@@ -7,7 +7,6 @@ import typer
 
 from snap_tap.cli.mobile.device_discovery import read_visible_devices
 from snap_tap.cli.mobile.primitive_result_output import (
-    emit_primitive_receipt,
     emit_primitive_result,
 )
 from snap_tap.device.discovery import DeviceDiscovery
@@ -89,7 +88,7 @@ def register_tap_command(app: typer.Typer, dependencies: TapDependencies) -> Non
         ] = None,
         json_output: Annotated[
             bool,
-            typer.Option("--json", help="Emit primitive_receipt.v1 JSON."),
+            typer.Option("--json", help="Emit primitive_result.v1 JSON."),
         ] = False,
         timeout_s: Annotated[
             float,
@@ -117,7 +116,7 @@ def register_tap_command(app: typer.Typer, dependencies: TapDependencies) -> Non
             device=device,
         )
         if arg_error is not None:
-            emit_primitive_receipt(
+            _emit_tap_result(
                 _blocked(
                     device_id=requested_device,
                     request=_request_payload(
@@ -128,7 +127,10 @@ def register_tap_command(app: typer.Typer, dependencies: TapDependencies) -> Non
                     ),
                     code=arg_error.code,
                     detail=arg_error.detail,
-                )
+                ),
+                dependencies=dependencies,
+                session_id=session,
+                json_output=json_output,
             )
             return
         run_tap_command(
@@ -161,41 +163,53 @@ def run_tap_command(
         snapshot=snapshot,
     )
     if target_id is None:
-        emit_primitive_receipt(
+        _emit_tap_result(
             _blocked(
                 device_id=None,
                 request=request,
                 detail="Target id is required.",
-            )
+            ),
+            dependencies=dependencies,
+            session_id=session,
+            json_output=json_output,
         )
         return
     target_id_error = _target_id_error(target_id)
     if target_id_error is not None:
-        emit_primitive_receipt(
-            _blocked(device_id=None, request=request, detail=target_id_error)
+        _emit_tap_result(
+            _blocked(device_id=None, request=request, detail=target_id_error),
+            dependencies=dependencies,
+            session_id=session,
+            json_output=json_output,
         )
         return
 
     serial = normalize_serial(device)
     if serial is None:
-        emit_primitive_receipt(
+        _emit_tap_result(
             _blocked(
                 device_id=None,
                 request=request,
                 detail="Pass a valid device serial.",
-            )
+            ),
+            dependencies=dependencies,
+            session_id=session,
+            json_output=json_output,
         )
         return
 
     session_error = _session_error(session=session, snapshot=snapshot)
     if session_error is not None:
-        emit_primitive_receipt(
+        _emit_tap_result(
             _blocked(
                 device_id=serial,
                 request=request,
                 code=session_error[0],
                 detail=session_error[1],
-            )
+            ),
+            dependencies=dependencies,
+            session_id=session,
+            json_output=json_output,
         )
         return
     normalized_session = normalize_latest_snapshot_session_id(session)
@@ -226,33 +240,42 @@ def run_tap_command(
             target_id,
         )
     except LatestSnapSourceError as exc:
-        emit_primitive_receipt(
+        _emit_tap_result(
             _blocked(
                 device_id=serial,
                 request=request,
                 code=exc.code,
                 detail=exc.detail,
-            )
+            ),
+            dependencies=dependencies,
+            session_id=normalized_session,
+            json_output=json_output,
         )
         return
     except SnapshotManifestSourceError as exc:
-        emit_primitive_receipt(
+        _emit_tap_result(
             _blocked(
                 device_id=serial,
                 request=request,
                 code=exc.code,
                 detail=exc.detail,
-            )
+            ),
+            dependencies=dependencies,
+            session_id=normalized_session,
+            json_output=json_output,
         )
         return
     except TargetSignatureError as exc:
-        emit_primitive_receipt(
+        _emit_tap_result(
             _blocked(
                 device_id=serial,
                 request=request,
                 code=exc.code,
                 detail=exc.detail,
-            )
+            ),
+            dependencies=dependencies,
+            session_id=normalized_session,
+            json_output=json_output,
         )
         return
 
@@ -274,7 +297,7 @@ def run_tap_command(
 
     visible = read_visible_devices(dependencies.discovery)
     if visible.error is not None:
-        emit_primitive_receipt(
+        _emit_tap_result(
             _blocked(
                 device_id=serial,
                 request={
@@ -286,7 +309,10 @@ def run_tap_command(
                     "source_snapshot_id": signature.source_snapshot_id,
                 },
                 detail=visible.error.detail,
-            )
+            ),
+            dependencies=dependencies,
+            session_id=normalized_session,
+            json_output=json_output,
         )
         return
     provider = CorePrimitiveSnapshotProvider(
@@ -303,6 +329,21 @@ def run_tap_command(
         receipt,
         dependencies=dependencies,
         session_id=normalized_session,
+        json_output=json_output,
+    )
+
+
+def _emit_tap_result(
+    receipt: PrimitiveReceipt,
+    *,
+    dependencies: TapDependencies,
+    session_id: str,
+    json_output: bool,
+) -> None:
+    emit_primitive_result(
+        receipt,
+        dependencies=dependencies,
+        session_id=session_id,
         json_output=json_output,
     )
 

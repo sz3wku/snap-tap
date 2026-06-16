@@ -190,9 +190,13 @@ def test_mobile_tap_snapshot_blocks_mismatch_before_phone_work(
     payload = _json(result.stdout)
 
     assert result.exit_code == 1
-    assert payload["error"]["code"] == "explicit_snapshot_source_device_mismatch"
-    assert payload["attempted_touch"] is False
-    assert payload["touched_phone"] is False
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["receipt"]["error"]["code"] == (
+        "explicit_snapshot_source_device_mismatch"
+    )
+    assert payload["receipt"]["attempted_touch"] is False
+    assert payload["receipt"]["touched_phone"] is False
+    assert payload["next_snap"] is None
     assert discovery.calls == 0
     assert xml_dumper.calls == []
     assert executor.calls == []
@@ -211,7 +215,11 @@ def test_mobile_tap_snapshot_rejects_non_tap_source_before_phone_work(
     payload = _json(result.stdout)
 
     assert result.exit_code == 1
-    assert payload["error"]["code"] == "latest_snap_source_target_not_tappable"
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["receipt"]["error"]["code"] == (
+        "latest_snap_source_target_not_tappable"
+    )
+    assert payload["next_snap"] is None
     assert discovery.calls == 0
     assert xml_dumper.calls == []
     assert executor.calls == []

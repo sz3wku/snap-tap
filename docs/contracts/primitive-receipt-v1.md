@@ -135,10 +135,12 @@ after-snapshot proof is unavailable.
 proof. Callers should not have to pass this for normal use; bounded overrides
 are debug/repro policy, not everyday UX.
 
-For CLI human mode, the same successful `after_snapshot` may be converted back
-into `mobile_snap.v1` and written as the next latest source for the same
-device/session. That presentation/update behavior belongs to the CLI surface,
-not to `primitive_receipt.v1` itself.
+For high-level CLI mode, the same `after_snapshot` may be converted back into
+`mobile_snap.v1` and written as the next latest source for the same
+device/session. Human mode renders that observation as the next snap table.
+Machine mode wraps the receipt and observation in `primitive_result.v1`. That
+presentation/update behavior belongs to the CLI surface, not to
+`primitive_receipt.v1` itself.
 
 ## Status Rules
 

@@ -14,6 +14,13 @@ from snap_tap.backends._shared.app_awareness import (
     read_device_app_current,
     read_device_package_info,
 )
+from snap_tap.backends._shared.app_lifecycle import (
+    DriverAppCatalog,
+    DriverAppEntry,
+    DriverAppLifecycle,
+    DriverAppOpen,
+    read_device_launchable_apps,
+)
 from snap_tap.backends._shared.errors import (
     ERROR_SPECS,
     DriverError,
@@ -45,6 +52,10 @@ from snap_tap.backends._shared.screenshot import (
 __all__ = [
     "DriverAppAwareness",
     "DriverAppAwarenessReader",
+    "DriverAppCatalog",
+    "DriverAppEntry",
+    "DriverAppLifecycle",
+    "DriverAppOpen",
     "DriverBackend",
     "DriverError",
     "DriverHealth",
@@ -66,5 +77,6 @@ __all__ = [
     "is_driver_recoverable",
     "normalize_package",
     "read_device_app_current",
+    "read_device_launchable_apps",
     "read_device_package_info",
 ]

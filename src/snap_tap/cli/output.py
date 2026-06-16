@@ -8,6 +8,8 @@ import typer
 from snap_tap.device.identity import DeviceInfo
 from snap_tap.backends.contracts import (
     DriverAppAwareness,
+    DriverAppCatalog,
+    DriverAppEntry,
     DriverError,
     DriverHealth,
     DriverLifecycleResult,
@@ -106,6 +108,29 @@ def app_awareness_to_dict(result: DriverAppAwareness) -> dict[str, object]:
         "recovery": recovery_to_dict(result.metadata),
         "error": error_to_dict(result.error),
     }
+
+
+def app_catalog_to_dict(result: DriverAppCatalog) -> dict[str, object]:
+    return {
+        "ok": result.ok,
+        "status": result.status,
+        "device_id": result.device_id,
+        "backend": result.backend,
+        "operation": result.operation,
+        "checked_at": result.checked_at,
+        "elapsed_ms": result.elapsed_ms,
+        "count": len(result.apps),
+        "apps": [app_entry_to_dict(app) for app in result.apps],
+        "error": error_to_dict(result.error),
+    }
+
+
+def app_entry_to_dict(app: DriverAppEntry) -> dict[str, object]:
+    payload: dict[str, object] = {"package": app.package}
+    if app.activity is not None:
+        payload["activity"] = app.activity
+        payload["component"] = f"{app.package}/{app.activity}"
+    return payload
 
 
 def app_awareness_metadata_to_dict(

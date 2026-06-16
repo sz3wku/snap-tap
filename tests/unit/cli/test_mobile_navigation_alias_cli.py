@@ -168,6 +168,11 @@ def test_mobile_navigation_aliases_use_primitive_executor_path() -> None:
         NAVIGATION_SWIPE,
         NAVIGATION_WAIT,
     ]
+    for item in (back, home, swipe, wait):
+        payload = _json(item.stdout)
+        assert payload["schema_version"] == "primitive_result.v1"
+        assert payload["receipt"]["schema_version"] == "primitive_receipt.v1"
+        assert payload["next_snap"]["schema_version"] == "mobile_snap.v1"
     assert [call.operation for call in executor.calls] == [
         NAVIGATION_BACK,
         NAVIGATION_HOME,
@@ -222,9 +227,16 @@ def test_mobile_navigation_alias_invalid_args_fail_before_executor() -> None:
     assert bad_serial.exit_code == 1
     assert bad_direction.exit_code == 1
     assert bad_wait.exit_code == 1
-    assert _json(bad_serial.stdout)["error"]["code"] == "primitive_invalid_request"
-    assert _json(bad_direction.stdout)["error"]["code"] == "primitive_invalid_request"
-    assert _json(bad_wait.stdout)["error"]["code"] == "primitive_invalid_request"
+    assert _json(bad_serial.stdout)["receipt"]["error"]["code"] == (
+        "primitive_invalid_request"
+    )
+    assert _json(bad_direction.stdout)["receipt"]["error"]["code"] == (
+        "primitive_invalid_request"
+    )
+    assert _json(bad_wait.stdout)["receipt"]["error"]["code"] == (
+        "primitive_invalid_request"
+    )
+    assert _json(bad_serial.stdout)["next_snap"] is None
     assert executor.calls == []
 
 
@@ -239,9 +251,11 @@ def test_mobile_navigation_alias_rejects_positional_serial_with_device_option() 
 
     assert result.exit_code == 1
     payload = _json(result.stdout)
+    assert payload["schema_version"] == "primitive_result.v1"
     assert payload["operation"] == NAVIGATION_BACK
-    assert payload["request"]["operation"] == NAVIGATION_BACK
-    assert payload["error"]["code"] == "invalid_arguments"
+    assert payload["receipt"]["request"]["operation"] == NAVIGATION_BACK
+    assert payload["receipt"]["error"]["code"] == "invalid_arguments"
+    assert payload["next_snap"] is None
     assert executor.calls == []
 
 

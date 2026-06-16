@@ -59,6 +59,17 @@ class PrimitiveNavigationRequest:
 
 
 @dataclass(frozen=True)
+class PrimitiveAppOpenRequest:
+    device_id: str
+    query: str
+    package: str
+    activity: str | None = None
+    timeout_s: float = 10.0
+    lease_timeout_s: float = 30.0
+    post_action_settle_ms: int = DEFAULT_POST_ACTION_SETTLE_MS
+
+
+@dataclass(frozen=True)
 class PrimitiveDriverResult:
     ok: bool
     backend: str

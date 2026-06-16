@@ -10,7 +10,9 @@ The public v0 loop is a small agent/operator loop:
 ```powershell
 snap-tap devices
 snap-tap status <serial>
+snap-tap apps <serial>
 snap-tap snap <serial>
+snap-tap app-open <serial> com.instagram.android
 snap-tap tap <serial> e001
 snap-tap input <serial> e004 --text "hello"
 snap-tap back <serial>
@@ -27,6 +29,8 @@ snap-tap wait <serial> --seconds 1
 - Mutating commands rebuild a target signature, capture a fresh screen,
   resolve the target again, apply stale-target guards, execute through the
   process-isolated Android backend, and emit a primitive receipt.
+- `app-open` is a small lifecycle primitive for opening a package or exact
+  package/activity component. It does not guess social app names.
 - There is no public raw coordinate-click or selector-click API in the v0 shared runtime.
 
 ## Alpha Readiness
@@ -42,6 +46,10 @@ human-readable by default; add `--json` for structured machine output.
 Successful human-mode primitives print the next snap table from their
 post-action observation, so the operator loop stays compact:
 `snap -> tap -> tap -> input`.
+
+`apps` lists launchable packages/components. `app-open` accepts a package such
+as `com.instagram.android` or a component such as
+`com.instagram.android/.activity.MainTabActivity`.
 
 ## Platform Direction
 

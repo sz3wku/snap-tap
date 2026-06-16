@@ -12,6 +12,10 @@ from snap_tap.cli.mobile.snap_command import (
 from snap_tap.cli.output import emit_json
 from snap_tap.primitives import PrimitiveReceipt, primitive_receipt_to_dict
 from snap_tap.targets import MobileSnap, build_mobile_snap_from_semantic
+from snap_tap.targets.mobile_snap_payload import mobile_snap_to_dict
+
+
+PRIMITIVE_RESULT_SCHEMA_VERSION = "primitive_result.v1"
 
 
 class PrimitiveResultDependencies(Protocol):
@@ -32,7 +36,18 @@ def emit_primitive_result(
     session_id: str,
     json_output: bool,
 ) -> None:
-    if json_output or not receipt.ok:
+    if json_output:
+        next_snap = _next_snap_from_receipt(
+            receipt,
+            dependencies=dependencies,
+            session_id=session_id,
+        )
+        emit_json(_primitive_result_to_dict(receipt, next_snap=next_snap))
+        if not receipt.ok:
+            raise typer.Exit(code=1)
+        return
+
+    if not receipt.ok:
         emit_primitive_receipt(receipt)
         return
 
@@ -46,6 +61,26 @@ def emit_primitive_result(
         return
 
     emit_snap_table(next_snap, debug=False)
+
+
+def _primitive_result_to_dict(
+    receipt: PrimitiveReceipt,
+    *,
+    next_snap: MobileSnap | None,
+) -> dict[str, object]:
+    return {
+        "schema_version": PRIMITIVE_RESULT_SCHEMA_VERSION,
+        "ok": receipt.ok,
+        "status": receipt.status,
+        "operation": receipt.operation,
+        "device_id": receipt.device_id,
+        "receipt": primitive_receipt_to_dict(receipt),
+        "next_snap": (
+            mobile_snap_to_dict(next_snap, debug=False)
+            if next_snap is not None
+            else None
+        ),
+    }
 
 
 def _next_snap_from_receipt(

@@ -91,7 +91,7 @@ def test_mobile_tap_default_output_renders_after_snap_table(
     assert [target.display_id for target in latest.targets] == ["e001"]
 
 
-def test_mobile_tap_json_does_not_refresh_latest_from_after_snap(
+def test_mobile_tap_json_returns_receipt_and_next_snap(
     tmp_path: Path,
 ) -> None:
     app, _xml_dumper = _build_app(tmp_path, _SuccessExecutor())
@@ -110,17 +110,23 @@ def test_mobile_tap_json_does_not_refresh_latest_from_after_snap(
 
     assert tap.exit_code == 0
     payload = _json(tap.stdout)
-    assert payload["schema_version"] == "primitive_receipt.v1"
-    assert payload["after_snapshot"]["snapshot_id"] == "after"
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["operation"] == "tap"
+    assert payload["receipt"]["schema_version"] == "primitive_receipt.v1"
+    assert payload["receipt"]["after_snapshot"]["snapshot_id"] == "after"
+    assert payload["next_snap"]["schema_version"] == "mobile_snap.v1"
+    assert payload["next_snap"]["snapshot"]["snapshot_id"] == "after"
+    assert payload["next_snap"]["targets"][0]["label"] == "Save"
     after = read_latest_snap_source(
         device_id="RFCN4010FCK",
         session_id="default",
         cache_root=tmp_path,
     )
-    assert after.snapshot.snapshot_id == before.snapshot.snapshot_id
+    assert before.snapshot.snapshot_id != "after"
+    assert after.snapshot.snapshot_id == "after"
 
 
-def test_mobile_tap_snapshot_json_does_not_write_latest_source(
+def test_mobile_tap_snapshot_json_returns_next_snap_and_writes_latest_source(
     tmp_path: Path,
 ) -> None:
     manifest = _capture_manifest(tmp_path / "captures")
@@ -141,9 +147,11 @@ def test_mobile_tap_snapshot_json_does_not_write_latest_source(
 
     assert tap.exit_code == 0
     payload = _json(tap.stdout)
-    assert payload["schema_version"] == "primitive_receipt.v1"
-    assert payload["after_snapshot"]["snapshot_id"] == "after"
-    assert not latest_snap_source_path(
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["receipt"]["schema_version"] == "primitive_receipt.v1"
+    assert payload["receipt"]["after_snapshot"]["snapshot_id"] == "after"
+    assert payload["next_snap"]["snapshot"]["snapshot_id"] == "after"
+    assert latest_snap_source_path(
         device_id="RFCN4010FCK",
         session_id="default",
         cache_root=tmp_path / "cache",
@@ -176,6 +184,32 @@ def test_mobile_tap_failure_with_after_snap_emits_receipt_not_next_table(
         cache_root=tmp_path,
     )
     assert after.snapshot.snapshot_id == before.snapshot.snapshot_id
+
+
+def test_mobile_tap_json_failure_includes_receipt_and_next_snap(
+    tmp_path: Path,
+) -> None:
+    app, _xml_dumper = _build_app(tmp_path, _FailingExecutor())
+    runner = CliRunner()
+    assert runner.invoke(app, ["snap", "--device", "RFCN4010FCK"]).exit_code == 0
+
+    tap = runner.invoke(app, ["tap", "e002", "--device", "RFCN4010FCK", "--json"])
+
+    assert tap.exit_code == 1
+    payload = _json(tap.stdout)
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["ok"] is False
+    assert payload["receipt"]["schema_version"] == "primitive_receipt.v1"
+    assert payload["receipt"]["status"] == "failed"
+    assert payload["receipt"]["after_snapshot"]["snapshot_id"] == "after"
+    assert payload["next_snap"]["schema_version"] == "mobile_snap.v1"
+    assert payload["next_snap"]["snapshot"]["snapshot_id"] == "after"
+    latest = read_latest_snap_source(
+        device_id="RFCN4010FCK",
+        session_id="default",
+        cache_root=tmp_path,
+    )
+    assert latest.snapshot.snapshot_id == "after"
 
 
 class _FakeDiscovery:

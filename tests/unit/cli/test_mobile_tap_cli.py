@@ -225,8 +225,11 @@ def test_mobile_snap_then_tap_id_builds_signature_for_executor(
     assert snap.exit_code == 0
     assert tap.exit_code == 0
     payload = _json(tap.stdout)
-    assert payload["schema_version"] == "primitive_receipt.v1"
+    assert payload["schema_version"] == "primitive_result.v1"
     assert payload["ok"] is True
+    assert payload["receipt"]["schema_version"] == "primitive_receipt.v1"
+    assert payload["receipt"]["ok"] is True
+    assert payload["next_snap"]["schema_version"] == "mobile_snap.v1"
     assert len(executor.calls) == 1
     request = executor.calls[0]
     assert request.signature.schema_version == "target_signature.v1"
@@ -246,8 +249,10 @@ def test_mobile_tap_missing_source_blocks_before_phone_work(tmp_path: Path) -> N
 
     assert result.exit_code == 1
     payload = _json(result.stdout)
-    assert payload["error"]["code"] == "latest_snap_source_missing"
-    assert payload["attempted_touch"] is False
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["receipt"]["error"]["code"] == "latest_snap_source_missing"
+    assert payload["receipt"]["attempted_touch"] is False
+    assert payload["next_snap"] is None
     assert xml_dumper.calls == []
     assert executor.calls == []
 
@@ -265,7 +270,9 @@ def test_mobile_tap_rejects_positional_serial_with_device_option(
 
     assert result.exit_code == 1
     payload = _json(result.stdout)
-    assert payload["error"]["code"] == "invalid_arguments"
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["receipt"]["error"]["code"] == "invalid_arguments"
+    assert payload["next_snap"] is None
     assert xml_dumper.calls == []
     assert executor.calls == []
 
@@ -287,7 +294,9 @@ def test_mobile_tap_rejects_corrupt_source_before_phone_work(tmp_path: Path) -> 
     )
 
     assert result.exit_code == 1
-    assert _json(result.stdout)["error"]["code"] == "latest_snap_source_invalid"
+    payload = _json(result.stdout)
+    assert payload["receipt"]["error"]["code"] == "latest_snap_source_invalid"
+    assert payload["next_snap"] is None
     assert xml_dumper.calls == []
     assert executor.calls == []
 
@@ -317,13 +326,16 @@ def test_mobile_tap_rejects_malformed_or_unsafe_id_before_phone_work(
     assert malformed.exit_code == 1
     assert input_target.exit_code == 1
     assert scroll_target.exit_code == 1
-    assert _json(malformed.stdout)["error"]["code"] == "primitive_invalid_request"
-    assert _json(input_target.stdout)["error"]["code"] == (
+    assert _json(malformed.stdout)["receipt"]["error"]["code"] == (
+        "primitive_invalid_request"
+    )
+    assert _json(input_target.stdout)["receipt"]["error"]["code"] == (
         "latest_snap_source_target_not_tappable"
     )
-    assert _json(scroll_target.stdout)["error"]["code"] == (
+    assert _json(scroll_target.stdout)["receipt"]["error"]["code"] == (
         "latest_snap_source_target_not_tappable"
     )
+    assert _json(malformed.stdout)["next_snap"] is None
     assert xml_dumper.calls == []
     assert executor.calls == []
 
@@ -352,14 +364,15 @@ def test_mobile_tap_preserves_resolution_and_stale_receipts(
     )
 
     assert resolution.exit_code == 1
-    assert _json(resolution.stdout)["blocking_reason"]["code"] == (
+    assert _json(resolution.stdout)["receipt"]["blocking_reason"]["code"] == (
         "primitive_resolution_blocked"
     )
     stale_payload = _json(stale.stdout)
     assert stale.exit_code == 1
-    assert stale_payload["blocking_reason"]["code"] == "primitive_target_stale"
-    assert stale_payload["attempted_touch"] is False
-    assert stale_payload["touched_phone"] is False
+    assert stale_payload["receipt"]["blocking_reason"]["code"] == "primitive_target_stale"
+    assert stale_payload["receipt"]["attempted_touch"] is False
+    assert stale_payload["receipt"]["touched_phone"] is False
+    assert stale_payload["next_snap"] is None
 
 
 def test_mobile_tap_custom_sessions_are_isolated(tmp_path: Path) -> None:
@@ -382,7 +395,9 @@ def test_mobile_tap_custom_sessions_are_isolated(tmp_path: Path) -> None:
 
     assert snap.exit_code == 0
     assert default_tap.exit_code == 1
-    assert _json(default_tap.stdout)["error"]["code"] == "latest_snap_source_missing"
+    assert _json(default_tap.stdout)["receipt"]["error"]["code"] == (
+        "latest_snap_source_missing"
+    )
     assert custom_tap.exit_code == 0
 
 

@@ -270,6 +270,29 @@ def test_mobile_package_info_outputs_public_metadata_only() -> None:
     ]
 
 
+def test_mobile_app_info_alias_outputs_public_metadata_only() -> None:
+    app, reader = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "app-info",
+            "RFCN4010FCK",
+            "--package",
+            "com.example.app",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = _json(result.stdout)
+    assert payload["ok"] is True
+    assert payload["result"]["operation"] == "package_info"
+    assert payload["result"]["metadata"]["package"] == "com.example.app"
+    assert reader.calls == [
+        ("package_info", "RFCN4010FCK", "com.example.app", 5.0)
+    ]
+
+
 def test_mobile_package_info_all_checks_each_visible_device() -> None:
     app, reader = _build_app(
         [

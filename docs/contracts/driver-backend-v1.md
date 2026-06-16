@@ -56,6 +56,8 @@ Supported P1 operations:
 - screenshot capture,
 - current foreground app/package read,
 - package info read,
+- launchable app package/component list,
+- open app package/component,
 - tap coordinates or resolved target geometry,
 - input text,
 - back,
@@ -131,6 +133,15 @@ Read-only app/package awareness uses the same envelope:
 not launch, stop, clear, install, uninstall, enumerate package inventory, or
 infer platform/account readiness.
 
+Launchable app lifecycle is a separate small surface:
+
+- `apps` lists package/activity entries that can be launched from the device,
+- `app_open` opens a dotted package name or exact `package/activity` component.
+
+`app_open` is mutating and must be represented by a primitive receipt when
+exposed through the high-level CLI. It must not guess display names such as
+`instagram`, infer social-platform readiness, or encode app-specific flows.
+
 ## Invariants
 
 - No platform business logic.
@@ -146,6 +157,8 @@ infer platform/account readiness.
 - Lifecycle maintenance commands may expose bounded diagnostics such as
   returncode and output-present flags, but not raw stdout/stderr.
 - App/package reads contain no platform business logic and no account semantics.
+- App open/listing contains no display-name resolver, no fuzzy social aliases,
+  and no platform workflow semantics.
 
 ## Failure Modes
 

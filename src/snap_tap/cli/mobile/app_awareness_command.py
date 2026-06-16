@@ -210,6 +210,8 @@ def register_app_awareness_commands(
         )
         _emit_app_result(result)
 
+    app.command("app-info")(package_info)
+
 
 def _emit_app_result(result: DriverAppAwareness) -> None:
     emit_json({"ok": result.ok, "result": app_awareness_to_dict(result)})

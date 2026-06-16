@@ -16,6 +16,10 @@ from snap_tap.cli.output import (
     xml_dump_to_dict,
 )
 from snap_tap.cli.mobile.app_awareness_command import register_app_awareness_commands
+from snap_tap.cli.mobile.app_lifecycle_command import (
+    AppOpenExecutor,
+    register_app_lifecycle_commands,
+)
 from snap_tap.cli.mobile.device_discovery import (
     blocked_health,
     devices_failure_payload,
@@ -47,6 +51,7 @@ from snap_tap.device.discovery import AdbDeviceDiscovery, DeviceDiscovery
 from snap_tap.device.identity import DeviceInfo, select_device
 from snap_tap.backends.contracts import (
     DriverAppAwarenessReader,
+    DriverAppLifecycle,
     DriverBackend,
     DriverHealth,
     DriverLifecycleResult,
@@ -60,10 +65,16 @@ from snap_tap.backends.contracts import (
 from snap_tap.backends.android.uiautomator2.lifecycle import (
     Uiautomator2LifecycleRunner,
 )
-from snap_tap.primitives import PrimitiveNavigator, PrimitiveTapper, PrimitiveTexter
+from snap_tap.primitives import (
+    PrimitiveAppOpener,
+    PrimitiveNavigator,
+    PrimitiveTapper,
+    PrimitiveTexter,
+)
 from snap_tap.backends.android.uiautomator2.screenshot import Uiautomator2ScreenshotCapturer
 from snap_tap.backends.android.uiautomator2.backend import Uiautomator2Backend
 from snap_tap.backends.android.uiautomator2.app_awareness import Uiautomator2AppAwarenessReader
+from snap_tap.backends.android.uiautomator2.app_lifecycle import Uiautomator2AppLifecycle
 from snap_tap.backends.android.uiautomator2.xml_dump import Uiautomator2XmlDumper, dump_device_xml
 from snap_tap.snapshots import DEFAULT_LATEST_SNAPSHOT_CACHE_ROOT
 
@@ -76,12 +87,15 @@ class MobileDependencies:
     xml_dumper: DriverXmlDumper
     screenshot_capturer: DriverScreenshotCapturer | None = None
     app_reader: DriverAppAwarenessReader | None = None
+    app_lifecycle: DriverAppLifecycle | None = None
     primitive_tapper: PrimitiveTapper | None = None
     primitive_tap_executor: PrimitiveTapExecutor | None = None
     primitive_texter: PrimitiveTexter | None = None
     primitive_text_executor: PrimitiveTextExecutor | None = None
     primitive_navigator: PrimitiveNavigator | None = None
     primitive_navigation_executor: PrimitiveNavigationExecutor | None = None
+    primitive_app_opener: PrimitiveAppOpener | None = None
+    primitive_app_open_executor: AppOpenExecutor | None = None
     latest_cache_root: Path = DEFAULT_LATEST_SNAPSHOT_CACHE_ROOT
 
 
@@ -387,6 +401,7 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
         )
 
     register_app_awareness_commands(app, dependencies)
+    register_app_lifecycle_commands(app, dependencies)
     register_primitive_tap_command(app, dependencies)
     register_primitive_text_commands(app, dependencies)
     register_primitive_navigation_commands(app, dependencies)
@@ -606,6 +621,7 @@ def _default_dependencies() -> MobileDependencies:
         xml_dumper=Uiautomator2XmlDumper(),
         screenshot_capturer=Uiautomator2ScreenshotCapturer(),
         app_reader=Uiautomator2AppAwarenessReader(),
+        app_lifecycle=Uiautomator2AppLifecycle(),
     )
 
 

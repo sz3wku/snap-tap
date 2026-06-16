@@ -7,7 +7,6 @@ import typer
 
 from snap_tap.cli.mobile.device_discovery import resolve_requested_serial
 from snap_tap.cli.mobile.primitive_result_output import (
-    emit_primitive_receipt,
     emit_primitive_result,
 )
 from snap_tap.cli.mobile.primitive_navigation_command import (
@@ -22,6 +21,7 @@ from snap_tap.backends.android.uiautomator2.navigation import (
 from snap_tap.primitives import (
     NAVIGATION_WAIT,
     PrimitiveNavigationRequest,
+    PrimitiveReceipt,
     invalid_request_receipt,
 )
 from snap_tap.snapshots import (
@@ -183,7 +183,12 @@ def _run(
             detail=serial_error.detail,
             operation=operation,
         )
-        emit_primitive_receipt(receipt)
+        _emit_navigation_result(
+            receipt,
+            dependencies=dependencies,
+            session_id=session,
+            json_output=json_output,
+        )
         return
     try:
         normalized_session = normalize_latest_snapshot_session_id(session)
@@ -199,7 +204,12 @@ def _run(
             detail=exc.detail,
             operation=operation,
         )
-        emit_primitive_receipt(receipt)
+        _emit_navigation_result(
+            receipt,
+            dependencies=dependencies,
+            session_id=session,
+            json_output=json_output,
+        )
         return
     receipt = execute_primitive_navigation_request(
         dependencies=dependencies,
@@ -216,5 +226,20 @@ def _run(
         receipt,
         dependencies=dependencies,
         session_id=normalized_session,
+        json_output=json_output,
+    )
+
+
+def _emit_navigation_result(
+    receipt: PrimitiveReceipt,
+    *,
+    dependencies: NavigationAliasDependencies,
+    session_id: str,
+    json_output: bool,
+) -> None:
+    emit_primitive_result(
+        receipt,
+        dependencies=dependencies,
+        session_id=session_id,
         json_output=json_output,
     )

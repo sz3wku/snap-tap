@@ -18,7 +18,9 @@ The public v0 should feel small and sharp:
 ```powershell
 snap-tap devices
 snap-tap status <serial>
+snap-tap apps <serial>
 snap-tap snap <serial>
+snap-tap app-open <serial> <package>
 snap-tap tap <serial> <target-id>
 snap-tap input <serial> <target-id> --text "hello"
 snap-tap back <serial>
@@ -36,6 +38,7 @@ The default CLI is for humans and everyday agent operation:
 
 - concise command shape,
 - readable target table,
+- launchable app list and package-only app open lifecycle primitive,
 - no raw coordinate-click or selector-click surface,
 - receipts and proof kept behind the normal safe primitive path.
 
@@ -52,7 +55,7 @@ Latest local verification from this repo:
 - `uv lock --check` passed.
 - `uv run ruff check src tests` passed.
 - `uv run mypy --explicit-package-bases src tests` passed.
-- `uv run pytest` passed with 451 tests.
+- `uv run pytest` passed with 462 tests.
 - `uv build --out-dir temp\build-check` produced sdist and wheel.
 - `snap-tap devices` detected two local Android devices.
 - `snap-tap status <serial>` reported both visible Android devices healthy.
@@ -60,6 +63,7 @@ Latest local verification from this repo:
   - `snap-tap devices` and `snap-tap devices --json`,
   - `snap-tap status <serial>`, `snap-tap status <serial> --json`, and
     `snap-tap status --all`,
+  - `snap-tap apps <serial> --json`,
   - `snap-tap snap <serial>`,
   - `snap-tap app-current <serial>`,
   - `snap-tap snapshot <serial> --out-dir temp\live-readonly\snapshot`,
@@ -67,6 +71,7 @@ Latest local verification from this repo:
 - L1 safe system primitive live smoke passed on a dummy Android phone:
   - `snap-tap home <serial> --json`,
   - `snap-tap wait <serial> --seconds 1 --json`,
+  - `snap-tap app-open <serial> com.instagram.android --json`,
   - `snap-tap back <serial> --json`,
   - `snap-tap swipe <serial> --direction up --json`,
   - final `snap-tap home <serial> --json` reset.
@@ -198,7 +203,9 @@ Done when:
 - README and help output teach the same everyday loop,
 - unit tests cover positional serial forms,
 - old `--device` forms either remain compatible or are intentionally removed,
-- `--json` output remains structured and receipt-first.
+- high-level `--json` output returns `primitive_result.v1` with both receipt
+  evidence and the next `mobile_snap.v1` when post-action observation is
+  available.
 
 ## Phase 4 - Live Gate
 

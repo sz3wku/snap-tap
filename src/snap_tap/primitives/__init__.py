@@ -6,6 +6,7 @@ from snap_tap.primitives.lease import (
 from snap_tap.primitives.models import (
     PRIMITIVE_RECEIPT_SCHEMA_VERSION,
     PrimitiveDriverResult,
+    PrimitiveAppOpenRequest,
     PrimitiveLease,
     PrimitiveLeaseConflict,
     PrimitiveNavigationRequest,
@@ -15,6 +16,7 @@ from snap_tap.primitives.models import (
     PrimitiveTapRequest,
     PrimitiveTextRequest,
 )
+from snap_tap.primitives.app_open_request import APP_OPEN_OPERATION
 from snap_tap.primitives.receipt import (
     invalid_request_receipt,
     primitive_receipt_to_dict,
@@ -30,15 +32,19 @@ from snap_tap.primitives.navigation import (
     PrimitiveNavigator,
     navigation_primitive,
 )
+from snap_tap.primitives.app_open import PrimitiveAppOpener, app_open_primitive
 from snap_tap.primitives.tap import PrimitiveTapper, resolved_tap
 from snap_tap.primitives.text import PrimitiveTexter, resolved_text
 
 __all__ = [
+    "APP_OPEN_OPERATION",
     "NAVIGATION_WAIT",
     "PRIMITIVE_RECEIPT_SCHEMA_VERSION",
     "CorePrimitiveSnapshotProvider",
     "DEFAULT_PRIMITIVE_LEASE_ROOT",
     "DEFAULT_PRIMITIVE_SNAPSHOT_ROOT",
+    "PrimitiveAppOpenRequest",
+    "PrimitiveAppOpener",
     "PrimitiveDriverResult",
     "PrimitiveLease",
     "PrimitiveLeaseConflict",
@@ -53,6 +59,7 @@ __all__ = [
     "PrimitiveSnapshotResult",
     "PrimitiveTapper",
     "PrimitiveTexter",
+    "app_open_primitive",
     "default_lease_manager",
     "invalid_request_receipt",
     "navigation_primitive",

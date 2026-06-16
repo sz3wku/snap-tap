@@ -46,7 +46,7 @@ def test_mobile_input_default_output_renders_after_snap_table(
     assert [target.display_id for target in latest.targets] == ["e001"]
 
 
-def test_mobile_input_json_does_not_refresh_latest_from_after_snap(
+def test_mobile_input_json_returns_receipt_and_next_snap(
     tmp_path: Path,
 ) -> None:
     write_latest_text_source(tmp_path)
@@ -71,14 +71,19 @@ def test_mobile_input_json_does_not_refresh_latest_from_after_snap(
 
     assert result.exit_code == 0
     payload = json_payload(result.stdout)
-    assert payload["schema_version"] == "primitive_receipt.v1"
-    assert payload["after_snapshot"]["snapshot_id"] == "after"
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["operation"] == TEXT_INPUT_MODE
+    assert payload["receipt"]["schema_version"] == "primitive_receipt.v1"
+    assert payload["receipt"]["after_snapshot"]["snapshot_id"] == "after"
+    assert payload["next_snap"]["schema_version"] == "mobile_snap.v1"
+    assert payload["next_snap"]["snapshot"]["snapshot_id"] == "after"
     after = read_latest_snap_source(
         device_id="RFCN4010FCK",
         session_id="default",
         cache_root=tmp_path,
     )
-    assert after.snapshot.snapshot_id == before.snapshot.snapshot_id
+    assert before.snapshot.snapshot_id != "after"
+    assert after.snapshot.snapshot_id == "after"
 
 
 def test_mobile_input_id_builds_text_request_from_latest_source(
@@ -100,9 +105,12 @@ def test_mobile_input_id_builds_text_request_from_latest_source(
 
     payload = json_payload(result.stdout)
     assert result.exit_code == 0
-    assert payload["schema_version"] == "primitive_receipt.v1"
+    assert payload["schema_version"] == "primitive_result.v1"
     assert payload["operation"] == TEXT_INPUT_MODE
-    assert payload["request"]["text_length"] == 11
+    assert payload["receipt"]["schema_version"] == "primitive_receipt.v1"
+    assert payload["receipt"]["operation"] == TEXT_INPUT_MODE
+    assert payload["receipt"]["request"]["text_length"] == 11
+    assert payload["next_snap"]["summary"]["input_count"] == 1
     assert "hakar smoke" not in result.stdout
     assert len(executor.calls) == 1
     request = executor.calls[0]
@@ -129,7 +137,10 @@ def test_mobile_replace_text_id_uses_replace_mode(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0
-    assert json_payload(result.stdout)["operation"] == TEXT_REPLACE_MODE
+    payload = json_payload(result.stdout)
+    assert payload["operation"] == TEXT_REPLACE_MODE
+    assert payload["receipt"]["operation"] == TEXT_REPLACE_MODE
+    assert payload["next_snap"]["schema_version"] == "mobile_snap.v1"
     assert "new caption" not in result.stdout
     assert executor.calls[0].mode == TEXT_REPLACE_MODE
 
@@ -172,18 +183,19 @@ def test_mobile_text_alias_invalid_inputs_fail_before_executor(
     assert bad_serial.exit_code == 1
     assert bad_session.exit_code == 1
     assert missing_source.exit_code == 1
-    assert json_payload(malformed_id.stdout)["error"]["code"] == (
+    assert json_payload(malformed_id.stdout)["receipt"]["error"]["code"] == (
         "primitive_invalid_request"
     )
-    assert json_payload(bad_serial.stdout)["error"]["code"] == (
+    assert json_payload(bad_serial.stdout)["receipt"]["error"]["code"] == (
         "primitive_invalid_request"
     )
-    assert json_payload(bad_session.stdout)["error"]["code"] == (
+    assert json_payload(bad_session.stdout)["receipt"]["error"]["code"] == (
         "latest_snapshot_ref_invalid"
     )
-    assert json_payload(missing_source.stdout)["error"]["code"] == (
+    assert json_payload(missing_source.stdout)["receipt"]["error"]["code"] == (
         "latest_snap_source_missing"
     )
+    assert json_payload(malformed_id.stdout)["next_snap"] is None
     assert executor.calls == []
 
 
@@ -209,7 +221,9 @@ def test_mobile_text_alias_rejects_positional_serial_with_device_option(
 
     payload = json_payload(result.stdout)
     assert result.exit_code == 1
-    assert payload["error"]["code"] == "invalid_arguments"
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["receipt"]["error"]["code"] == "invalid_arguments"
+    assert payload["next_snap"] is None
     assert executor.calls == []
 
 
@@ -226,8 +240,9 @@ def test_mobile_text_alias_non_input_source_fails_before_executor(
 
     payload = json_payload(result.stdout)
     assert result.exit_code == 1
-    assert payload["error"]["code"] == "latest_snap_source_target_not_input"
-    assert payload["attempted_touch"] is False
+    assert payload["receipt"]["error"]["code"] == "latest_snap_source_target_not_input"
+    assert payload["receipt"]["attempted_touch"] is False
+    assert payload["next_snap"] is None
     assert executor.calls == []
 
 
@@ -245,8 +260,9 @@ def test_mobile_text_alias_invalid_text_does_not_leak_raw_text(
 
     payload = json_payload(result.stdout)
     assert result.exit_code == 1
-    assert payload["error"]["code"] == "primitive_invalid_request"
-    assert payload["request"]["text_length"] == len(invalid_text)
-    assert "text_sha256" in payload["request"]
+    assert payload["receipt"]["error"]["code"] == "primitive_invalid_request"
+    assert payload["receipt"]["request"]["text_length"] == len(invalid_text)
+    assert "text_sha256" in payload["receipt"]["request"]
+    assert payload["next_snap"] is None
     assert secret not in result.stdout
     assert executor.calls == []
