@@ -140,7 +140,7 @@ Launchable app lifecycle is a separate small surface:
 
 `app_open` is mutating and must be represented by a primitive receipt when
 exposed through the high-level CLI. It must not guess display names such as
-`instagram`, infer social-platform readiness, or encode app-specific flows.
+`Settings`, infer app readiness, or encode app-specific flows.
 
 ## Invariants
 

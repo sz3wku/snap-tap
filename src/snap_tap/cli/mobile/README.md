@@ -13,7 +13,7 @@ snap-tap devices
 snap-tap status <serial>
 snap-tap apps <serial>
 snap-tap snap <serial>
-snap-tap app-open <serial> com.instagram.android
+snap-tap app-open <serial> com.android.settings
 snap-tap tap <serial> e080
 snap-tap input <serial> e004 --text "hello"
 snap-tap replace-text <serial> e004 --text "hello"
@@ -29,7 +29,7 @@ when an agent, test, CI job, or support flow needs the structured payload.
 `apps` lists launchable packages/components. `app-open` opens a package or
 exact package/activity component as a lifecycle primitive with a receipt and
 post-action observation. It does not resolve display names such as
-`instagram`; agents should use the package from `apps`.
+`Settings`; agents should use the package from `apps`.
 
 `snap` is the normal read-only screen observation surface. Its default output is
 a compact human table with actionable target ids. `snap --json` emits the

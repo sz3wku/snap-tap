@@ -55,7 +55,7 @@ Latest local verification from this repo:
 - `uv lock --check` passed.
 - `uv run ruff check src tests` passed.
 - `uv run mypy --explicit-package-bases src tests` passed.
-- `uv run pytest` passed with 462 tests.
+- `uv run pytest` passed with 467 tests.
 - `uv build --out-dir temp\build-check` produced sdist and wheel.
 - `snap-tap devices` detected two local Android devices.
 - `snap-tap status <serial>` reported both visible Android devices healthy.
@@ -71,7 +71,7 @@ Latest local verification from this repo:
 - L1 safe system primitive live smoke passed on a dummy Android phone:
   - `snap-tap home <serial> --json`,
   - `snap-tap wait <serial> --seconds 1 --json`,
-  - `snap-tap app-open <serial> com.instagram.android --json`,
+  - `snap-tap app-open <serial> <known-installed-package> --json`,
   - `snap-tap back <serial> --json`,
   - `snap-tap swipe <serial> --direction up --json`,
   - final `snap-tap home <serial> --json` reset.
@@ -79,6 +79,8 @@ Latest local verification from this repo:
 Known gaps:
 
 - initial baseline commit exists locally: `0b19b34`,
+- pre-release polish commits now cover app-open foreground proof, import
+  sorting, and primitive result CLI simplification,
 - no public remote yet,
 - OSS shell exists locally: `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`,
   `CHANGELOG.md`, GitHub issue templates, PR template, and GitHub Actions CI,

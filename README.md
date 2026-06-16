@@ -12,13 +12,56 @@ snap-tap devices
 snap-tap status <serial>
 snap-tap apps <serial>
 snap-tap snap <serial>
-snap-tap app-open <serial> com.instagram.android
+snap-tap app-open <serial> com.android.settings
 snap-tap tap <serial> e001
 snap-tap input <serial> e004 --text "hello"
 snap-tap back <serial>
 snap-tap home <serial>
 snap-tap swipe <serial> --direction up
 snap-tap wait <serial> --seconds 1
+```
+
+## Quick Start
+
+During alpha, install from a local checkout:
+
+```powershell
+uv sync
+uv run snap-tap --help
+```
+
+Prepare an Android phone:
+
+- install Android platform tools or Android Studio,
+- enable Developer options and USB debugging,
+- connect the phone over USB and accept the RSA trust prompt,
+- check that `adb devices` shows the phone as `device`.
+
+On Windows, run from PowerShell:
+
+```powershell
+uv run snap-tap devices
+uv run snap-tap status <serial>
+uv run snap-tap snap <serial>
+```
+
+On Linux, use the same commands after ADB and any required udev rules are ready:
+
+```bash
+uv run snap-tap devices
+uv run snap-tap status <serial>
+uv run snap-tap snap <serial>
+```
+
+If more than one online device is visible, pass the serial explicitly. Mutating
+commands should start only after a fresh `snap` has printed the target table.
+
+First safe mutating smoke:
+
+```powershell
+uv run snap-tap home <serial>
+uv run snap-tap app-open <serial> com.android.settings
+uv run snap-tap back <serial>
 ```
 
 ## Safety Model
@@ -31,7 +74,8 @@ snap-tap wait <serial> --seconds 1
   process-isolated Android backend, and emit a primitive receipt.
 - `app-open` is a small lifecycle primitive for opening a package or exact
   package/activity component. It does not guess social app names.
-- There is no public raw coordinate-click or selector-click API in the v0 shared runtime.
+- There is no public raw coordinate-click or selector-click API in the v0 shared
+  runtime.
 
 ## Alpha Readiness
 
@@ -48,8 +92,8 @@ post-action observation, so the operator loop stays compact:
 `snap -> tap -> tap -> input`.
 
 `apps` lists launchable packages/components. `app-open` accepts a package such
-as `com.instagram.android` or a component such as
-`com.instagram.android/.activity.MainTabActivity`.
+as `com.android.settings` or a component such as
+`com.android.settings/.Settings`.
 
 ## Platform Direction
 
@@ -59,7 +103,8 @@ target tables, taps, text input, navigation, and receipts.
 iOS is planned as a separate backend line. The feasibility spike proved
 discovery and DVT screenshots through Apple Devices, Developer Mode,
 DeveloperDiskImage, and `pymobiledevice3` tunneld. iOS tap/input support is
-expected to require a signed WebDriverAgent/XCUITest runner. See
+expected to require Mac/Xcode signing and a signed WebDriverAgent/XCUITest
+runner. See
 `docs/PLATFORM_ARCHITECTURE.md`.
 
 ## Provenance
@@ -72,9 +117,12 @@ do not automatically affect HAKAR.
 ```powershell
 uv sync
 uv run snap-tap --help
+uv run snap-tap devices
 uv run pytest
 uv run ruff check src tests
 uv run mypy --explicit-package-bases src tests
+uv lock --check
+uv build --out-dir temp\build-check
 ```
 
 ## Contributing and Security

@@ -20,9 +20,11 @@ Install and validate:
 ```powershell
 uv sync
 uv run snap-tap --help
+uv run snap-tap devices
 uv run pytest
 uv run ruff check src tests
 uv run mypy --explicit-package-bases src tests
+uv lock --check
 uv build --out-dir temp\build-check
 ```
 
