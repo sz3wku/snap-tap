@@ -91,7 +91,7 @@ def test_mobile_devices_outputs_visible_devices_as_json() -> None:
         ]
     )
 
-    result = CliRunner().invoke(app, ["devices"])
+    result = CliRunner().invoke(app, ["devices", "--json"])
 
     assert result.exit_code == 0
     payload = _json(result.stdout)
@@ -99,6 +99,49 @@ def test_mobile_devices_outputs_visible_devices_as_json() -> None:
     assert payload["count"] == 1
     assert payload["devices"][0]["serial"] == "RFCN4010FCK"
     assert payload["devices"][0]["model"] == "SM_G981B"
+
+
+def test_mobile_devices_default_outputs_human_table() -> None:
+    app, _, _, _ = _build_app(
+        [
+            DeviceInfo(
+                serial="RFCN4010FCK",
+                state="device",
+                product="x1sxeea",
+                model="SM_G981B",
+                device="x1s",
+            )
+        ]
+    )
+
+    result = CliRunner().invoke(app, ["devices"])
+
+    assert result.exit_code == 0
+    assert "SERIAL" in result.stdout
+    assert "RFCN4010FCK" in result.stdout
+    assert "SM_G981B" in result.stdout
+    assert not result.stdout.lstrip().startswith("{")
+
+
+def test_mobile_devices_default_never_truncates_serial_column() -> None:
+    long_serial = "00008130-000935222230001C"
+    app, _, _, _ = _build_app(
+        [
+            DeviceInfo(
+                serial=long_serial,
+                state="device",
+                product="iphone-product-that-may-be-long",
+                model="iPhone 15 Pro Max With Long Marketing Name",
+                device="iphone",
+            )
+        ]
+    )
+
+    result = CliRunner().invoke(app, ["devices"])
+
+    assert result.exit_code == 0
+    assert long_serial in result.stdout
+    assert long_serial[:18] + "  device" not in result.stdout
 
 
 def test_mobile_status_blocks_ambiguous_multi_device_selection() -> None:
@@ -109,7 +152,7 @@ def test_mobile_status_blocks_ambiguous_multi_device_selection() -> None:
         ]
     )
 
-    result = CliRunner().invoke(app, ["status"])
+    result = CliRunner().invoke(app, ["status", "--json"])
 
     assert result.exit_code == 1
     payload = _json(result.stdout)
@@ -126,7 +169,10 @@ def test_mobile_status_all_checks_each_visible_device() -> None:
         ]
     )
 
-    result = CliRunner().invoke(app, ["status", "--all", "--timeout-s", "2"])
+    result = CliRunner().invoke(
+        app,
+        ["status", "--all", "--timeout-s", "2", "--json"],
+    )
 
     assert result.exit_code == 0
     payload = _json(result.stdout)
@@ -146,7 +192,10 @@ def test_mobile_status_accepts_positional_serial() -> None:
         ]
     )
 
-    result = CliRunner().invoke(app, ["status", "RFCN4010FCK", "--timeout-s", "2"])
+    result = CliRunner().invoke(
+        app,
+        ["status", "RFCN4010FCK", "--timeout-s", "2", "--json"],
+    )
 
     assert result.exit_code == 0
     payload = _json(result.stdout)
@@ -155,12 +204,58 @@ def test_mobile_status_accepts_positional_serial() -> None:
     assert backend.calls == [("RFCN4010FCK", 2.0)]
 
 
+def test_mobile_status_default_outputs_human_line() -> None:
+    app, backend, _, _ = _build_app(
+        [DeviceInfo(serial="RFCN4010FCK", state="device")]
+    )
+
+    result = CliRunner().invoke(app, ["status", "RFCN4010FCK", "--timeout-s", "2"])
+
+    assert result.exit_code == 0
+    assert "RFCN4010FCK" in result.stdout
+    assert "healthy" in result.stdout
+    assert "fake" in result.stdout
+    assert not result.stdout.lstrip().startswith("{")
+    assert backend.calls == [("RFCN4010FCK", 2.0)]
+
+
+def test_mobile_status_all_default_outputs_human_table() -> None:
+    app, backend, _, _ = _build_app(
+        [
+            DeviceInfo(serial="RFCN4010FCK", state="device"),
+            DeviceInfo(serial="R58R502HMSJ", state="device"),
+        ]
+    )
+
+    result = CliRunner().invoke(app, ["status", "--all", "--timeout-s", "2"])
+
+    assert result.exit_code == 0
+    assert "SERIAL" in result.stdout
+    assert "STATUS" in result.stdout
+    assert "RFCN4010FCK" in result.stdout
+    assert "R58R502HMSJ" in result.stdout
+    assert not result.stdout.lstrip().startswith("{")
+    assert backend.calls == [("RFCN4010FCK", 2.0), ("R58R502HMSJ", 2.0)]
+
+
+def test_mobile_status_all_default_never_truncates_serial_column() -> None:
+    long_serial = "00008130-000935222230001C"
+    app, backend, _, _ = _build_app([DeviceInfo(serial=long_serial, state="device")])
+
+    result = CliRunner().invoke(app, ["status", "--all"])
+
+    assert result.exit_code == 0
+    assert long_serial in result.stdout
+    assert long_serial[:18] + "  healthy" not in result.stdout
+    assert backend.calls == [(long_serial, 5.0)]
+
+
 def test_mobile_status_rejects_all_with_explicit_device() -> None:
     app, backend, _, _ = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
 
     result = CliRunner().invoke(
         app,
-        ["status", "--all", "--device", "RFCN4010FCK"],
+        ["status", "--all", "--device", "RFCN4010FCK", "--json"],
     )
 
     assert result.exit_code == 1
@@ -175,7 +270,7 @@ def test_mobile_status_rejects_positional_serial_with_device_option() -> None:
 
     result = CliRunner().invoke(
         app,
-        ["status", "RFCN4010FCK", "--device", "RFCN4010FCK"],
+        ["status", "RFCN4010FCK", "--device", "RFCN4010FCK", "--json"],
     )
 
     assert result.exit_code == 1
@@ -188,7 +283,7 @@ def test_mobile_status_rejects_positional_serial_with_device_option() -> None:
 def test_mobile_status_all_blocks_when_no_devices_are_visible() -> None:
     app, backend, _, _ = _build_app([])
 
-    result = CliRunner().invoke(app, ["status", "--all"])
+    result = CliRunner().invoke(app, ["status", "--all", "--json"])
 
     assert result.exit_code == 1
     payload = _json(result.stdout)

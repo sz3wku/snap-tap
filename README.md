@@ -37,7 +37,8 @@ resolution, stale guards, after-proof, and primitive receipts.
 
 The headline CLI uses positional serials. `--device` remains accepted as a
 compatibility/debug alias for scripts and support flows. `--json` is reserved
-for debug, inspection, tests, CI, and support.
+for debug, inspection, tests, CI, and support. `devices` and `status` are
+human-readable by default; add `--json` for structured machine output.
 
 ## Platform Direction
 

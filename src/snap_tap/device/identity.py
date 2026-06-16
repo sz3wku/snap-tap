@@ -95,3 +95,11 @@ def select_device(
             ),
         )
     return DeviceSelection(ok=True, device=online_devices[0])
+
+
+__all__ = [
+    "DeviceInfo",
+    "DeviceSelection",
+    "normalize_serial",
+    "select_device",
+]

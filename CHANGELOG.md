@@ -14,9 +14,10 @@ versioning after the first public alpha.
   lines.
 - Backend capability model for Android UIAutomator2, iOS DVT screenshot, and
   future iOS WDA primitives.
-- iOS feasibility notes under `temp/ios-feasibility`.
+- iOS feasibility summary captured in platform architecture docs.
 - OSS repo shell: license, security policy, contributing guide, issue
   templates, and CI workflow.
+- Public API/export guards for core package surfaces.
 
 ### Changed
 
@@ -24,6 +25,8 @@ versioning after the first public alpha.
   backend line.
 - `--json` is documented as debug/inspect/machine mode rather than the headline
   human loop.
+- `devices` and `status` are human-readable by default, with `--json` retaining
+  structured machine output.
 
 ### Not Released
 

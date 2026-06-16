@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 from pathlib import Path
 
 
@@ -12,6 +13,7 @@ PUBLIC_DOC_ROOTS = (
     REPO_ROOT / "SECURITY.md",
     REPO_ROOT / "CONTRIBUTING.md",
     REPO_ROOT / "CHANGELOG.md",
+    REPO_ROOT / ".github",
     REPO_ROOT / "docs",
     SOURCE_ROOT,
 )
@@ -54,14 +56,23 @@ def test_source_uses_standalone_package_imports() -> None:
     assert offenders == []
 
 
-def test_core_does_not_import_cli_layer() -> None:
-    core_root = SOURCE_ROOT / "core"
+def test_runtime_packages_do_not_import_cli_layer() -> None:
+    runtime_roots = (
+        SOURCE_ROOT / "backends",
+        SOURCE_ROOT / "device",
+        SOURCE_ROOT / "evidence",
+        SOURCE_ROOT / "primitives",
+        SOURCE_ROOT / "semantics",
+        SOURCE_ROOT / "snapshots",
+        SOURCE_ROOT / "targets",
+    )
     offenders: list[str] = []
 
-    for path in sorted(core_root.rglob("*.py")):
-        text = path.read_text(encoding="utf-8")
-        if "snap_tap.cli" in text:
-            offenders.append(str(path.relative_to(REPO_ROOT)))
+    for runtime_root in runtime_roots:
+        for path in sorted(runtime_root.rglob("*.py")):
+            text = path.read_text(encoding="utf-8")
+            if "snap_tap.cli" in text:
+                offenders.append(str(path.relative_to(REPO_ROOT)))
 
     assert offenders == []
 
@@ -119,5 +130,59 @@ def test_public_docs_do_not_use_private_device_serial_examples() -> None:
         for serial in private_serials:
             if serial in text:
                 offenders.append(f"{path.relative_to(REPO_ROOT)}: {serial}")
+
+    assert offenders == []
+
+
+def test_public_modules_have_clean_all_exports() -> None:
+    public_modules = (
+        "snap_tap",
+        "snap_tap.backends",
+        "snap_tap.backends.capabilities",
+        "snap_tap.backends.contracts",
+        "snap_tap.device",
+        "snap_tap.device.discovery",
+        "snap_tap.device.identity",
+        "snap_tap.evidence",
+        "snap_tap.primitives",
+        "snap_tap.semantics",
+        "snap_tap.snapshots",
+        "snap_tap.targets",
+    )
+    offenders: list[str] = []
+
+    for module_name in public_modules:
+        module = importlib.import_module(module_name)
+        exports = getattr(module, "__all__", None)
+        if not isinstance(exports, list):
+            offenders.append(f"{module_name}: missing __all__ list")
+            continue
+        for name in exports:
+            if not isinstance(name, str) or not name:
+                offenders.append(f"{module_name}: invalid export {name!r}")
+                continue
+            if name.startswith("_") and name != "__version__":
+                offenders.append(f"{module_name}: private export {name}")
+            if not hasattr(module, name):
+                offenders.append(f"{module_name}: missing exported attr {name}")
+
+    assert offenders == []
+
+
+def test_public_docs_do_not_expose_private_python_paths() -> None:
+    private_paths = (
+        "snap_tap.backends._shared",
+        "snap_tap.snapshots._",
+        "snap_tap.targets._",
+        "src/snap_tap/backends/_shared",
+        "src\\snap_tap\\backends\\_shared",
+    )
+    offenders: list[str] = []
+
+    for path in _public_docs():
+        text = path.read_text(encoding="utf-8")
+        for private_path in private_paths:
+            if private_path in text:
+                offenders.append(f"{path.relative_to(REPO_ROOT)}: {private_path}")
 
     assert offenders == []

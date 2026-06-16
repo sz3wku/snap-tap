@@ -1,7 +1,11 @@
 from snap_tap.backends.capabilities import (
     ANDROID_UIAUTOMATOR2_CAPABILITIES,
+    IOS_ADMIN_TUNNELD,
+    IOS_DEVELOPER_DISK_IMAGE,
+    IOS_DEVELOPER_MODE,
     IOS_DVT_SNAP_CAPABILITIES,
     IOS_WDA_CAPABILITIES,
+    IOS_WDA_RUNNER,
     BackendCapabilities,
     BackendRequirement,
     CapabilityName,
@@ -13,8 +17,12 @@ from snap_tap.backends.capabilities import (
 
 __all__ = [
     "ANDROID_UIAUTOMATOR2_CAPABILITIES",
+    "IOS_ADMIN_TUNNELD",
+    "IOS_DEVELOPER_DISK_IMAGE",
+    "IOS_DEVELOPER_MODE",
     "IOS_DVT_SNAP_CAPABILITIES",
     "IOS_WDA_CAPABILITIES",
+    "IOS_WDA_RUNNER",
     "BackendCapabilities",
     "BackendRequirement",
     "CapabilityName",

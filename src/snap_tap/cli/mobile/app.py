@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Annotated
@@ -89,19 +90,29 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
     app = typer.Typer(no_args_is_help=True)
 
     @app.command("devices")
-    def devices() -> None:
+    def devices(
+        json_output: Annotated[
+            bool,
+            typer.Option("--json", help="Emit machine-readable JSON."),
+        ] = False,
+    ) -> None:
         snapshot = read_visible_devices(dependencies.discovery)
         if snapshot.error is not None:
-            emit_json(devices_failure_payload(snapshot.error))
+            if json_output:
+                emit_json(devices_failure_payload(snapshot.error))
+            else:
+                _emit_devices_failure(snapshot.error.code, snapshot.error.detail)
             raise typer.Exit(code=1)
         visible = snapshot.devices
-        emit_json(
-            {
-                "ok": True,
-                "count": len(visible),
-                "devices": [device_to_dict(device) for device in visible],
-            }
-        )
+        payload = {
+            "ok": True,
+            "count": len(visible),
+            "devices": [device_to_dict(device) for device in visible],
+        }
+        if json_output:
+            emit_json(payload)
+            return
+        _emit_devices_table(visible)
 
     @app.command("status")
     def status(
@@ -116,6 +127,10 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
         all_devices: Annotated[
             bool,
             typer.Option("--all", help="Inspect every visible Android device."),
+        ] = False,
+        json_output: Annotated[
+            bool,
+            typer.Option("--json", help="Emit machine-readable JSON."),
         ] = False,
         timeout_s: Annotated[
             float,
@@ -133,7 +148,8 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
                 detail=serial_error.detail,
                 device_id=serial or device,
             )
-            _emit_status_result(health)
+            _emit_status_result(health, json_output=json_output)
+            return
         if all_devices and requested_serial is not None:
             health = blocked_health(
                 backend=dependencies.backend.backend_name,
@@ -141,7 +157,8 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
                 detail="Use either --all or an explicit device serial, not both.",
                 device_id=requested_serial,
             )
-            _emit_status_result(health)
+            _emit_status_result(health, json_output=json_output)
+            return
         snapshot = read_visible_devices(dependencies.discovery)
         if snapshot.error is not None:
             health = discovery_health_failure(
@@ -150,15 +167,17 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
                 device_id=requested_serial,
             )
             if all_devices:
-                emit_json(
-                    {
-                        "ok": False,
-                        "count": 1,
-                        "results": [health_to_dict(health)],
-                    }
-                )
+                payload = {
+                    "ok": False,
+                    "count": 1,
+                    "results": [health_to_dict(health)],
+                }
+                if json_output:
+                    emit_json(payload)
+                else:
+                    _emit_status_table([health])
                 raise typer.Exit(code=1)
-            _emit_status_result(health)
+            _emit_status_result(health, json_output=json_output)
             return
         visible = snapshot.devices
         if all_devices:
@@ -176,7 +195,10 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
                 "count": len(results),
                 "results": [health_to_dict(result) for result in results],
             }
-            emit_json(payload)
+            if json_output:
+                emit_json(payload)
+            else:
+                _emit_status_table(results)
             if payload["ok"] is not True:
                 raise typer.Exit(code=1)
             return
@@ -187,7 +209,7 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             requested_serial=requested_serial,
             timeout_s=timeout_s,
         )
-        _emit_status_result(health)
+        _emit_status_result(health, json_output=json_output)
 
     @app.command("init")
     def init(
@@ -428,10 +450,125 @@ def _run_lifecycle(
     _emit_lifecycle_result(result)
 
 
-def _emit_status_result(health: DriverHealth) -> None:
-    emit_json({"ok": health.ok, "result": health_to_dict(health)})
+def _emit_devices_failure(code: str, detail: str) -> None:
+    typer.echo(f"snap-tap devices blocked: {code} - {detail}")
+
+
+def _emit_devices_table(devices: list[DeviceInfo]) -> None:
+    if not devices:
+        typer.echo("No Android devices visible.")
+        return
+    typer.echo(_format_row(["SERIAL", "STATE", "MODEL", "PRODUCT", "DEVICE"]))
+    for device in devices:
+        typer.echo(
+            _format_row(
+                [
+                    device.serial,
+                    device.state,
+                    _display_value(device.model),
+                    _display_value(device.product),
+                    _display_value(device.device),
+                ]
+            )
+        )
+
+
+def _emit_status_result(health: DriverHealth, *, json_output: bool) -> None:
+    if json_output:
+        emit_json({"ok": health.ok, "result": health_to_dict(health)})
+    else:
+        _emit_status_line(health)
     if not health.ok:
         raise typer.Exit(code=1)
+
+
+def _emit_status_table(results: list[DriverHealth]) -> None:
+    if not results:
+        typer.echo("No Android devices visible.")
+        return
+    typer.echo(_format_row(["SERIAL", "STATUS", "BACKEND", "DISPLAY", "SDK", "ELAPSED"]))
+    for health in results:
+        typer.echo(
+            _format_row(
+                [
+                    _display_value(health.device_id),
+                    health.status,
+                    health.backend,
+                    _display_size(health.metadata),
+                    _display_sdk(health.metadata),
+                    _display_elapsed(health.elapsed_ms),
+                ]
+            )
+        )
+        if not health.ok and health.error is not None:
+            typer.echo(f"  {health.error.code}: {health.error.detail}")
+
+
+def _emit_status_line(health: DriverHealth) -> None:
+    if health.ok:
+        typer.echo(
+            "  ".join(
+                [
+                    _display_value(health.device_id),
+                    health.status,
+                    health.backend,
+                    _display_size(health.metadata),
+                    f"sdk {_display_sdk(health.metadata)}",
+                    _display_elapsed(health.elapsed_ms),
+                ]
+            )
+        )
+        return
+    if health.error is None:
+        typer.echo(f"snap-tap status {health.status}: unavailable")
+        return
+    typer.echo(
+        f"snap-tap status {health.status}: "
+        f"{health.error.code} - {health.error.detail}"
+    )
+
+
+def _format_row(values: list[str]) -> str:
+    widths = [18, 10, 18, 18, 12, 10]
+    if values:
+        widths[0] = max(widths[0], len(values[0]))
+    return "  ".join(
+        _format_cell(value, width, truncate=index != 0)
+        for index, (value, width) in enumerate(zip(values, widths, strict=False))
+    )
+
+
+def _format_cell(value: str, width: int, *, truncate: bool) -> str:
+    text = value.ljust(width)
+    if truncate:
+        return text[:width]
+    return text
+
+
+def _display_value(value: object | None) -> str:
+    if value is None:
+        return "-"
+    text = str(value).strip()
+    return text or "-"
+
+
+def _display_size(metadata: Mapping[str, object]) -> str:
+    width = metadata.get("displayWidth")
+    height = metadata.get("displayHeight")
+    if isinstance(width, str) and isinstance(height, str) and width and height:
+        return f"{width}x{height}"
+    return "-"
+
+
+def _display_sdk(metadata: Mapping[str, object]) -> str:
+    sdk = metadata.get("sdkInt")
+    if isinstance(sdk, str) and sdk:
+        return sdk
+    return "-"
+
+
+def _display_elapsed(elapsed_ms: float) -> str:
+    return f"{elapsed_ms:.0f}ms"
 
 
 def _emit_lifecycle_result(result: DriverLifecycleResult) -> None:

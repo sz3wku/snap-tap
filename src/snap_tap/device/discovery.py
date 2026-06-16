@@ -68,3 +68,10 @@ def _safe_getprop(device: object, prop: str) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+__all__ = [
+    "AdbDeviceDiscovery",
+    "DeviceDiscovery",
+    "DeviceDiscoveryError",
+]

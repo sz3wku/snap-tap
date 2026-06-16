@@ -21,6 +21,9 @@ snap-tap swipe <serial> --direction up
 snap-tap wait <serial> --seconds 1
 ```
 
+`devices` and `status` default to compact human-readable output. Add `--json`
+when an agent, test, CI job, or support flow needs the structured payload.
+
 `snap` is the normal read-only screen observation surface. Its default output is
 a compact human table with actionable target ids. `snap --json` emits the
 stable machine contract, and `snap --debug` includes diagnostic source facts.

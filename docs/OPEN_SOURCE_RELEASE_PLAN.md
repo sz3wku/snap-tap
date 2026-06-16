@@ -50,15 +50,24 @@ Latest local verification from this repo:
 - `uv lock --check` passed.
 - `uv run ruff check src tests` passed.
 - `uv run mypy --explicit-package-bases src tests` passed.
-- `uv run pytest` passed with 433 tests.
+- `uv run pytest` passed with 440 tests.
 - `uv build --out-dir temp\build-check` produced sdist and wheel.
 - `snap-tap devices` detected two local Android devices.
 - `snap-tap status <serial>` reported both visible Android devices healthy.
 - Positional read-only live smoke passed on a local Android phone:
+  - `snap-tap devices` and `snap-tap devices --json`,
+  - `snap-tap status <serial>`, `snap-tap status <serial> --json`, and
+    `snap-tap status --all`,
   - `snap-tap snap <serial>`,
   - `snap-tap app-current <serial>`,
   - `snap-tap snapshot <serial> --out-dir temp\live-readonly\snapshot`,
   - `snap-tap screenshot <serial> --out temp\live-readonly\screen.png`.
+- L1 safe system primitive live smoke passed on a dummy Android phone:
+  - `snap-tap home <serial> --json`,
+  - `snap-tap wait <serial> --seconds 1 --json`,
+  - `snap-tap back <serial> --json`,
+  - `snap-tap swipe <serial> --direction up --json`,
+  - final `snap-tap home <serial> --json` reset.
 
 Known gaps:
 
@@ -73,7 +82,7 @@ Known gaps:
   private serial examples,
 - platform architecture now includes an iOS backend line, with `snap` proved in
   a temp spike and `tap/input` blocked on WDA signing/setup,
-- mutating L1/L2 live gates have not run in this slice.
+- L2 target mutation and text-input live gates have not run in this slice.
 
 ## Phase 0 - Freeze Baseline
 
@@ -179,8 +188,8 @@ Tasks:
   UX,
 - define `--json` as debug/inspect/machine mode,
 - keep `--debug` for extra diagnostics where useful,
-- decide whether `devices` should be human-readable by default with optional
-  `--json`, or remain JSON-only with clear docs,
+- keep `devices` and `status` human-readable by default, with `--json` for
+  structured machine output,
 - keep primitive debug commands available but clearly secondary.
 
 Done when:

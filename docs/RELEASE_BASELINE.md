@@ -1,12 +1,17 @@
 # Release Baseline
 
-Status: Phase 0 baseline recorded without a commit by user request.
+Status: committed local pre-alpha baseline.
 
 Date: 2026-06-16
 
+Baseline commits:
+
+- `0b19b34 chore: initial snap-tap open-source baseline`
+- `3ba8cd0 feat: polish positional mobile cli`
+
 ## Current Local Verification
 
-The current starter repo has passed:
+The current starter repo has passed the release-facing local gates:
 
 ```powershell
 uv lock --check
@@ -16,25 +21,31 @@ uv run mypy --explicit-package-bases src tests
 uv build --out-dir temp\build-check
 ```
 
-Observed results after Phase 1 cleanup:
+Observed results after CLI/API polish:
 
 - `uv lock --check`: passed.
-- `uv run pytest`: 420 passed.
+- `uv run pytest`: 440 passed.
 - `uv run ruff check src tests`: passed.
 - `uv run mypy --explicit-package-bases src tests`: passed.
 - `uv build --out-dir temp\build-check`: sdist and wheel built.
-- `snap-tap devices`: local Android devices detected.
-- `snap-tap status --all`: visible Android devices reported healthy.
+- `snap-tap devices` and `snap-tap devices --json`: local Android devices
+  detected.
+- `snap-tap status <serial>`, `snap-tap status <serial> --json`, and
+  `snap-tap status --all`: visible Android devices reported healthy.
+- L1 safe system primitives on a dummy Android phone:
+  `home`, `wait`, `back`, `swipe up`, and final `home` reset all emitted
+  successful primitive receipts with completed proof.
 - Public docs/source guard: no legacy command language or private serial
   examples in public docs/source strings.
+- Public API guard: selected public modules expose importable `__all__` entries
+  without private helper paths.
 
-## No-Commit Exception
+## Commit State
 
-Phase 0 normally ends with an initial commit, but this run intentionally stops
-before staging or committing. The repository remains local and private until
-the release shell and license decisions are discussed.
+Phase 0 and the positional CLI polish are committed locally. Later API/UX polish
+may still be uncommitted until reviewed and explicitly committed.
 
 ## Next Boundary
 
-Stop before Phase 2 (`LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`, CI, package
-metadata) and discuss licensing/repo shell decisions.
+Before a public alpha, decide whether to run L2 target tap/text mutation gates
+on a neutral dummy-phone surface.

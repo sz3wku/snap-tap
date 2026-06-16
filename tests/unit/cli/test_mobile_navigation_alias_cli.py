@@ -212,7 +212,10 @@ def test_mobile_navigation_alias_rejects_positional_serial_with_device_option() 
     )
 
     assert result.exit_code == 1
-    assert _json(result.stdout)["error"]["code"] == "invalid_arguments"
+    payload = _json(result.stdout)
+    assert payload["operation"] == NAVIGATION_BACK
+    assert payload["request"]["operation"] == NAVIGATION_BACK
+    assert payload["error"]["code"] == "invalid_arguments"
     assert executor.calls == []
 
 

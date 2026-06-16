@@ -165,3 +165,21 @@ def ios_dvt_snap_capabilities() -> BackendCapabilities:
 
 def ios_wda_capabilities() -> BackendCapabilities:
     return IOS_WDA_CAPABILITIES
+
+
+__all__ = [
+    "ANDROID_UIAUTOMATOR2_CAPABILITIES",
+    "IOS_ADMIN_TUNNELD",
+    "IOS_DEVELOPER_DISK_IMAGE",
+    "IOS_DEVELOPER_MODE",
+    "IOS_DVT_SNAP_CAPABILITIES",
+    "IOS_WDA_CAPABILITIES",
+    "IOS_WDA_RUNNER",
+    "BackendCapabilities",
+    "BackendRequirement",
+    "CapabilityName",
+    "PlatformName",
+    "android_uiautomator2_capabilities",
+    "ios_dvt_snap_capabilities",
+    "ios_wda_capabilities",
+]

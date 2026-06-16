@@ -147,6 +147,7 @@ def _run(
             },
             code=serial_error.code,
             detail=serial_error.detail,
+            operation=operation,
         )
         emit_json(primitive_receipt_to_dict(receipt))
         raise typer.Exit(code=1)

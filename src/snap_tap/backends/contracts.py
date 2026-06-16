@@ -1,3 +1,10 @@
+"""Stable backend contracts shared by Android, iOS, and test fakes.
+
+Concrete backend implementations live under platform-specific packages. This
+module is the public import surface for driver result types, protocols, error
+metadata, and safe selection helpers.
+"""
+
 from __future__ import annotations
 
 from snap_tap.backends._shared.app_awareness import (
