@@ -390,7 +390,7 @@ def _receipt(
 
 
 def _is_input_target(target: SnapshotTarget) -> bool:
-    return target.role is SemanticRole.INPUT and target.enabled and target.clickable
+    return target.role is SemanticRole.INPUT and target.enabled
 
 
 def _safe_operation(mode: str) -> str:

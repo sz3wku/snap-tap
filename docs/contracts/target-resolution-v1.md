@@ -7,8 +7,8 @@ Owner: `src/snap_tap/targets`
 Record the read-only result of resolving a `target_signature.v1` against a
 fresh `semantic_snapshot.v1`.
 
-S3 answers whether a durable signature matches exactly one actionable target on
-the current screen. It does not touch the phone, emit primitive receipts, use a
+S3 answers whether a durable signature matches exactly one safe target on the
+current screen. It does not touch the phone, emit primitive receipts, use a
 latest snapshot cache, or make platform-specific decisions.
 
 Future P1.R5 primitives may consider phone touch only after a `target_resolution`
@@ -35,7 +35,7 @@ The public payload contains:
 - `source_snapshot_id`,
 - `resolved_snapshot_id`,
 - `device_id`,
-- `resolved_target`: present only for a successful unique actionable match,
+- `resolved_target`: present only for a successful unique safe match,
 - `match`: candidate and field-match diagnostics,
 - `blocking_reason`: present only when blocked,
 - `refs`: sanitized fresh snapshot refs.
@@ -91,11 +91,13 @@ Resolution is deterministic and conservative.
 8. `0` matching candidates blocks.
 9. More than `1` matching candidate blocks.
 10. A disabled match blocks.
-11. A non-clickable match blocks.
-12. Exactly one enabled and clickable match resolves.
+11. A non-clickable non-input match blocks.
+12. Exactly one enabled match resolves. Input targets may resolve even when
+    the source accessibility tree reports `clickable=false`; text primitives
+    still perform their own input-role preflight before driver work.
 
-Weak identity may resolve only when it still produces exactly one actionable
-fresh target. Ambiguity always blocks.
+Weak identity may resolve only when it still produces exactly one safe fresh
+target. Ambiguity always blocks.
 
 ## Invariants
 
@@ -136,7 +138,8 @@ add screenshot-pixel or driver inspection to determine this.
 - Tests cover source snapshot reuse blocking as stale.
 - Tests cover device mismatch blocking.
 - Tests cover no match and ambiguous match blocking.
-- Tests cover disabled and non-clickable match blocking.
+- Tests cover disabled and non-clickable non-input match blocking.
+- Tests cover non-clickable input match resolving.
 - Tests cover malformed ref containers and malformed allowed ref values.
 - Tests cover malformed fresh target fields blocking before `ok=true`.
 - Tests cover unsafe target signature requirements blocking before resolution.
@@ -160,8 +163,8 @@ S4 must prove:
   `source_index` do not affect identity matching,
 - exact identity changes block instead of falling back to coordinates,
 - duplicate identity blocks as ambiguous,
-- existing stale, device mismatch, disabled, non-clickable, and malformed-input
-  behavior remains fail-closed,
+- existing stale, device mismatch, disabled, non-clickable non-input, and
+  malformed-input behavior remains fail-closed,
 - live proof can capture source/fresh snapshots and resolve or block targets on
   both connected phones without touching the phone.
 

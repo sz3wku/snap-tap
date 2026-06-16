@@ -77,6 +77,29 @@ def test_successful_replace_text_receipt_uses_replace_mode() -> None:
     assert cast(dict[str, object], payload["request"])["mode"] == "replace_text"
 
 
+def test_input_accepts_non_clickable_edit_text_target() -> None:
+    texter = FakeTexter(fake_driver_result(operation=TEXT_INPUT_MODE))
+
+    receipt = resolved_text(
+        fake_request(clickable=False),
+        snapshot_provider=FakeSnapshotProvider(
+            [
+                fake_snapshot_result("fresh", clickable=False),
+                fake_snapshot_result("after", clickable=False),
+            ]
+        ),
+        texter=texter,
+        lease_manager=PrimitiveLeaseManager(in_memory_only=True),
+    )
+
+    payload = primitive_receipt_to_dict(receipt)
+    assert payload["status"] == "completed"
+    assert payload["touched_phone"] is True
+    assert texter.calls == [
+        ("RFCN4010FCK", 60.0, 120.0, "hakar smoke", TEXT_INPUT_MODE)
+    ]
+
+
 def test_invalid_text_blocks_before_lease_snapshot_or_driver() -> None:
     provider = FakeSnapshotProvider([])
     texter = FakeTexter(None)

@@ -33,8 +33,9 @@ P1.R5 primitives produce receipts.
 snapshot.
 
 Resolution is read-only. It may return `ok=true` only for one fresh, enabled,
-clickable match. It does not touch the phone, emit receipts, use latest cache,
-or add platform semantics.
+safe match. Non-input matches must be clickable; input matches may be
+non-clickable because Android edit fields often report that shape. It does not
+touch the phone, emit receipts, use latest cache, or add platform semantics.
 
 ## P1.R4.S4 Boundary
 
@@ -72,8 +73,8 @@ display id. They must then use the existing primitive path: fresh snapshot,
 `primitive_receipt.v1`.
 
 Tap source targets must be enabled, clickable, `kind=tap`, and have a generic
-tappable role. Text source targets must be enabled, clickable, `kind=input`,
-and `role=input`.
+tappable role. Text source targets must be enabled, `kind=input`, and
+`role=input`.
 
 `eNN` remains snapshot-local source UX. It is not executable, not durable
 identity, not a selector, and not coordinates.

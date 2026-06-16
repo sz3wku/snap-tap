@@ -238,6 +238,6 @@ snap-tap input <serial> e004 --text "hello" --json
 snap-tap replace-text <serial> e004 --text "hello" --json
 ```
 
-The source `eNN` must refer to an enabled, clickable input target in the latest
-successful `snap-tap snap` for the device/session. Raw text is sent only to the
-driver operation; receipts expose safe text metadata such as length/hash.
+The source `eNN` must refer to an enabled input target in the latest successful
+`snap-tap snap` for the device/session. Raw text is sent only to the driver
+operation; receipts expose safe text metadata such as length/hash.

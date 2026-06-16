@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from snap_tap.semantics import SemanticSnapshot
+from snap_tap.semantics import SemanticRole, SemanticSnapshot
 from snap_tap.snapshots import SnapshotArtifactRef
 from snap_tap.targets._resolution_match import (
     ResolutionBlocked,
@@ -134,7 +134,7 @@ def resolve_target_signature(
             candidate_count=1,
             refs=refs,
         )
-    if not target.clickable:
+    if signature.role is not SemanticRole.INPUT and not target.clickable:
         return _blocked_resolution(
             signature=signature,
             fresh_snapshot=fresh_snapshot,

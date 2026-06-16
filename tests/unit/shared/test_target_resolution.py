@@ -150,6 +150,29 @@ def test_target_resolution_blocks_non_clickable_match() -> None:
     _assert_blocked(payload, "target_resolution_not_clickable")
 
 
+def test_target_resolution_resolves_non_clickable_input_match() -> None:
+    source = build_snapshot_targets(
+        _snapshot(
+            "snap_source",
+            (_element(1, SemanticRole.INPUT, True, False, None, "none"),),
+        ),
+    )
+    signature = build_target_signature(source, "e001")
+
+    payload = _resolve_payload(
+        signature,
+        _snapshot(
+            "snap_fresh",
+            (_element(2, SemanticRole.INPUT, True, False, None, "none"),),
+        ),
+    )
+
+    assert payload["ok"] is True
+    target = cast(dict[str, object], payload["resolved_target"])
+    assert target["clickable"] is False
+    assert target["role"] == "input"
+
+
 def test_target_resolution_role_only_identity_resolves_when_unique() -> None:
     source = build_snapshot_targets(
         _snapshot(

@@ -66,8 +66,11 @@ def fake_request(
     *,
     mode: str = TEXT_INPUT_MODE,
     role: SemanticRole = SemanticRole.INPUT,
+    clickable: bool = True,
 ) -> PrimitiveTextRequest:
-    source = build_snapshot_targets(fake_snapshot("source", role=role))
+    source = build_snapshot_targets(
+        fake_snapshot("source", role=role, clickable=clickable)
+    )
     signature = build_target_signature(source, "e001")
     return PrimitiveTextRequest(
         device_id="RFCN4010FCK",
@@ -81,9 +84,15 @@ def fake_snapshot_result(
     snapshot_id: str,
     *,
     role: SemanticRole = SemanticRole.INPUT,
+    clickable: bool = True,
     bounds: SnapshotBounds | None = None,
 ) -> PrimitiveSnapshotResult:
-    snapshot = fake_snapshot(snapshot_id, role=role, bounds=bounds)
+    snapshot = fake_snapshot(
+        snapshot_id,
+        role=role,
+        clickable=clickable,
+        bounds=bounds,
+    )
     return PrimitiveSnapshotResult(
         ok=True,
         status="completed",
@@ -98,6 +107,7 @@ def fake_snapshot(
     snapshot_id: str,
     *,
     role: SemanticRole = SemanticRole.INPUT,
+    clickable: bool = True,
     bounds: SnapshotBounds | None = None,
 ) -> SemanticSnapshot:
     is_input = role is SemanticRole.INPUT
@@ -106,7 +116,7 @@ def fake_snapshot(
         role=role,
         bounds=bounds or SnapshotBounds(10, 20, 110, 220, 100, 200, 60.0, 120.0),
         enabled=True,
-        clickable=True,
+        clickable=clickable,
         scrollable=False,
         label="Message",
         label_source="hint" if is_input else "content_desc",
@@ -140,8 +150,8 @@ def fake_snapshot(
                 visible_element_count=1,
                 semantic_element_count=1,
                 enabled_count=1,
-                clickable_count=1,
-                actionable_count=1,
+                clickable_count=1 if clickable else 0,
+                actionable_count=1 if clickable else 0,
                 labeled_count=1,
                 unknown_count=0,
             ),

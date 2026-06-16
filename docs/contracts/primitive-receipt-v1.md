@@ -258,7 +258,7 @@ S2 text primitives must:
 2. acquire the same per-device primitive lease before any possible phone touch,
 3. capture a fresh snapshot and resolve `target_signature.v1`,
 4. block before the driver when resolution is stale, missing, ambiguous,
-   disabled, non-clickable, or malformed,
+   disabled, or malformed,
 5. additionally block before the driver when the resolved target is not an
    input-like semantic target,
 6. call only the process-isolated UIAutomator2 text driver operation,
@@ -315,7 +315,7 @@ must emit `primitive_receipt.v1` through the existing primitive code paths.
 `latest_snap_source.v1`, then use the S2 text primitive path. They must block
 before fresh snapshot capture or driver work when the source cache is missing,
 malformed, wrong-device/session, or the source target is missing, non-input,
-disabled, non-clickable, or has insufficient identity. After fresh snapshot
+disabled, or has insufficient identity. After fresh snapshot
 capture, stale or ambiguous resolution still blocks before driver work. Public
 receipt request metadata records text length/hash, not raw text.
 
