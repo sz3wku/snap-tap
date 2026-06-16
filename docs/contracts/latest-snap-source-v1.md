@@ -76,7 +76,8 @@ before resolution and touch.
   guards, and emit `primitive_receipt.v1`.
 - `snap-tap input` and `snap-tap replace-text` must follow the same cache ->
   signature -> fresh resolution -> stale guard -> primitive receipt path for
-  source targets that are enabled, clickable, `kind=input`, and `role=input`.
+  source targets that are enabled, `kind=input`, and `role=input`. Text fields
+  are not required to be clickable in the source accessibility tree.
 - Missing, corrupt, wrong-device, or wrong-session cache data fails closed
   before snapshot capture or driver work.
 - Unsafe source targets fail closed before snapshot capture or driver work.

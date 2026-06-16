@@ -115,7 +115,6 @@ def latest_snap_source_target_for_input(
     target = matches[0]
     if (
         not target.enabled
-        or not target.clickable
         or target.kind is not MobileSnapKind.INPUT
         or target.role is not SemanticRole.INPUT
     ):
@@ -204,7 +203,7 @@ def _snapshot_target(
         enabled=target.enabled,
         clickable=target.clickable,
         scrollable=target.scrollable,
-        actionable=target.enabled and target.clickable,
+        actionable=target.actionable,
         label=target.label,
         label_source=target.label_source,
         class_name=target.class_name,

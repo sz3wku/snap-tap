@@ -161,18 +161,31 @@ def test_latest_snap_source_rejects_unsafe_tap_targets() -> None:
 def test_latest_snap_source_validates_input_targets() -> None:
     source = build_latest_snap_source(_input_snap(), session_id="default")
     button_source = build_latest_snap_source(_snap(), session_id="default")
-    non_clickable = build_latest_snap_source(
+    non_clickable_source = build_latest_snap_source(
         _input_snap(clickable=False),
+        session_id="default",
+    )
+    disabled_source = build_latest_snap_source(
+        _input_snap(disabled=True),
         session_id="default",
     )
 
     target = latest_snap_source_target_for_input(source, "e001")
+    non_clickable_target = latest_snap_source_target_for_input(
+        non_clickable_source,
+        "e001",
+    )
+    rebuilt = snapshot_targets_from_latest_snap_source(non_clickable_source).targets[0]
     with pytest.raises(LatestSnapSourceError) as button:
         latest_snap_source_target_for_input(button_source, "e001")
     with pytest.raises(LatestSnapSourceError) as disabled_input:
-        latest_snap_source_target_for_input(non_clickable, "e001")
+        latest_snap_source_target_for_input(disabled_source, "e001")
 
     assert target.display_id == "e001"
+    assert non_clickable_target.display_id == "e001"
+    assert non_clickable_target.clickable is False
+    assert non_clickable_target.actionable is True
+    assert rebuilt.actionable is True
     assert button.value.code == "latest_snap_source_target_not_input"
     assert disabled_input.value.code == "latest_snap_source_target_not_input"
 
@@ -206,9 +219,10 @@ def _snap(*, disabled: bool = False) -> MobileSnap:
     )
 
 
-def _input_snap(*, clickable: bool = True) -> MobileSnap:
+def _input_snap(*, clickable: bool = True, disabled: bool = False) -> MobileSnap:
     return build_mobile_snap(
         _raw_capture(
+            disabled=disabled,
             class_name="android.widget.EditText",
             resource_id="com.example:id/message",
             content_desc=None,
