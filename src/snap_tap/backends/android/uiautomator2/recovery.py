@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, replace
-from time import perf_counter
+from time import perf_counter, sleep
 from typing import Any, Protocol, TypeVar, cast
 
 from snap_tap.backends.android.uiautomator2.process_runner import (
@@ -12,6 +12,7 @@ from snap_tap.backends.android.uiautomator2.process_runner import (
 from snap_tap.backends.contracts import DriverError, is_driver_recoverable
 
 DEFAULT_RECOVERY_TIMEOUT_S = 30.0
+DEFAULT_RECOVERY_SETTLE_S = 0.75
 RECOVERABLE_READ_OPERATIONS = frozenset(
     {
         "health",
@@ -54,6 +55,8 @@ def retry_once_after_recovery(
     python_executable: str,
     retry: Callable[[], ResultT],
     recovery_timeout_s: float = DEFAULT_RECOVERY_TIMEOUT_S,
+    recovery_settle_s: float = DEFAULT_RECOVERY_SETTLE_S,
+    sleeper: Callable[[float], None] = sleep,
 ) -> ResultT:
     if (
         first_result.ok
@@ -76,6 +79,9 @@ def retry_once_after_recovery(
             recovered_after_failure=first_result.error.code,
             attempt=1,
         )
+
+    if recovery_settle_s > 0:
+        sleeper(recovery_settle_s)
 
     retried = retry()
     return _with_recovery_metadata(

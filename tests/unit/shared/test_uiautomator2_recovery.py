@@ -148,6 +148,47 @@ def test_recovery_helper_blocks_unsupported_operations() -> None:
     assert runner.calls == []
 
 
+def test_recovery_helper_settles_after_successful_init_before_retry() -> None:
+    runner = SequenceProcessRunner(
+        [ProcessResult(returncode=0, stdout="init ok", stderr="")]
+    )
+    events: list[tuple[str, float]] = []
+    first = DriverHealth.failure(
+        backend="uiautomator2",
+        code="driver_unavailable",
+        detail="bridge down",
+        device_id="RFCN4010FCK",
+        elapsed_ms=1.0,
+    )
+
+    def sleeper(seconds: float) -> None:
+        events.append(("sleep", seconds))
+
+    def retry() -> DriverHealth:
+        events.append(("retry", 0.0))
+        return DriverHealth.success(
+            device_id="RFCN4010FCK",
+            backend="uiautomator2",
+            elapsed_ms=2.0,
+        )
+
+    result = retry_once_after_recovery(
+        first,
+        device_id="RFCN4010FCK",
+        operation="screenshot",
+        process_runner=runner,
+        python_executable=".venv",
+        retry=retry,
+        recovery_settle_s=0.75,
+        sleeper=sleeper,
+    )
+
+    assert result.ok is True
+    assert result.metadata["attempt"] == 2
+    assert events == [("sleep", 0.75), ("retry", 0.0)]
+    assert len(runner.calls) == 1
+
+
 def test_dump_xml_recovers_driver_unavailable_then_retries() -> None:
     runner = SequenceProcessRunner(
         [
