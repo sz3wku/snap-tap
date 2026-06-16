@@ -74,6 +74,17 @@ class SnapshotTargetsError(Exception):
 
 
 @dataclass(frozen=True)
+class MobileSnapOperatorLabelCandidate:
+    id: str
+    label: str
+    label_source: str
+    role: SemanticRole
+    source_index: int
+    semantic_index: int
+    bounds: SnapshotBounds
+
+
+@dataclass(frozen=True)
 class MobileSnapTarget:
     id: str
     kind: MobileSnapKind
@@ -93,6 +104,12 @@ class MobileSnapTarget:
     resource_id: str | None = None
     label_source: str | None = None
     snapshot_id: str | None = None
+    operator_label: str | None = None
+    operator_label_source: str | None = None
+    operator_label_confidence: str | None = None
+    operator_label_candidates: Sequence[MobileSnapOperatorLabelCandidate] = field(
+        default_factory=tuple
+    )
 
 
 @dataclass(frozen=True)

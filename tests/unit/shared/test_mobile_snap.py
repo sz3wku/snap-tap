@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import cast
 
 from snap_tap.backends.contracts import DriverAppAwareness
+from snap_tap.semantics import build_semantic_snapshot
 from snap_tap.snapshots import (
     RawSnapshotCapture,
     SnapshotBounds,
@@ -10,7 +11,13 @@ from snap_tap.snapshots import (
     SnapshotIdentity,
     SnapshotNormalization,
 )
-from snap_tap.targets import build_mobile_snap, mobile_snap_to_dict
+from snap_tap.targets import (
+    build_mobile_snap,
+    build_snapshot_targets,
+    build_target_signature,
+    mobile_snap_to_dict,
+    target_signature_to_dict,
+)
 
 
 def test_mobile_snap_classifies_visible_targets_and_summary_counts() -> None:
@@ -111,6 +118,148 @@ def test_mobile_snap_orders_actionable_targets_before_layout_noise() -> None:
     ]
 
 
+def test_mobile_snap_adds_operator_label_for_unlabeled_clickable_card() -> None:
+    payload = mobile_snap_to_dict(
+        build_mobile_snap(
+            _raw_capture(elements=_operator_label_elements()),
+            app_current=None,
+            session_id="default",
+        ),
+        debug=True,
+    )
+
+    target = cast(list[dict[str, object]], payload["targets"])[0]
+    assert target["id"] == "e001"
+    assert target["kind"] == "tap"
+    assert target["label"] is None
+    assert target["operator_label"] == "Continue with Instagram"
+    assert target["operator_label_source"] == "primary_descendant_text"
+    assert target["operator_label_confidence"] == "hint"
+    candidates = cast(list[dict[str, object]], target["operator_label_candidates"])
+    assert [candidate["label"] for candidate in candidates] == [
+        "Continue with Instagram",
+        "Use phone number",
+    ]
+
+
+def test_mobile_snap_keeps_single_descendant_text_as_hard_label() -> None:
+    payload = mobile_snap_to_dict(
+        build_mobile_snap(
+            _raw_capture(
+                elements=(
+                    _element(
+                        1,
+                        "android.view.View",
+                        None,
+                        text=None,
+                        bounds=_bounds_at(100, 100, 500, 180),
+                    ),
+                    _element(
+                        2,
+                        "android.widget.TextView",
+                        None,
+                        text="Continue",
+                        clickable=False,
+                        depth=1,
+                        bounds=_bounds_at(140, 120, 360, 160),
+                    ),
+                )
+            ),
+            app_current=None,
+            session_id="default",
+        ),
+        debug=True,
+    )
+
+    target = cast(list[dict[str, object]], payload["targets"])[0]
+    assert target["label"] == "Continue"
+    assert target["label_source"] == "descendant_text"
+    assert target["operator_label"] is None
+    assert target["operator_label_candidates"] == []
+
+
+def test_mobile_snap_does_not_operator_label_huge_clickable_container() -> None:
+    payload = mobile_snap_to_dict(
+        build_mobile_snap(
+            _raw_capture(
+                elements=(
+                    _element(
+                        1,
+                        "android.view.View",
+                        None,
+                        text=None,
+                        bounds=_bounds_at(0, 0, 1080, 2400),
+                    ),
+                    _element(
+                        2,
+                        "android.widget.TextView",
+                        None,
+                        text="First",
+                        clickable=False,
+                        depth=1,
+                        bounds=_bounds_at(20, 40, 180, 80),
+                    ),
+                    _element(
+                        3,
+                        "android.widget.TextView",
+                        None,
+                        text="Second",
+                        clickable=False,
+                        depth=1,
+                        bounds=_bounds_at(20, 100, 180, 140),
+                    ),
+                )
+            ),
+            app_current=None,
+            session_id="default",
+        )
+    )
+
+    target = cast(list[dict[str, object]], payload["targets"])[0]
+    assert target["label"] is None
+    assert target["operator_label"] is None
+
+
+def test_mobile_snap_operator_label_payload_debug_boundary() -> None:
+    snap = build_mobile_snap(
+        _raw_capture(elements=_operator_label_elements()),
+        app_current=None,
+        session_id="default",
+    )
+
+    default_target = cast(
+        list[dict[str, object]],
+        mobile_snap_to_dict(snap, debug=False)["targets"],
+    )[0]
+    debug_target = cast(
+        list[dict[str, object]],
+        mobile_snap_to_dict(snap, debug=True)["targets"],
+    )[0]
+
+    assert default_target["operator_label"] == "Continue with Instagram"
+    assert "operator_label_candidates" not in default_target
+    assert "operator_label_source" not in default_target
+    assert debug_target["operator_label_source"] == "primary_descendant_text"
+    assert debug_target["operator_label_confidence"] == "hint"
+    assert debug_target["operator_label_candidates"]
+
+
+def test_mobile_snap_operator_label_is_not_target_signature_identity() -> None:
+    raw = _raw_capture(elements=_operator_label_elements())
+    snap = build_mobile_snap(raw, app_current=None, session_id="default")
+
+    snap_target = snap.targets[0]
+    assert snap_target.label is None
+    assert snap_target.operator_label == "Continue with Instagram"
+
+    source = build_snapshot_targets(build_semantic_snapshot(raw))
+    signature = target_signature_to_dict(build_target_signature(source, "e001"))
+
+    identity = cast(dict[str, str], signature["identity"])
+    assert "label" not in identity
+    assert "operator_label" not in identity
+
+
 def _app_current() -> DriverAppAwareness:
     return DriverAppAwareness.success(
         device_id="RFCN4010FCK",
@@ -182,6 +331,36 @@ def _raw_capture(
     )
 
 
+def _operator_label_elements() -> tuple[SnapshotElement, ...]:
+    return (
+        _element(
+            1,
+            "android.view.View",
+            None,
+            text=None,
+            bounds=_bounds_at(45, 450, 675, 770),
+        ),
+        _element(
+            2,
+            "android.widget.TextView",
+            None,
+            text="Continue with Instagram",
+            clickable=False,
+            depth=1,
+            bounds=_bounds_at(90, 500, 520, 550),
+        ),
+        _element(
+            3,
+            "android.widget.TextView",
+            None,
+            text="Use phone number",
+            clickable=False,
+            depth=1,
+            bounds=_bounds_at(90, 570, 420, 620),
+        ),
+    )
+
+
 def _element(
     source_index: int,
     class_name: str | None,
@@ -191,11 +370,13 @@ def _element(
     enabled: bool = True,
     clickable: bool = True,
     scrollable: bool = False,
+    depth: int = 0,
+    bounds: SnapshotBounds | None = None,
 ) -> SnapshotElement:
     return SnapshotElement(
         source_index=source_index,
-        depth=0,
-        bounds=SnapshotBounds(10, 20, 110, 220, 100, 200, 60.0, 120.0),
+        depth=depth,
+        bounds=bounds or SnapshotBounds(10, 20, 110, 220, 100, 200, 60.0, 120.0),
         visible=True,
         enabled=enabled,
         clickable=clickable,
@@ -204,4 +385,19 @@ def _element(
         resource_id=resource_id,
         package="com.example",
         text=text,
+    )
+
+
+def _bounds_at(left: int, top: int, right: int, bottom: int) -> SnapshotBounds:
+    width = right - left
+    height = bottom - top
+    return SnapshotBounds(
+        left,
+        top,
+        right,
+        bottom,
+        width,
+        height,
+        left + (width / 2),
+        top + (height / 2),
     )

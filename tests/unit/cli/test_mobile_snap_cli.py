@@ -36,6 +36,22 @@ XML_TEXT = """
 </hierarchy>
 """
 
+XML_OPERATOR_LABEL_TEXT = """
+<hierarchy>
+  <node class="android.view.View" package="com.example"
+        bounds="[45,450][675,770]" visible-to-user="true" enabled="true"
+        clickable="true" scrollable="false">
+    <node class="android.widget.TextView" package="com.example"
+          bounds="[90,500][520,550]" visible-to-user="true" enabled="true"
+          clickable="false" scrollable="false"
+          text="Kontynuuj przy użyciu Instagramu" />
+    <node class="android.widget.TextView" package="com.example"
+          bounds="[90,570][420,620]" visible-to-user="true" enabled="true"
+          clickable="false" scrollable="false" text="Użyj numeru telefonu" />
+  </node>
+</hierarchy>
+"""
+
 
 class FakeDiscovery:
     def __init__(self, devices: Sequence[DeviceInfo]) -> None:
@@ -79,8 +95,9 @@ class FakeLifecycleRunner:
 class FakeXmlDumper:
     backend_name = "fake"
 
-    def __init__(self) -> None:
+    def __init__(self, xml_text: str = XML_TEXT) -> None:
         self.calls: list[tuple[str, float]] = []
+        self._xml_text = xml_text
 
     def dump_xml(self, device_id: str, timeout_s: float = 10.0) -> DriverXmlDump:
         self.calls.append((device_id, timeout_s))
@@ -88,7 +105,7 @@ class FakeXmlDumper:
             device_id=device_id,
             backend=self.backend_name,
             elapsed_ms=1.0,
-            xml=XML_TEXT,
+            xml=self._xml_text,
         )
 
 
@@ -198,6 +215,26 @@ def test_mobile_snap_debug_table_includes_scroll_rows(tmp_path: Path) -> None:
     assert "scrollable" in result.stdout
 
 
+def test_mobile_snap_default_table_marks_operator_label(tmp_path: Path) -> None:
+    app, _xml_dumper, _capturer, _app_reader = _build_app(
+        [DeviceInfo(serial="RFCN4010FCK", state="device")],
+        cache_root=tmp_path / "latest",
+        xml_text=XML_OPERATOR_LABEL_TEXT,
+    )
+
+    result = CliRunner().invoke(app, ["snap", "RFCN4010FCK"])
+
+    assert result.exit_code == 0
+    assert "Kontynuuj przy użyciu Instagramu~" in result.stdout
+    assert "~ operator label; not target identity" in result.stdout
+    latest = read_latest_snap_source(
+        device_id="RFCN4010FCK",
+        session_id="default",
+        cache_root=tmp_path / "latest",
+    )
+    assert latest.targets[0].label is None
+
+
 def test_mobile_snap_json_contract_and_debug_fields(tmp_path: Path) -> None:
     app, _xml_dumper, _capturer, _app_reader = _build_app(
         [DeviceInfo(serial="RFCN4010FCK", state="device")],
@@ -266,8 +303,9 @@ def _build_app(
     devices: Sequence[DeviceInfo],
     *,
     cache_root: Path | None = None,
+    xml_text: str = XML_TEXT,
 ) -> tuple[typer.Typer, FakeXmlDumper, FakeScreenshotCapturer, FakeAppReader]:
-    xml_dumper = FakeXmlDumper()
+    xml_dumper = FakeXmlDumper(xml_text)
     capturer = FakeScreenshotCapturer()
     app_reader = FakeAppReader()
     app = build_mobile_app(

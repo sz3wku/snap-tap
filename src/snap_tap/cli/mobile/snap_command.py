@@ -41,6 +41,9 @@ from snap_tap.targets import (
 )
 
 
+_LABEL_WIDTH = 36
+
+
 class SnapDependencies(Protocol):
     @property
     def discovery(self) -> DeviceDiscovery: ...
@@ -296,9 +299,12 @@ def emit_snap_table(snap: MobileSnap, *, debug: bool) -> None:
             f"{_area_label(summary['scroll_count'])} detected; "
             "use --debug or --json for bounds"
         )
+    table_targets = _table_targets(snap.targets, debug=debug)
     typer.echo(_header(debug=debug))
-    for target in _table_targets(snap.targets, debug=debug):
+    for target in table_targets:
         typer.echo(_row(target, debug=debug))
+    if any(_uses_operator_label(target) for target in table_targets):
+        typer.echo("~ operator label; not target identity")
 
 
 def _header(*, debug: bool) -> str:
@@ -313,7 +319,7 @@ def _row(target: MobileSnapTarget, *, debug: bool) -> str:
         target.id,
         target.kind.value,
         target.role.value,
-        _clip(target.label or "-", 24),
+        _table_label(target),
         f"{target.center_x:g},{target.center_y:g}",
         (
             f"{target.bounds.left},{target.bounds.top},"
@@ -335,10 +341,31 @@ def _row(target: MobileSnapTarget, *, debug: bool) -> str:
 
 
 def _format_row(columns: list[str], *, debug: bool) -> str:
-    widths = [6, 8, 10, 24, 12, 18, 12]
+    widths = [6, 8, 10, _LABEL_WIDTH, 12, 18, 12]
     if debug:
         widths.extend([6, 6, 24, 32, 20])
     return "  ".join(value.ljust(width)[:width] for value, width in zip(columns, widths))
+
+
+def _table_label(target: MobileSnapTarget) -> str:
+    if target.label is not None:
+        return _clip(target.label, _LABEL_WIDTH)
+    if target.operator_label is not None:
+        return _clip_operator_label(target.operator_label, _LABEL_WIDTH)
+    return "-"
+
+
+def _clip_operator_label(label: str, width: int) -> str:
+    value = f"{label}~"
+    if len(value) <= width:
+        return value
+    if width <= 2:
+        return value[:width]
+    return value[: width - 2] + ".~"
+
+
+def _uses_operator_label(target: MobileSnapTarget) -> bool:
+    return target.label is None and target.operator_label is not None
 
 
 def _state(target: MobileSnapTarget) -> str:

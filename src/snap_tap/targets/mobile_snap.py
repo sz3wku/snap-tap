@@ -7,14 +7,24 @@ from snap_tap.backends.contracts import DriverAppAwareness
 from snap_tap.backends.contracts import DriverError
 from snap_tap.semantics import SemanticRole, SemanticSnapshot, build_semantic_snapshot
 from snap_tap.semantics.models import SemanticViewport
-from snap_tap.snapshots import RawSnapshotCapture
+from snap_tap.snapshots import RawSnapshotCapture, SnapshotBounds
 from snap_tap.targets.models import (
     MobileSnap,
     MobileSnapKind,
+    MobileSnapOperatorLabelCandidate,
     MobileSnapTarget,
     SnapshotTarget,
 )
 from snap_tap.targets.snapshot import build_snapshot_targets
+
+
+_OPERATOR_LABEL_MAX_LENGTH = 80
+_OPERATOR_LABEL_MAX_CANDIDATES = 4
+_OPERATOR_LABEL_MAX_VIEWPORT_RATIO = 0.40
+_OPERATOR_LABEL_SOURCE_SINGLE = "single_descendant_text"
+_OPERATOR_LABEL_SOURCE_PRIMARY = "primary_descendant_text"
+_OPERATOR_LABEL_CONFIDENCE_MEDIUM = "medium"
+_OPERATOR_LABEL_CONFIDENCE_HINT = "hint"
 
 
 def build_mobile_snap(
@@ -39,7 +49,14 @@ def build_mobile_snap(
 
     targets = tuple(
         sorted(
-            (_mobile_target(target) for target in snapshot_targets.targets),
+            (
+                _mobile_target(
+                    target,
+                    source_targets=snapshot_targets.targets,
+                    viewport=semantic.screen_metadata.viewport,
+                )
+                for target in snapshot_targets.targets
+            ),
             key=_target_sort_key,
         )
     )
@@ -77,7 +94,14 @@ def build_mobile_snap_from_semantic(
 
     targets = tuple(
         sorted(
-            (_mobile_target(target) for target in snapshot_targets.targets),
+            (
+                _mobile_target(
+                    target,
+                    source_targets=snapshot_targets.targets,
+                    viewport=snapshot.screen_metadata.viewport,
+                )
+                for target in snapshot_targets.targets
+            ),
             key=_target_sort_key,
         )
     )
@@ -152,8 +176,24 @@ def _failure(
     )
 
 
-def _mobile_target(target: SnapshotTarget) -> MobileSnapTarget:
+def _mobile_target(
+    target: SnapshotTarget,
+    *,
+    source_targets: Sequence[SnapshotTarget],
+    viewport: SemanticViewport,
+) -> MobileSnapTarget:
     kind = _target_kind(target)
+    (
+        operator_label,
+        operator_label_source,
+        operator_label_confidence,
+        operator_label_candidates,
+    ) = _operator_label_metadata(
+        target,
+        kind=kind,
+        source_targets=source_targets,
+        viewport=viewport,
+    )
     return MobileSnapTarget(
         id=target.display_id,
         kind=kind,
@@ -177,6 +217,10 @@ def _mobile_target(target: SnapshotTarget) -> MobileSnapTarget:
         resource_id=target.resource_id,
         label_source=target.label_source,
         snapshot_id=target.snapshot_id,
+        operator_label=operator_label,
+        operator_label_source=operator_label_source,
+        operator_label_confidence=operator_label_confidence,
+        operator_label_candidates=operator_label_candidates,
     )
 
 
@@ -204,6 +248,124 @@ def _target_sort_key(target: MobileSnapTarget) -> tuple[int, int]:
         MobileSnapKind.UNKNOWN: 5,
     }
     return (priority[target.kind], target.source_index)
+
+
+def _operator_label_metadata(
+    target: SnapshotTarget,
+    *,
+    kind: MobileSnapKind,
+    source_targets: Sequence[SnapshotTarget],
+    viewport: SemanticViewport,
+) -> tuple[
+    str | None,
+    str | None,
+    str | None,
+    tuple[MobileSnapOperatorLabelCandidate, ...],
+]:
+    if target.label is not None or kind is not MobileSnapKind.TAP:
+        return None, None, None, ()
+    if not _operator_label_target_is_reasonable(target, viewport=viewport):
+        return None, None, None, ()
+
+    candidates = _operator_label_candidates(target, source_targets)
+    if not candidates or len(candidates) > _OPERATOR_LABEL_MAX_CANDIDATES:
+        return None, None, None, candidates
+
+    primary = candidates[0]
+    if len(candidates) == 1:
+        return (
+            primary.label,
+            _OPERATOR_LABEL_SOURCE_SINGLE,
+            _OPERATOR_LABEL_CONFIDENCE_MEDIUM,
+            candidates,
+        )
+    return (
+        primary.label,
+        _OPERATOR_LABEL_SOURCE_PRIMARY,
+        _OPERATOR_LABEL_CONFIDENCE_HINT,
+        candidates,
+    )
+
+
+def _operator_label_target_is_reasonable(
+    target: SnapshotTarget,
+    *,
+    viewport: SemanticViewport,
+) -> bool:
+    if not target.enabled or not target.clickable:
+        return False
+    viewport_area = _viewport_area(viewport)
+    if viewport_area is None:
+        return True
+    target_area = target.bounds.width * target.bounds.height
+    return (target_area / viewport_area) <= _OPERATOR_LABEL_MAX_VIEWPORT_RATIO
+
+
+def _operator_label_candidates(
+    target: SnapshotTarget,
+    source_targets: Sequence[SnapshotTarget],
+) -> tuple[MobileSnapOperatorLabelCandidate, ...]:
+    candidates: list[MobileSnapOperatorLabelCandidate] = []
+    for candidate in source_targets:
+        if not _is_operator_label_candidate(container=target, candidate=candidate):
+            continue
+        label = candidate.label
+        if label is None or not _is_short_operator_label(label):
+            continue
+        candidates.append(
+            MobileSnapOperatorLabelCandidate(
+                id=candidate.display_id,
+                label=label,
+                label_source=candidate.label_source,
+                role=candidate.role,
+                source_index=candidate.source_index,
+                semantic_index=candidate.semantic_index,
+                bounds=candidate.bounds,
+            )
+        )
+        if len(candidates) > _OPERATOR_LABEL_MAX_CANDIDATES:
+            break
+    return tuple(sorted(candidates, key=lambda item: item.source_index))
+
+
+def _is_operator_label_candidate(
+    *,
+    container: SnapshotTarget,
+    candidate: SnapshotTarget,
+) -> bool:
+    if candidate.display_id == container.display_id:
+        return False
+    if candidate.role is not SemanticRole.TEXT:
+        return False
+    if candidate.source_index <= container.source_index:
+        return False
+    if container.package is not None and candidate.package != container.package:
+        return False
+    return _bounds_strictly_contain(container.bounds, candidate.bounds)
+
+
+def _is_short_operator_label(label: str) -> bool:
+    return 0 < len(label) <= _OPERATOR_LABEL_MAX_LENGTH
+
+
+def _bounds_strictly_contain(container: SnapshotBounds, child: SnapshotBounds) -> bool:
+    if container == child:
+        return False
+    return (
+        container.left <= child.left
+        and container.top <= child.top
+        and container.right >= child.right
+        and container.bottom >= child.bottom
+    )
+
+
+def _viewport_area(viewport: SemanticViewport) -> int | None:
+    if viewport.width is None or viewport.height is None:
+        return None
+    area = viewport.width * viewport.height
+    if area <= 0:
+        return None
+    return area
 
 
 def _summary(

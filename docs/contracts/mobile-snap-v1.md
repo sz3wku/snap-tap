@@ -42,6 +42,17 @@ e002   tap     tab       Profile            972,2240    enabled
 e004   input   input     Caption            540,880     enabled
 ```
 
+If a row has no semantic `label` but `snap-tap snap` can infer a short
+human/operator hint from text descendants, the table may render that hint with a
+`~` suffix:
+
+```text
+e009   tap     button    Continue with Instagram~             360,610     enabled
+~ operator label; not target identity
+```
+
+The suffix means the displayed text is an `operator_label`, not target identity.
+
 Machine:
 
 ```powershell
@@ -121,6 +132,7 @@ Each target has:
 - `center`: `{ "x": number, "y": number }`
 - `bounds`: `[left, top, right, bottom]`
 - `package`
+- `operator_label`: optional human/operator hint used only when `label` is null
 
 Debug targets may add:
 
@@ -130,6 +142,14 @@ Debug targets may add:
 - `resource_id`
 - `label_source`
 - `snapshot_id`
+- `operator_label_source`
+- `operator_label_confidence`
+- `operator_label_candidates`
+
+`operator_label` is computed only by the `mobile_snap.v1` presentation layer.
+It must not alter `SemanticElement.label`, `SnapshotTarget.label`,
+`TargetSignature.identity`, target resolution, latest-source replay, or
+primitive receipts.
 
 ## Kind Rules
 
