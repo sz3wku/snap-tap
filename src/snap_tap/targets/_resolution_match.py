@@ -115,12 +115,19 @@ def validated_signature_identity(signature: TargetSignature) -> dict[str, str]:
         )
     if "role" in identity:
         try:
-            SemanticRole(identity["role"])
+            identity_role = SemanticRole(identity["role"])
         except ValueError as exc:
             raise ResolutionBlocked(
                 code="target_resolution_invalid_signature",
                 detail="Target signature role identity is unsupported.",
             ) from exc
+        if identity_role is not signature.role:
+            raise ResolutionBlocked(
+                code="target_resolution_invalid_signature",
+                detail="Target signature role identity does not match signature role.",
+            )
+    elif signature.role is not SemanticRole.UNKNOWN:
+        identity["role"] = signature.role.value
     if not identity:
         raise ResolutionBlocked(
             code="target_resolution_invalid_signature",

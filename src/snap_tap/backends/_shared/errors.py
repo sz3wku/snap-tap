@@ -150,6 +150,12 @@ ERROR_SPECS: dict[str, ErrorSpec] = {
         retryable=False,
         recovery_hint="Choose a tap target from snap-tap snap, not input or scroll.",
     ),
+    "primitive_target_not_tappable": ErrorSpec(
+        category="primitive",
+        recoverable=False,
+        retryable=False,
+        recovery_hint="Choose a clickable tap target from snap-tap snap.",
+    ),
     "explicit_snapshot_source_missing": ErrorSpec(
         category="target_source",
         recoverable=False,

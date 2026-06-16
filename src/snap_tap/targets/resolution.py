@@ -134,7 +134,7 @@ def resolve_target_signature(
             candidate_count=1,
             refs=refs,
         )
-    if signature.role is not SemanticRole.INPUT and not target.clickable:
+    if target.role is not SemanticRole.INPUT and not target.clickable:
         return _blocked_resolution(
             signature=signature,
             fresh_snapshot=fresh_snapshot,

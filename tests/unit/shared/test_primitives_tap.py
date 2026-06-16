@@ -24,6 +24,7 @@ from snap_tap.primitives import (
     target_signature_from_dict,
 )
 from snap_tap.primitives.receipt import utc_now
+from snap_tap.semantics import SemanticRole
 from snap_tap.snapshots import SnapshotBounds
 
 
@@ -136,6 +137,31 @@ def test_stale_size_drift_blocks_before_driver() -> None:
     payload = primitive_receipt_to_dict(receipt)
     assert payload["status"] == "blocked"
     assert cast(dict[str, object], payload["error"])["code"] == "primitive_target_stale"
+    assert payload["driver_result"] is None
+    assert payload["attempted_touch"] is False
+    assert payload["touched_phone"] is False
+    assert tapper.calls == []
+
+
+def test_non_clickable_resolved_input_blocks_tap_before_driver() -> None:
+    provider = FakeSnapshotProvider(
+        [fake_tap_snapshot_result("fresh", role=SemanticRole.INPUT, clickable=False)]
+    )
+    tapper = FakeTapper(None)
+
+    receipt = resolved_tap(
+        fake_tap_request(role=SemanticRole.INPUT, clickable=False),
+        snapshot_provider=provider,
+        tapper=tapper,
+        lease_manager=PrimitiveLeaseManager(in_memory_only=True),
+    )
+
+    payload = primitive_receipt_to_dict(receipt)
+    assert payload["status"] == "blocked"
+    assert cast(dict[str, object], payload["error"])["code"] == (
+        "primitive_target_not_tappable"
+    )
+    assert payload["target_resolution"] is not None
     assert payload["driver_result"] is None
     assert payload["attempted_touch"] is False
     assert payload["touched_phone"] is False

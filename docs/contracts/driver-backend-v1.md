@@ -201,6 +201,7 @@ must not emit them directly.
 - `input_failed`
 - `navigation_failed`
 - `primitive_target_stale`
+- `primitive_target_not_tappable`
 - `primitive_app_open_foreground_mismatch`
 - `primitive_app_open_foreground_unknown`
 - `device_required`

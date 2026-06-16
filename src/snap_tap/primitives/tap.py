@@ -25,7 +25,7 @@ from snap_tap.primitives.proof import (
 from snap_tap.primitives.receipt import invalid_request_receipt, new_receipt_id, utc_now
 from snap_tap.primitives.snapshot_provider import PrimitiveSnapshotProvider
 from snap_tap.primitives.target_guard import stale_target_block
-from snap_tap.targets import TargetResolution, resolve_target_signature
+from snap_tap.targets import SnapshotTarget, TargetResolution, resolve_target_signature
 
 
 class PrimitiveTapper(Protocol):
@@ -168,6 +168,26 @@ def resolved_tap(
                 blocking_detail=stale_block.detail,
                 error=DriverError(code=stale_block.code, detail=stale_block.detail),
             )
+        if not _is_tappable_target(target):
+            return _receipt(
+                started=started,
+                started_at=started_at,
+                device_id=serial,
+                lease=lease,
+                request=request,
+                status="blocked",
+                before=before,
+                fresh=before,
+                resolution=resolution,
+                driver=None,
+                after=None,
+                blocking_code="primitive_target_not_tappable",
+                blocking_detail="Resolved target is not a tappable target.",
+                error=DriverError(
+                    code="primitive_target_not_tappable",
+                    detail="Resolved target is not a tappable target.",
+                ),
+            )
 
         driver = _tap_safely(
             tapper,
@@ -299,6 +319,10 @@ def _primitive_driver_result(result: DriverTap) -> PrimitiveDriverResult:
         metadata=dict(result.metadata),
         error=result.error,
     )
+
+
+def _is_tappable_target(target: SnapshotTarget) -> bool:
+    return target.enabled and target.clickable
 
 
 def _receipt(

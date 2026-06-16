@@ -236,12 +236,14 @@ S1 tap must:
 3. resolve `target_signature.v1` against that fresh snapshot,
 4. block before touch on stale, ambiguous, disabled, non-clickable, malformed,
    or missing target resolution,
-5. tap only the resolved target center through the process-isolated driver
+5. additionally block before the driver when the resolved target is not enabled
+   and clickable,
+6. tap only the resolved target center through the process-isolated driver
    backend,
-6. normalize backend tap confirmation at the child process boundary,
-7. attempt after-snap inside the same lease when touch was attempted or
+7. normalize backend tap confirmation at the child process boundary,
+8. attempt after-snap inside the same lease when touch was attempted or
    confirmed,
-8. return one receipt.
+9. return one receipt.
 
 ## S2 Text Boundary
 
@@ -405,6 +407,7 @@ sleep only for a bounded duration, and report `attempted_touch=false` and
 - `primitive_after_snapshot_failed`
 - `primitive_receipt_failed`
 - `primitive_target_not_input`
+- `primitive_target_not_tappable`
 
 ## Validation Expectations
 
@@ -413,6 +416,7 @@ sleep only for a bounded duration, and report `attempted_touch=false` and
 - Tests prove target resolution blocked returns a receipt and no driver call.
 - Tests prove stale targeted bounds block before driver while preserving target
   resolution evidence.
+- Tests prove non-tappable resolved targets block before tap driver work.
 - Tests prove resolved tap success returns `completed`.
 - Tests prove false-success driver payload returns `primitive_false_success`.
 - Tests prove after-snapshot failure after touch returns non-clean status.

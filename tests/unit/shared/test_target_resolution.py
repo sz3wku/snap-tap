@@ -173,6 +173,51 @@ def test_target_resolution_resolves_non_clickable_input_match() -> None:
     assert target["role"] == "input"
 
 
+def test_target_resolution_adds_signature_role_to_matching_identity() -> None:
+    source = build_snapshot_targets(
+        _snapshot(
+            "snap_source",
+            (_element(1, SemanticRole.INPUT, True, False, None, "none"),),
+        ),
+    )
+    signature = replace(
+        build_target_signature(source, "e001"),
+        identity={"class_name": "android.widget.Button"},
+    )
+
+    payload = _resolve_payload(
+        signature,
+        _snapshot(
+            "snap_fresh",
+            (
+                _element(
+                    2,
+                    SemanticRole.BUTTON,
+                    True,
+                    False,
+                    None,
+                    "none",
+                    class_name="android.widget.Button",
+                ),
+            ),
+        ),
+    )
+
+    _assert_blocked(payload, "target_resolution_no_match")
+
+
+def test_target_resolution_rejects_signature_role_identity_mismatch() -> None:
+    signature = replace(
+        _signature(),
+        role=SemanticRole.INPUT,
+        identity={"role": "button", "resource_id": "com.example:id/save"},
+    )
+
+    payload = _resolve_payload(signature, _fresh_snapshot("snap_fresh"))
+
+    _assert_blocked(payload, "target_resolution_invalid_signature")
+
+
 def test_target_resolution_role_only_identity_resolves_when_unique() -> None:
     source = build_snapshot_targets(
         _snapshot(
@@ -350,6 +395,10 @@ def _element(
     clickable: bool,
     label: str | None,
     label_source: str,
+    *,
+    class_name: str | None = None,
+    resource_id: str | None = None,
+    package: str | None = None,
 ) -> SemanticElement:
     return SemanticElement(
         source_index=source_index,
@@ -359,6 +408,9 @@ def _element(
         clickable=clickable,
         label=label,
         label_source=label_source,
+        class_name=class_name,
+        resource_id=resource_id,
+        package=package,
     )
 
 

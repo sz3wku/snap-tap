@@ -133,7 +133,7 @@ add screenshot-pixel or driver inspection to determine this.
 
 ## Validation Expectations
 
-- Tests cover a successful unique actionable match against a different fresh
+- Tests cover a successful unique safe match against a different fresh
   snapshot.
 - Tests cover source snapshot reuse blocking as stale.
 - Tests cover device mismatch blocking.
@@ -143,7 +143,7 @@ add screenshot-pixel or driver inspection to determine this.
 - Tests cover malformed ref containers and malformed allowed ref values.
 - Tests cover malformed fresh target fields blocking before `ok=true`.
 - Tests cover unsafe target signature requirements blocking before resolution.
-- Tests cover weak role-only identity resolving only when unique and actionable.
+- Tests cover weak role-only identity resolving only when unique and safe.
 - Tests assert source bounds, center coordinates, source indexes, and display
   ids do not influence candidate matching.
 - Tests assert public JSON excludes latest-cache refs, primitive receipts,

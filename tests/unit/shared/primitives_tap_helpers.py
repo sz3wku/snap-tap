@@ -75,8 +75,14 @@ class RaisingTapper:
         raise RuntimeError("tap exploded")
 
 
-def fake_tap_request() -> PrimitiveTapRequest:
-    source = build_snapshot_targets(fake_tap_snapshot("source"))
+def fake_tap_request(
+    *,
+    role: SemanticRole = SemanticRole.BUTTON,
+    clickable: bool = True,
+) -> PrimitiveTapRequest:
+    source = build_snapshot_targets(
+        fake_tap_snapshot("source", role=role, clickable=clickable)
+    )
     signature = build_target_signature(source, "e001")
     return PrimitiveTapRequest(device_id="RFCN4010FCK", signature=signature)
 
@@ -84,9 +90,16 @@ def fake_tap_request() -> PrimitiveTapRequest:
 def fake_tap_snapshot_result(
     snapshot_id: str,
     *,
+    role: SemanticRole = SemanticRole.BUTTON,
+    clickable: bool = True,
     bounds: SnapshotBounds | None = None,
 ) -> PrimitiveSnapshotResult:
-    snapshot = fake_tap_snapshot(snapshot_id, bounds=bounds)
+    snapshot = fake_tap_snapshot(
+        snapshot_id,
+        role=role,
+        clickable=clickable,
+        bounds=bounds,
+    )
     return PrimitiveSnapshotResult(
         ok=True,
         status="completed",
@@ -100,19 +113,22 @@ def fake_tap_snapshot_result(
 def fake_tap_snapshot(
     snapshot_id: str,
     *,
+    role: SemanticRole = SemanticRole.BUTTON,
+    clickable: bool = True,
     bounds: SnapshotBounds | None = None,
 ) -> SemanticSnapshot:
+    is_input = role is SemanticRole.INPUT
     element = SemanticElement(
         source_index=7,
-        role=SemanticRole.BUTTON,
+        role=role,
         bounds=bounds or SnapshotBounds(10, 20, 110, 220, 100, 200, 60.0, 120.0),
         enabled=True,
-        clickable=True,
+        clickable=clickable,
         scrollable=False,
-        label="Save",
-        label_source="content_desc",
-        class_name="android.widget.Button",
-        resource_id="com.example:id/save",
+        label="Message" if is_input else "Save",
+        label_source="hint" if is_input else "content_desc",
+        class_name="android.widget.EditText" if is_input else "android.widget.Button",
+        resource_id="com.example:id/message" if is_input else "com.example:id/save",
         package="com.example",
     )
     return SemanticSnapshot(
@@ -141,8 +157,8 @@ def fake_tap_snapshot(
                 visible_element_count=1,
                 semantic_element_count=1,
                 enabled_count=1,
-                clickable_count=1,
-                actionable_count=1,
+                clickable_count=1 if clickable else 0,
+                actionable_count=1 if clickable else 0,
                 labeled_count=1,
                 unknown_count=0,
             ),
