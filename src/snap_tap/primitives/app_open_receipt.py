@@ -43,6 +43,7 @@ def build_app_open_receipt(
             or driver.metadata.get("touch_may_have_occurred") is True
         )
     )
+    proof_required = attempted or touched
     return PrimitiveReceipt(
         schema_version=PRIMITIVE_RECEIPT_SCHEMA_VERSION,
         receipt_id=new_receipt_id(),
@@ -63,9 +64,9 @@ def build_app_open_receipt(
         proof_status=proof_status_for_after(
             after=after,
             proof_requested=attempted or touched,
-            proof_required=False,
+            proof_required=proof_required,
         ),
-        after_snapshot_required=False,
+        after_snapshot_required=proof_required,
         post_action_settle_ms=normalize_post_action_settle_ms(
             request.post_action_settle_ms
         ),

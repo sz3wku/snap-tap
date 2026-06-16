@@ -210,6 +210,18 @@ ERROR_SPECS: dict[str, ErrorSpec] = {
         retryable=False,
         recovery_hint="Capture a fresh snapshot and resolve the target again.",
     ),
+    "primitive_app_open_foreground_mismatch": ErrorSpec(
+        category="primitive",
+        recoverable=False,
+        retryable=False,
+        recovery_hint="Inspect the post-launch snapshot and current app before retrying.",
+    ),
+    "primitive_app_open_foreground_unknown": ErrorSpec(
+        category="primitive",
+        recoverable=False,
+        retryable=False,
+        recovery_hint="Capture a fresh snapshot or inspect the current app before retrying.",
+    ),
     "device_required": ErrorSpec(
         category="selection",
         recoverable=False,

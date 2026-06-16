@@ -201,6 +201,8 @@ must not emit them directly.
 - `input_failed`
 - `navigation_failed`
 - `primitive_target_stale`
+- `primitive_app_open_foreground_mismatch`
+- `primitive_app_open_foreground_unknown`
 - `device_required`
 - `invalid_arguments`
 - `unsupported_operation`
@@ -221,6 +223,10 @@ S5 taxonomy rules:
 - Future touch/write failures must not blind-retry at the driver boundary.
 - Primitive guard failures such as `primitive_target_stale` are non-retryable at
   the operation boundary; capture a fresh snapshot and resolve the target again.
+- Primitive app-open proof failures such as
+  `primitive_app_open_foreground_mismatch` and
+  `primitive_app_open_foreground_unknown` are non-retryable at the operation
+  boundary; inspect the post-launch snapshot or current app before retrying.
 - Latest snap source failures are non-retryable at the tap operation boundary;
   run `snap-tap snap` again for the requested device/session before tapping.
 

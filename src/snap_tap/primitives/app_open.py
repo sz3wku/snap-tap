@@ -3,8 +3,8 @@ from __future__ import annotations
 from time import perf_counter
 from typing import Protocol
 
+from snap_tap.backends.contracts import DriverAppOpen, DriverError, normalize_package
 from snap_tap.device.identity import normalize_serial
-from snap_tap.backends.contracts import DriverAppOpen, DriverError
 from snap_tap.primitives.app_open_receipt import build_app_open_receipt
 from snap_tap.primitives.app_open_request import (
     app_open_request_payload,
@@ -94,8 +94,24 @@ def app_open_primitive(
         status, error = status_for_driver_and_proof(
             driver,
             after,
-            proof_required=False,
+            proof_required=True,
         )
+        proof_package = _proof_package(request)
+        if status == "completed":
+            status, error = _status_for_foreground_package(
+                package=proof_package,
+                after=after,
+            )
+        if (
+            error is not None
+            and driver.error is None
+            and error.code.startswith("primitive_app_open_")
+        ):
+            driver = _driver_with_foreground_metadata(
+                driver,
+                package=proof_package,
+                after=after,
+            )
         return _receipt(
             started=started,
             started_at=started_at,
@@ -176,6 +192,69 @@ def _primitive_driver_result(result: DriverAppOpen) -> PrimitiveDriverResult:
         checked_at=result.checked_at,
         metadata=dict(result.metadata),
         error=result.error,
+    )
+
+
+def _status_for_foreground_package(
+    *,
+    package: str,
+    after: PrimitiveSnapshotResult | None,
+) -> tuple[str, DriverError | None]:
+    actual = _dominant_package(after)
+    if actual is None:
+        return (
+            "partial",
+            DriverError(
+                code="primitive_app_open_foreground_unknown",
+                detail=(
+                    "After snapshot did not expose a dominant foreground package "
+                    f"for requested app '{package}'."
+                ),
+            ),
+        )
+    if actual != package:
+        return (
+            "partial",
+            DriverError(
+                code="primitive_app_open_foreground_mismatch",
+                detail=(
+                    "After snapshot foreground package mismatch: "
+                    f"expected '{package}', got '{actual}'."
+                ),
+            ),
+        )
+    return "completed", None
+
+
+def _proof_package(request: PrimitiveAppOpenRequest) -> str:
+    return normalize_package(request.package) or request.package
+
+
+def _dominant_package(after: PrimitiveSnapshotResult | None) -> str | None:
+    if after is None or after.snapshot is None:
+        return None
+    return after.snapshot.screen_metadata.dominant_package
+
+
+def _driver_with_foreground_metadata(
+    driver: PrimitiveDriverResult,
+    *,
+    package: str,
+    after: PrimitiveSnapshotResult | None,
+) -> PrimitiveDriverResult:
+    metadata = dict(driver.metadata)
+    metadata["requested_package"] = package
+    metadata["foreground_package"] = _dominant_package(after)
+    return PrimitiveDriverResult(
+        ok=driver.ok,
+        backend=driver.backend,
+        operation=driver.operation,
+        elapsed_ms=driver.elapsed_ms,
+        attempted=driver.attempted,
+        confirmed=driver.confirmed,
+        checked_at=driver.checked_at,
+        metadata=metadata,
+        error=driver.error,
     )
 
 

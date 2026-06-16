@@ -145,7 +145,9 @@ class FakeAppOpenExecutor:
         self.calls.append(request)
         return app_open_primitive(
             request,
-            snapshot_provider=_Provider(_snapshot_result("after")),
+            snapshot_provider=_Provider(
+                _snapshot_result("after", package=request.package)
+            ),
             opener=FakeAppLifecycle(),
         )
 
@@ -260,8 +262,12 @@ def _build_app(
     )
 
 
-def _snapshot_result(snapshot_id: str) -> PrimitiveSnapshotResult:
-    snapshot = _snapshot(snapshot_id)
+def _snapshot_result(
+    snapshot_id: str,
+    *,
+    package: str = "com.example",
+) -> PrimitiveSnapshotResult:
+    snapshot = _snapshot(snapshot_id, package=package)
     return PrimitiveSnapshotResult(
         ok=True,
         status="completed",
@@ -272,7 +278,7 @@ def _snapshot_result(snapshot_id: str) -> PrimitiveSnapshotResult:
     )
 
 
-def _snapshot(snapshot_id: str) -> SemanticSnapshot:
+def _snapshot(snapshot_id: str, *, package: str = "com.example") -> SemanticSnapshot:
     element = SemanticElement(
         source_index=7,
         role=SemanticRole.BUTTON,
@@ -283,8 +289,8 @@ def _snapshot(snapshot_id: str) -> SemanticSnapshot:
         label="Home",
         label_source="content_desc",
         class_name="android.widget.Button",
-        resource_id="com.example:id/home",
-        package="com.example",
+        resource_id=f"{package}:id/home",
+        package=package,
     )
     return SemanticSnapshot(
         schema_version=SEMANTIC_SNAPSHOT_SCHEMA_VERSION,
@@ -309,6 +315,7 @@ def _snapshot(snapshot_id: str) -> SemanticSnapshot:
                 labeled_count=1,
                 unknown_count=0,
             ),
+            dominant_package=package,
         ),
     )
 
