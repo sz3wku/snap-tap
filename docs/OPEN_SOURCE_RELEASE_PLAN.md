@@ -55,7 +55,7 @@ Latest local verification from this repo:
 - `uv lock --check` passed.
 - `uv run ruff check src tests` passed.
 - `uv run mypy --explicit-package-bases src tests` passed.
-- `uv run pytest` passed with 467 tests.
+- `uv run pytest` passed with 474 tests.
 - `uv build --out-dir temp\build-check` produced sdist and wheel.
 - `snap-tap devices` detected two local Android devices.
 - `snap-tap status <serial>` reported both visible Android devices healthy.
