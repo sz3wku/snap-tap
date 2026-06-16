@@ -173,7 +173,7 @@ def register_app_lifecycle_commands(
         if arg_error is not None or target_error is not None:
             error = arg_error or target_error
             assert error is not None
-            _emit_app_open_result(
+            emit_primitive_result(
                 invalid_request_receipt(
                     device_id=requested_device,
                     request={
@@ -193,7 +193,7 @@ def register_app_lifecycle_commands(
         try:
             normalized_session = normalize_latest_snapshot_session_id(session)
         except LatestSnapshotRefError as exc:
-            _emit_app_open_result(
+            emit_primitive_result(
                 invalid_request_receipt(
                     device_id=requested_device,
                     request={
@@ -296,20 +296,6 @@ def _format_cell(value: str, width: int) -> str:
         return text[: width - 1] + "~"
     return text.ljust(width)
 
-
-def _emit_app_open_result(
-    receipt: PrimitiveReceipt,
-    *,
-    dependencies: AppLifecycleDependencies,
-    session_id: str,
-    json_output: bool,
-) -> None:
-    emit_primitive_result(
-        receipt,
-        dependencies=dependencies,
-        session_id=session_id,
-        json_output=json_output,
-    )
 
 
 def _app_open_arguments(

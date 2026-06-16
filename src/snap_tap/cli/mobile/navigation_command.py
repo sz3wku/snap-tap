@@ -21,7 +21,6 @@ from snap_tap.cli.mobile.primitive_result_output import (
 from snap_tap.primitives import (
     NAVIGATION_WAIT,
     PrimitiveNavigationRequest,
-    PrimitiveReceipt,
     invalid_request_receipt,
 )
 from snap_tap.snapshots import (
@@ -183,7 +182,7 @@ def _run(
             detail=serial_error.detail,
             operation=operation,
         )
-        _emit_navigation_result(
+        emit_primitive_result(
             receipt,
             dependencies=dependencies,
             session_id=session,
@@ -204,7 +203,7 @@ def _run(
             detail=exc.detail,
             operation=operation,
         )
-        _emit_navigation_result(
+        emit_primitive_result(
             receipt,
             dependencies=dependencies,
             session_id=session,
@@ -226,20 +225,5 @@ def _run(
         receipt,
         dependencies=dependencies,
         session_id=normalized_session,
-        json_output=json_output,
-    )
-
-
-def _emit_navigation_result(
-    receipt: PrimitiveReceipt,
-    *,
-    dependencies: NavigationAliasDependencies,
-    session_id: str,
-    json_output: bool,
-) -> None:
-    emit_primitive_result(
-        receipt,
-        dependencies=dependencies,
-        session_id=session_id,
         json_output=json_output,
     )
