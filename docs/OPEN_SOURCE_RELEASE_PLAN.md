@@ -52,7 +52,7 @@ Latest local verification from this repo:
 - `uv lock --check` passed.
 - `uv run ruff check src tests` passed.
 - `uv run mypy --explicit-package-bases src tests` passed.
-- `uv run pytest` passed with 440 tests.
+- `uv run pytest` passed with 451 tests.
 - `uv build --out-dir temp\build-check` produced sdist and wheel.
 - `snap-tap devices` detected two local Android devices.
 - `snap-tap status <serial>` reported both visible Android devices healthy.
@@ -73,8 +73,7 @@ Latest local verification from this repo:
 
 Known gaps:
 
-- initial baseline commit exists locally: `0b19b34`; current CLI polish is
-  uncommitted until reviewed,
+- initial baseline commit exists locally: `0b19b34`,
 - no public remote yet,
 - OSS shell exists locally: `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`,
   `CHANGELOG.md`, GitHub issue templates, PR template, and GitHub Actions CI,
@@ -332,6 +331,47 @@ Done when:
 - HAKAR issue notes clearly state the snap-tap release state,
 - no dependency flip is implied,
 - future integration remains an explicit architecture decision.
+
+## Review And Release Ladder
+
+Use this sequence after the current fix/docs commits exist locally:
+
+1. Review the recent commits as a pair.
+   - Check that the operator-label fix is behaviorally safe.
+   - Check that the platform/iOS docs do not overpromise implementation.
+   - Check that Phase 2 and later release shell changes are intentional.
+
+2. Run Android live validation.
+   - Start with L0 read-only smoke.
+   - Run L1 safe system primitives on a dummy or non-sensitive device.
+   - Run L2 target mutation only on a neutral test surface.
+   - Keep all live artifacts under `temp`.
+
+3. Run a deep architecture review.
+   - Ask whether the package has too many abstractions.
+   - Ask what can be removed or collapsed.
+   - Check whether the Android/iOS backend split is clear without making the
+     shared core vague.
+   - Check whether a junior engineer could trace `snap -> target -> tap ->
+     receipt` without needing project lore.
+
+4. Run an installability review.
+   - Fresh Windows setup should reach `snap-tap devices` in about two minutes
+     after Python/uv are available.
+   - Fresh Linux setup should reach the same point with clear ADB/uiautomator2
+     setup notes.
+   - Failure messages should say which system dependency is missing.
+   - README quickstart should be enough for a first successful read-only snap.
+
+5. Apply final corrections.
+   - Keep fixes small and separately reviewable.
+   - Re-run unit/static/build gates.
+   - Re-run the relevant live smoke if behavior changed.
+
+6. Release.
+   - Public repo only after CI is green.
+   - Public alpha before PyPI.
+   - PyPI only after the public alpha support surface feels stable.
 
 ## Release Rule
 
