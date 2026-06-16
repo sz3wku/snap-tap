@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from time import perf_counter
 import sys
+from time import perf_counter
 
-from snap_tap.device.identity import normalize_serial
-from snap_tap.backends.contracts import DriverLifecycleResult
 from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessRunner,
     ProcessTimeoutError,
     SubprocessRunner,
 )
-
+from snap_tap.backends.contracts import DriverLifecycleResult
+from snap_tap.device.identity import normalize_serial
 
 SUPPORTED_LIFECYCLE_OPERATIONS = frozenset({"init", "doctor"})
 

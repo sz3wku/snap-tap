@@ -3,8 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 
-from snap_tap.backends.contracts import DriverAppAwareness
-from snap_tap.backends.contracts import DriverError
+from snap_tap.backends.contracts import DriverAppAwareness, DriverError
 from snap_tap.semantics import SemanticRole, SemanticSnapshot, build_semantic_snapshot
 from snap_tap.semantics.models import SemanticViewport
 from snap_tap.snapshots import RawSnapshotCapture, SnapshotBounds
@@ -16,7 +15,6 @@ from snap_tap.targets.models import (
     SnapshotTarget,
 )
 from snap_tap.targets.snapshot import build_snapshot_targets
-
 
 _OPERATOR_LABEL_MAX_LENGTH = 80
 _OPERATOR_LABEL_MAX_CANDIDATES = 4

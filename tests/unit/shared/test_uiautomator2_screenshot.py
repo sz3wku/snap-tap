@@ -8,8 +8,9 @@ from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessRunner,
     ProcessTimeoutError,
 )
-from snap_tap.backends.android.uiautomator2.screenshot import capture_uiautomator2_screenshot
-
+from snap_tap.backends.android.uiautomator2.screenshot import (
+    capture_uiautomator2_screenshot,
+)
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\nfake-png"
 

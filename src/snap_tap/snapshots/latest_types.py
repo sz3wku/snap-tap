@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import hashlib
 import json
-from pathlib import Path
 import re
 from collections.abc import Mapping
+from dataclasses import dataclass, field
+from pathlib import Path
 
 from snap_tap.device.identity import normalize_serial
 from snap_tap.snapshots.models import SnapshotArtifactRef
-
 
 LATEST_SNAPSHOT_REF_SCHEMA_VERSION = "latest_snapshot_ref.v1"
 DEFAULT_LATEST_SNAPSHOT_SESSION_ID = "default"

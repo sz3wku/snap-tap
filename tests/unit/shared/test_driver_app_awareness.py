@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from snap_tap.device.identity import DeviceInfo
 from snap_tap.backends.contracts import (
     DriverAppAwareness,
     read_device_app_current,
     read_device_package_info,
 )
+from snap_tap.device.identity import DeviceInfo
 
 
 class FakeAppReader:

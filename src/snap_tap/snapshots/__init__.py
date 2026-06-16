@@ -26,9 +26,9 @@ from snap_tap.snapshots.latest import (
 from snap_tap.snapshots.manifest import SNAPSHOT_MANIFEST_SCHEMA_VERSION
 from snap_tap.snapshots.models import (
     RawSnapshotCapture,
+    SnapshotArtifactRef,
     SnapshotBounds,
     SnapshotElement,
-    SnapshotArtifactRef,
     SnapshotIdentity,
     SnapshotNormalization,
 )

@@ -5,21 +5,26 @@ from typing import Annotated, Protocol
 
 import typer
 
+from snap_tap.backends.android.uiautomator2.screenshot import (
+    Uiautomator2ScreenshotCapturer,
+)
+from snap_tap.backends.android.uiautomator2.tap import Uiautomator2Tapper
+from snap_tap.backends.contracts import (
+    DriverError,
+    DriverScreenshotCapturer,
+    DriverXmlDumper,
+)
 from snap_tap.cli.mobile.device_discovery import read_visible_devices
 from snap_tap.cli.mobile.primitive_result_output import (
     emit_primitive_result,
 )
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import normalize_serial
-from snap_tap.backends.contracts import DriverError, DriverScreenshotCapturer
-from snap_tap.backends.android.uiautomator2.tap import Uiautomator2Tapper
-from snap_tap.backends.android.uiautomator2.screenshot import Uiautomator2ScreenshotCapturer
-from snap_tap.backends.contracts import DriverXmlDumper
 from snap_tap.primitives import (
     CorePrimitiveSnapshotProvider,
     PrimitiveReceipt,
-    PrimitiveTapRequest,
     PrimitiveTapper,
+    PrimitiveTapRequest,
     invalid_request_receipt,
     resolved_tap,
 )

@@ -2,16 +2,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from typer.testing import CliRunner
-
-from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_REPLACE_MODE
-from snap_tap.targets import read_latest_snap_source
 from mobile_text_alias_helpers import (
     FakeTextExecutor,
     build_text_alias_app,
     json_payload,
     write_latest_text_source,
 )
+from typer.testing import CliRunner
+
+from snap_tap.backends.android.uiautomator2.text import (
+    TEXT_INPUT_MODE,
+    TEXT_REPLACE_MODE,
+)
+from snap_tap.targets import read_latest_snap_source
 
 
 def test_mobile_input_default_output_renders_after_snap_table(

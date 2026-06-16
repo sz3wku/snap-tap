@@ -253,7 +253,10 @@ def test_semantic_snapshot_is_deterministic_for_same_raw_input() -> None:
 
 
 def test_semantic_snapshot_fails_closed_without_raw_snapshot_identity() -> None:
-    from snap_tap.semantics.snapshot import SemanticSnapshotError, build_semantic_snapshot
+    from snap_tap.semantics.snapshot import (
+        SemanticSnapshotError,
+        build_semantic_snapshot,
+    )
 
     raw = _raw_capture(elements=[]).with_identity(None)  # type: ignore[arg-type]
 

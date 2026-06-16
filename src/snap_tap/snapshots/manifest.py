@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 import json
+from collections.abc import Mapping
 from pathlib import Path
 
 from snap_tap.snapshots.models import (
@@ -11,7 +11,6 @@ from snap_tap.snapshots.models import (
     SnapshotElement,
     SnapshotNormalization,
 )
-
 
 SNAPSHOT_MANIFEST_SCHEMA_VERSION = "snapshot_manifest.v1"
 

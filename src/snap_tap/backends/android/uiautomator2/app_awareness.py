@@ -4,25 +4,24 @@ import sys
 from collections.abc import Mapping
 from time import perf_counter
 
-from snap_tap.device.identity import normalize_serial
 from snap_tap.backends.android.uiautomator2.app_awareness_payload import (
     has_required_metadata,
     probe_error_code,
     probe_error_detail,
     probe_metadata,
 )
-from snap_tap.backends.contracts import (
-    DriverAppAwareness,
-    normalize_package,
-)
+from snap_tap.backends.android.uiautomator2.probe_payload import parse_probe_payload
 from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessRunner,
     ProcessTimeoutError,
     SubprocessRunner,
 )
-from snap_tap.backends.android.uiautomator2.probe_payload import parse_probe_payload
 from snap_tap.backends.android.uiautomator2.recovery import retry_once_after_recovery
-
+from snap_tap.backends.contracts import (
+    DriverAppAwareness,
+    normalize_package,
+)
+from snap_tap.device.identity import normalize_serial
 
 SUPPORTED_APP_OPERATIONS = frozenset({"app_current", "package_info"})
 

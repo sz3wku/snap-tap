@@ -5,7 +5,6 @@ import re
 from snap_tap.semantics.models import SemanticRole
 from snap_tap.snapshots import SnapshotElement
 
-
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 __all__ = ["SemanticRole", "classify_semantic_role"]
 

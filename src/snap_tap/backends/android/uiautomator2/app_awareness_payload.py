@@ -4,6 +4,8 @@ from collections.abc import Mapping
 
 from snap_tap.backends.android.uiautomator2.probe_payload import (
     probe_error_code as driver_probe_error_code,
+)
+from snap_tap.backends.android.uiautomator2.probe_payload import (
     probe_error_detail as driver_probe_error_detail,
 )
 

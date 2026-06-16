@@ -14,7 +14,6 @@ from snap_tap.primitives import PrimitiveReceipt, primitive_receipt_to_dict
 from snap_tap.targets import MobileSnap, build_mobile_snap_from_semantic
 from snap_tap.targets.mobile_snap_payload import mobile_snap_to_dict
 
-
 PRIMITIVE_RESULT_SCHEMA_VERSION = "primitive_result.v1"
 
 

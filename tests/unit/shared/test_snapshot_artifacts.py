@@ -6,9 +6,8 @@ from pathlib import Path
 import pytest
 
 import snap_tap.snapshots.artifacts as artifacts_module
-from snap_tap.snapshots.manifest import SnapshotManifestError, build_snapshot_manifest
 from snap_tap.snapshots import RawSnapshotCapture, materialize_raw_snapshot_artifacts
-
+from snap_tap.snapshots.manifest import SnapshotManifestError, build_snapshot_manifest
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\nfake-png"
 XML_TEXT = (

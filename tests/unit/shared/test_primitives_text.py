@@ -1,22 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import hashlib
 import json
+from dataclasses import replace
 from typing import cast
 
-from snap_tap.backends.contracts import DriverError
-from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_REPLACE_MODE
-from snap_tap.backends.android.uiautomator2.text import text_uiautomator2
-from snap_tap.primitives import (
-    PrimitiveLeaseManager,
-    PrimitiveSnapshotResult,
-    primitive_receipt_to_dict,
-    resolved_text,
-)
-from snap_tap.primitives.receipt import utc_now
-from snap_tap.snapshots import SnapshotBounds
-from snap_tap.semantics import SemanticRole
 from primitives_text_helpers import (
     FakeRunner,
     FakeSnapshotProvider,
@@ -25,6 +13,22 @@ from primitives_text_helpers import (
     fake_request,
     fake_snapshot_result,
 )
+
+from snap_tap.backends.android.uiautomator2.text import (
+    TEXT_INPUT_MODE,
+    TEXT_REPLACE_MODE,
+    text_uiautomator2,
+)
+from snap_tap.backends.contracts import DriverError
+from snap_tap.primitives import (
+    PrimitiveLeaseManager,
+    PrimitiveSnapshotResult,
+    primitive_receipt_to_dict,
+    resolved_text,
+)
+from snap_tap.primitives.receipt import utc_now
+from snap_tap.semantics import SemanticRole
+from snap_tap.snapshots import SnapshotBounds
 
 
 def test_successful_input_receipt_has_resolution_driver_and_after_refs() -> None:

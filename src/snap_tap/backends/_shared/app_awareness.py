@@ -1,15 +1,14 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
-import re
 from time import perf_counter
 from typing import Protocol
 
-from snap_tap.device.identity import DeviceInfo, select_device
 from snap_tap.backends._shared.errors import DriverError
-
+from snap_tap.device.identity import DeviceInfo, select_device
 
 _PACKAGE_RE = re.compile(
     r"^[A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*$"

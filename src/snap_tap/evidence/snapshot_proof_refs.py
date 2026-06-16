@@ -8,7 +8,6 @@ from snap_tap.primitives.models import PrimitiveReceipt
 from snap_tap.semantics import SemanticSnapshot
 from snap_tap.snapshots import SnapshotArtifactRef
 
-
 PRIMITIVE_SNAPSHOT_PROOF_REFS_SCHEMA_VERSION = "primitive_snapshot_proof_refs.v1"
 
 SnapshotProofSlot = Literal["before", "fresh", "after"]

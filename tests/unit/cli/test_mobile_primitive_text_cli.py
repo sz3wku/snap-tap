@@ -1,21 +1,26 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 import json
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
 import typer
 from typer.testing import CliRunner
 
+from snap_tap.backends.android.uiautomator2.text import (
+    TEXT_INPUT_MODE,
+    TEXT_REPLACE_MODE,
+)
+from snap_tap.backends.contracts import (
+    DriverHealth,
+    DriverLifecycleResult,
+    DriverScreenshot,
+    DriverText,
+    DriverXmlDump,
+)
 from snap_tap.cli.mobile.app import MobileDependencies, build_mobile_app
 from snap_tap.device.identity import DeviceInfo
-from snap_tap.backends.contracts import DriverHealth
-from snap_tap.backends.contracts import DriverLifecycleResult
-from snap_tap.backends.contracts import DriverScreenshot
-from snap_tap.backends.contracts import DriverText
-from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_REPLACE_MODE
-from snap_tap.backends.contracts import DriverXmlDump
 from snap_tap.primitives import (
     PrimitiveReceipt,
     PrimitiveSnapshotResult,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -20,15 +20,14 @@ from snap_tap.targets import (
     build_latest_snap_source,
     build_mobile_snap,
     build_target_signature,
-    latest_snap_source_target_for_input,
     latest_snap_source_path,
+    latest_snap_source_target_for_input,
     latest_snap_source_target_for_tap,
     latest_snap_source_to_dict,
     read_latest_snap_source,
     snapshot_targets_from_latest_snap_source,
     write_latest_snap_source,
 )
-
 
 FORBIDDEN_SENTINELS = (
     "<hierarchy>DO_NOT_LEAK_XML</hierarchy>",

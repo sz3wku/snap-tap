@@ -1,17 +1,19 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 import json
+from collections.abc import Sequence
 from typing import Any
 
 import typer
 from typer.testing import CliRunner
 
+from snap_tap.backends.contracts import (
+    DriverHealth,
+    DriverLifecycleResult,
+    DriverXmlDump,
+)
 from snap_tap.cli.mobile.app import MobileDependencies, build_mobile_app
 from snap_tap.device.identity import DeviceInfo
-from snap_tap.backends.contracts import DriverHealth
-from snap_tap.backends.contracts import DriverLifecycleResult
-from snap_tap.backends.contracts import DriverXmlDump
 
 
 class FakeDiscovery:

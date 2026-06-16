@@ -4,6 +4,15 @@ from dataclasses import replace
 from typing import cast
 
 import pytest
+from primitives_tap_helpers import (
+    FakeSnapshotProvider,
+    FakeTapper,
+    RaisingSnapshotProvider,
+    RaisingTapper,
+    fake_driver_tap_result,
+    fake_tap_request,
+    fake_tap_snapshot_result,
+)
 
 from snap_tap.backends.contracts import DriverError
 from snap_tap.primitives import (
@@ -16,15 +25,6 @@ from snap_tap.primitives import (
 )
 from snap_tap.primitives.receipt import utc_now
 from snap_tap.snapshots import SnapshotBounds
-from primitives_tap_helpers import (
-    FakeSnapshotProvider,
-    FakeTapper,
-    RaisingSnapshotProvider,
-    RaisingTapper,
-    fake_driver_tap_result,
-    fake_tap_request,
-    fake_tap_snapshot_result,
-)
 
 
 def test_lease_conflict_blocks_before_snapshot_or_driver() -> None:

@@ -11,7 +11,6 @@ from snap_tap.backends.android.uiautomator2.navigation import (
 from snap_tap.primitives.models import PrimitiveNavigationRequest
 from snap_tap.primitives.proof import normalize_post_action_settle_ms
 
-
 NAVIGATION_WAIT = "wait"
 NAVIGATION_PRIMITIVES = {
     NAVIGATION_BACK,

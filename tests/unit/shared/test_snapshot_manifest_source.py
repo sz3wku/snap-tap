@@ -13,7 +13,6 @@ from snap_tap.snapshots.manifest_source import (
 )
 from snap_tap.targets import build_target_signature, mobile_snap_to_dict
 
-
 PNG_BYTES = b"\x89PNG\r\n\x1a\nfake-png"
 XML_TEXT = (
     '<hierarchy><node class="android.widget.Button" '

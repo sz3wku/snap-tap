@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from snap_tap.semantics import SEMANTIC_SNAPSHOT_SCHEMA_VERSION, SemanticElement
-from snap_tap.semantics import SemanticRole, SemanticSnapshot
+from snap_tap.semantics import (
+    SEMANTIC_SNAPSHOT_SCHEMA_VERSION,
+    SemanticElement,
+    SemanticRole,
+    SemanticSnapshot,
+)
 from snap_tap.snapshots import SnapshotArtifactRef, SnapshotBounds
 from snap_tap.targets.models import (
     SNAPSHOT_TARGETS_SCHEMA_VERSION,
@@ -12,7 +16,6 @@ from snap_tap.targets.models import (
     SnapshotTargetsError,
     SnapshotTargetSummary,
 )
-
 
 __all__ = [
     "SnapshotTargetsError",

@@ -7,7 +7,6 @@ from snap_tap.semantics import SemanticRole
 from snap_tap.snapshots import SnapshotBounds
 from snap_tap.targets.models import MobileSnapKind
 
-
 LATEST_SNAP_SOURCE_SCHEMA_VERSION = "latest_snap_source.v1"
 TAPPABLE_ROLES = frozenset(
     {SemanticRole.BUTTON, SemanticRole.TAB, SemanticRole.LIST_ITEM}

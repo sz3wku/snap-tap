@@ -23,7 +23,6 @@ from snap_tap.targets import (
     target_resolution_to_dict,
 )
 
-
 RESOLUTION_TOP_LEVEL_KEYS = {
     "schema_version",
     "ok",

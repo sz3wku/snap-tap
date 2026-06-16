@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 import json
 import sys
+from collections.abc import Sequence
 from types import SimpleNamespace
 
 import pytest
@@ -15,7 +15,11 @@ from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_SWIPE,
     navigation_uiautomator2,
 )
-from snap_tap.backends.android.uiautomator2.process_runner import ProcessResult, ProcessRunner, ProcessTimeoutError
+from snap_tap.backends.android.uiautomator2.process_runner import (
+    ProcessResult,
+    ProcessRunner,
+    ProcessTimeoutError,
+)
 
 
 class FakeRunner(ProcessRunner):

@@ -8,7 +8,6 @@ from snap_tap.backends.contracts import DriverError
 from snap_tap.semantics import SemanticRole
 from snap_tap.snapshots import SnapshotArtifactRef, SnapshotBounds
 
-
 SNAPSHOT_TARGETS_SCHEMA_VERSION = "snapshot_targets.v1"
 TARGET_SIGNATURE_SCHEMA_VERSION = "target_signature.v1"
 TARGET_RESOLUTION_SCHEMA_VERSION = "target_resolution.v1"

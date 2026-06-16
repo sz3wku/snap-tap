@@ -1,22 +1,22 @@
 from __future__ import annotations
 
+import sys
 from collections.abc import Mapping, Sequence
 from time import perf_counter
-import sys
 
-from snap_tap.device.identity import DeviceInfo, normalize_serial, select_device
-from snap_tap.backends.contracts import DriverXmlDump, DriverXmlDumper
-from snap_tap.backends.android.uiautomator2.process_runner import (
-    ProcessRunner,
-    ProcessTimeoutError,
-    SubprocessRunner,
-)
 from snap_tap.backends.android.uiautomator2.probe_payload import (
     parse_probe_payload,
     probe_error_code,
     probe_error_detail,
 )
+from snap_tap.backends.android.uiautomator2.process_runner import (
+    ProcessRunner,
+    ProcessTimeoutError,
+    SubprocessRunner,
+)
 from snap_tap.backends.android.uiautomator2.recovery import retry_once_after_recovery
+from snap_tap.backends.contracts import DriverXmlDump, DriverXmlDumper
+from snap_tap.device.identity import DeviceInfo, normalize_serial, select_device
 
 
 class Uiautomator2XmlDumper:

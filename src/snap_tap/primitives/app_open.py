@@ -23,7 +23,10 @@ from snap_tap.primitives.navigation_snapshot import (
     capture_navigation_snapshot,
     exception_detail,
 )
-from snap_tap.primitives.proof import settle_after_driver_action, status_for_driver_and_proof
+from snap_tap.primitives.proof import (
+    settle_after_driver_action,
+    status_for_driver_and_proof,
+)
 from snap_tap.primitives.receipt import invalid_request_receipt, utc_now
 from snap_tap.primitives.snapshot_provider import PrimitiveSnapshotProvider
 

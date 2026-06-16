@@ -5,13 +5,9 @@ from typing import Annotated, Protocol
 
 import typer
 
-from snap_tap.cli.output import app_awareness_to_dict, emit_json
-from snap_tap.cli.mobile.device_discovery import (
-    read_visible_devices,
-    resolve_requested_serial,
+from snap_tap.backends.android.uiautomator2.app_awareness import (
+    Uiautomator2AppAwarenessReader,
 )
-from snap_tap.device.discovery import DeviceDiscovery
-from snap_tap.device.identity import DeviceInfo
 from snap_tap.backends.contracts import (
     DriverAppAwareness,
     DriverAppAwarenessReader,
@@ -19,7 +15,13 @@ from snap_tap.backends.contracts import (
     read_device_app_current,
     read_device_package_info,
 )
-from snap_tap.backends.android.uiautomator2.app_awareness import Uiautomator2AppAwarenessReader
+from snap_tap.cli.mobile.device_discovery import (
+    read_visible_devices,
+    resolve_requested_serial,
+)
+from snap_tap.cli.output import app_awareness_to_dict, emit_json
+from snap_tap.device.discovery import DeviceDiscovery
+from snap_tap.device.identity import DeviceInfo
 
 
 class AppAwarenessDependencies(Protocol):

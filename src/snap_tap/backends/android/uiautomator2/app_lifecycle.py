@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from time import perf_counter
-import re
 
-from snap_tap.device.identity import normalize_serial
+from snap_tap.backends.android.uiautomator2.process_runner import (
+    ProcessRunner,
+    ProcessTimeoutError,
+    SubprocessRunner,
+)
 from snap_tap.backends.contracts import (
     DriverAppCatalog,
     DriverAppEntry,
@@ -12,12 +16,7 @@ from snap_tap.backends.contracts import (
     DriverError,
     normalize_package,
 )
-from snap_tap.backends.android.uiautomator2.process_runner import (
-    ProcessRunner,
-    ProcessTimeoutError,
-    SubprocessRunner,
-)
-
+from snap_tap.device.identity import normalize_serial
 
 _COMPONENT_RE = re.compile(
     r"^\s*([A-Za-z][A-Za-z0-9_]*(?:\.[A-Za-z][A-Za-z0-9_]*)*)/(\S+)\s*$"

@@ -7,15 +7,17 @@ from uuid import uuid4
 
 import typer
 
-from snap_tap.cli.output import emit_json, screenshot_to_dict
-from snap_tap.cli.mobile.device_discovery import read_visible_devices
-from snap_tap.device.discovery import DeviceDiscovery
+from snap_tap.backends.android.uiautomator2.screenshot import (
+    Uiautomator2ScreenshotCapturer,
+)
 from snap_tap.backends.contracts import (
     DriverScreenshot,
     DriverScreenshotCapturer,
     capture_device_screenshot,
 )
-from snap_tap.backends.android.uiautomator2.screenshot import Uiautomator2ScreenshotCapturer
+from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.output import emit_json, screenshot_to_dict
+from snap_tap.device.discovery import DeviceDiscovery
 
 
 class ScreenshotDependencies(Protocol):

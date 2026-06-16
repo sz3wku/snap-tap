@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 
@@ -18,7 +18,6 @@ from snap_tap.snapshots import (
     read_latest_snapshot_ref,
     write_latest_snapshot_ref,
 )
-
 
 FORBIDDEN_SENTINELS = (
     "<hierarchy>DO_NOT_LEAK_XML</hierarchy>",

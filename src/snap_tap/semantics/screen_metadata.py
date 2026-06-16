@@ -13,7 +13,11 @@ from snap_tap.semantics.models import (
     SemanticViewport,
     ViewportOrientation,
 )
-from snap_tap.snapshots import RawSnapshotCapture, SnapshotElement, SnapshotNormalization
+from snap_tap.snapshots import (
+    RawSnapshotCapture,
+    SnapshotElement,
+    SnapshotNormalization,
+)
 
 
 def build_screen_metadata(

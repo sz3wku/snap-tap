@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 import json
+from collections.abc import Mapping
 
 import typer
 
-from snap_tap.device.identity import DeviceInfo
 from snap_tap.backends.contracts import (
     DriverAppAwareness,
     DriverAppCatalog,
@@ -16,6 +15,7 @@ from snap_tap.backends.contracts import (
     DriverScreenshot,
     DriverXmlDump,
 )
+from snap_tap.device.identity import DeviceInfo
 
 
 def emit_json(payload: Mapping[str, object]) -> None:

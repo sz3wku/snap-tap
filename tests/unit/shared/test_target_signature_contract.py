@@ -16,7 +16,6 @@ from snap_tap.targets import (
     target_signature_to_dict,
 )
 
-
 SIGNATURE_TOP_LEVEL_KEYS = {
     "schema_version",
     "signature_id",

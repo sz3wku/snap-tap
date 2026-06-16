@@ -6,8 +6,8 @@ from datetime import UTC, datetime
 from time import perf_counter
 from typing import Protocol
 
-from snap_tap.device.identity import DeviceInfo, select_device
 from snap_tap.backends._shared.errors import DriverError
+from snap_tap.device.identity import DeviceInfo, select_device
 
 
 @dataclass(frozen=True)

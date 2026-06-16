@@ -16,7 +16,6 @@ from snap_tap.targets.models import (
     TargetSignatureRequirements,
 )
 
-
 __all__ = [
     "TargetSignatureError",
     "build_target_signature",

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from snap_tap.snapshots import SnapshotBounds, SnapshotElement
 
-
 ROLE_VALUES = ["button", "tab", "input", "text", "image", "list_item", "unknown"]
 
 

@@ -11,7 +11,6 @@ from snap_tap.targets.models import (
     TargetResolutionMatch,
 )
 
-
 _ALLOWED_REF_NAMES = frozenset({"xml", "screenshot", "manifest"})
 
 

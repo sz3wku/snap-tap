@@ -3,15 +3,15 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from snap_tap.device.discovery import _device_info_from_adb
-from snap_tap.device.identity import DeviceInfo, normalize_serial, select_device
-from snap_tap.backends.contracts import DriverHealth, check_device_health
+from snap_tap.backends.android.uiautomator2.backend import Uiautomator2Backend
 from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessResult,
     ProcessRunner,
     ProcessTimeoutError,
 )
-from snap_tap.backends.android.uiautomator2.backend import Uiautomator2Backend
+from snap_tap.backends.contracts import DriverHealth, check_device_health
+from snap_tap.device.discovery import _device_info_from_adb
+from snap_tap.device.identity import DeviceInfo, normalize_serial, select_device
 
 
 @dataclass

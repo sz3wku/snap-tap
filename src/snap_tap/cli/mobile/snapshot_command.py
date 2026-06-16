@@ -5,16 +5,17 @@ from typing import Annotated, Protocol
 
 import typer
 
-from snap_tap.cli.output import emit_json
-from snap_tap.cli.snapshot_output import raw_snapshot_capture_to_dict
+from snap_tap.backends.android.uiautomator2.screenshot import (
+    Uiautomator2ScreenshotCapturer,
+)
+from snap_tap.backends.contracts import DriverScreenshotCapturer, DriverXmlDumper
 from snap_tap.cli.mobile.device_discovery import (
     read_visible_devices,
     resolve_requested_serial,
 )
+from snap_tap.cli.output import emit_json
+from snap_tap.cli.snapshot_output import raw_snapshot_capture_to_dict
 from snap_tap.device.discovery import DeviceDiscovery
-from snap_tap.backends.contracts import DriverScreenshotCapturer
-from snap_tap.backends.android.uiautomator2.screenshot import Uiautomator2ScreenshotCapturer
-from snap_tap.backends.contracts import DriverXmlDumper
 from snap_tap.snapshots import (
     DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
     LatestSnapshotRefError,

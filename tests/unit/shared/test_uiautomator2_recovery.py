@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from snap_tap.backends.contracts import DriverHealth
-from snap_tap.backends.android.uiautomator2.process_runner import ProcessResult, ProcessRunner
-from snap_tap.backends.android.uiautomator2.recovery import retry_once_after_recovery
 from snap_tap.backends.android.uiautomator2.backend import Uiautomator2Backend
+from snap_tap.backends.android.uiautomator2.process_runner import (
+    ProcessResult,
+    ProcessRunner,
+)
+from snap_tap.backends.android.uiautomator2.recovery import retry_once_after_recovery
 from snap_tap.backends.android.uiautomator2.xml_dump import dump_uiautomator2_xml
+from snap_tap.backends.contracts import DriverHealth
 
 
 class SequenceProcessRunner(ProcessRunner):

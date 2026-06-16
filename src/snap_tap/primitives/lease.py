@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
 import hashlib
 import json
 import os
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from threading import Lock
 from uuid import uuid4
 
 from snap_tap.primitives.models import PrimitiveLease, PrimitiveLeaseConflict
-
 
 DEFAULT_PRIMITIVE_LEASE_ROOT = (
     Path(__file__).resolve().parents[3] / "temp" / "mobile-primitives" / "leases"

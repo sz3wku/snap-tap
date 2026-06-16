@@ -3,12 +3,15 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from time import perf_counter
 
+from snap_tap.backends.contracts import (
+    DriverError,
+    DriverScreenshot,
+    DriverScreenshotCapturer,
+    DriverXmlDump,
+    DriverXmlDumper,
+)
 from snap_tap.device.identity import DeviceInfo, select_device
-from snap_tap.backends.contracts import DriverError
-from snap_tap.backends.contracts import DriverScreenshot, DriverScreenshotCapturer
-from snap_tap.backends.contracts import DriverXmlDump, DriverXmlDumper
 from snap_tap.snapshots.models import RawSnapshotCapture
-
 
 _PRESERVE_DRIVER_CODES = {
     "device_offline",

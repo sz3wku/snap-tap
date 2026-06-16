@@ -3,9 +3,9 @@ from __future__ import annotations
 from time import perf_counter
 from typing import Protocol
 
-from snap_tap.device.identity import normalize_serial
-from snap_tap.backends.contracts import DriverError, DriverText
 from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_MODES
+from snap_tap.backends.contracts import DriverError, DriverText
+from snap_tap.device.identity import normalize_serial
 from snap_tap.primitives.lease import PrimitiveLeaseManager, default_lease_manager
 from snap_tap.primitives.models import (
     PrimitiveDriverResult,
@@ -15,10 +15,10 @@ from snap_tap.primitives.models import (
     PrimitiveSnapshotResult,
     PrimitiveTextRequest,
 )
+from snap_tap.primitives.proof import settle_after_driver_action
 from snap_tap.primitives.receipt import invalid_request_receipt, utc_now
 from snap_tap.primitives.snapshot_provider import PrimitiveSnapshotProvider
 from snap_tap.primitives.target_guard import stale_target_block
-from snap_tap.primitives.proof import settle_after_driver_action
 from snap_tap.primitives.text_receipt import (
     build_blocked_text_target_receipt,
     build_text_receipt,

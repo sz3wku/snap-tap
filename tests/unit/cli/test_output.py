@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+from snap_tap.backends.contracts import (
+    DriverAppAwareness,
+    DriverError,
+    DriverLifecycleResult,
+    DriverScreenshot,
+)
 from snap_tap.cli.output import (
     app_awareness_to_dict,
     error_to_dict,
     lifecycle_to_dict,
     screenshot_to_dict,
 )
-from snap_tap.backends.contracts import DriverError
-from snap_tap.backends.contracts import DriverAppAwareness
-from snap_tap.backends.contracts import DriverLifecycleResult
-from snap_tap.backends.contracts import DriverScreenshot
 
 
 def test_error_to_dict_keeps_code_detail_and_adds_taxonomy() -> None:

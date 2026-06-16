@@ -6,17 +6,24 @@ from typing import Annotated, Protocol
 
 import typer
 
-from snap_tap.cli.output import emit_json
+from snap_tap.backends.android.uiautomator2.app_awareness import (
+    Uiautomator2AppAwarenessReader,
+)
+from snap_tap.backends.android.uiautomator2.screenshot import (
+    Uiautomator2ScreenshotCapturer,
+)
+from snap_tap.backends.contracts import (
+    DriverAppAwarenessReader,
+    DriverScreenshotCapturer,
+    DriverXmlDumper,
+    read_device_app_current,
+)
 from snap_tap.cli.mobile.device_discovery import (
     read_visible_devices,
     resolve_requested_serial,
 )
+from snap_tap.cli.output import emit_json
 from snap_tap.device.discovery import DeviceDiscovery
-from snap_tap.backends.contracts import DriverAppAwarenessReader, read_device_app_current
-from snap_tap.backends.contracts import DriverScreenshotCapturer
-from snap_tap.backends.android.uiautomator2.app_awareness import Uiautomator2AppAwarenessReader
-from snap_tap.backends.android.uiautomator2.screenshot import Uiautomator2ScreenshotCapturer
-from snap_tap.backends.contracts import DriverXmlDumper
 from snap_tap.snapshots import (
     DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
     LatestSnapshotRefError,
@@ -39,7 +46,6 @@ from snap_tap.targets import (
     mobile_snap_to_dict,
     write_latest_snap_source,
 )
-
 
 _LABEL_WIDTH = 36
 

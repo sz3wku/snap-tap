@@ -6,7 +6,6 @@ from snap_tap.backends.contracts import normalize_package
 from snap_tap.primitives.models import PrimitiveAppOpenRequest
 from snap_tap.primitives.proof import normalize_post_action_settle_ms
 
-
 APP_OPEN_OPERATION = "app_open"
 
 

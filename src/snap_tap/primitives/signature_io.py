@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from snap_tap.primitives.models import PrimitiveRequestError
 from snap_tap.semantics import SemanticRole
 from snap_tap.snapshots import SnapshotArtifactRef, SnapshotBounds
 from snap_tap.targets import (
@@ -9,7 +10,6 @@ from snap_tap.targets import (
     TargetSignature,
     TargetSignatureRequirements,
 )
-from snap_tap.primitives.models import PrimitiveRequestError
 
 
 def target_signature_from_dict(payload: Mapping[str, object]) -> TargetSignature:

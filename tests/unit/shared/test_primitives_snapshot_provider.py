@@ -2,12 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from snap_tap.backends.contracts import DriverScreenshot, DriverXmlDump
 from snap_tap.device.identity import DeviceInfo
-from snap_tap.backends.contracts import DriverScreenshot
-from snap_tap.backends.contracts import DriverXmlDump
 from snap_tap.primitives import CorePrimitiveSnapshotProvider
 from snap_tap.targets import build_snapshot_targets
-
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\nfake-png"
 XML_TEXT = (

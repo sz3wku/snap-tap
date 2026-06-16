@@ -3,7 +3,6 @@ from __future__ import annotations
 import importlib
 from pathlib import Path
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SOURCE_ROOT = REPO_ROOT / "src" / "snap_tap"
 PUBLIC_DOC_ROOTS = (

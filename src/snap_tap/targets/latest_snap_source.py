@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from datetime import UTC, datetime
 
+from snap_tap.semantics import SemanticRole
 from snap_tap.snapshots import (
     DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
     SnapshotBounds,
@@ -11,7 +12,6 @@ from snap_tap.snapshots.latest_types import (
     normalize_latest_snapshot_device_id,
     normalize_latest_snapshot_session_id,
 )
-from snap_tap.semantics import SemanticRole
 from snap_tap.targets.latest_snap_source_models import (
     LATEST_SNAP_SOURCE_SCHEMA_VERSION,
     TAPPABLE_ROLES,

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 import json
+from collections.abc import Mapping
 
 from snap_tap.backends.contracts import ERROR_SPECS
-
 
 DEFAULT_DETAIL_LIMIT = 500
 

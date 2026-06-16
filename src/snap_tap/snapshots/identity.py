@@ -1,16 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-from datetime import UTC, datetime
 import hashlib
 import json
+from collections.abc import Mapping
+from datetime import UTC, datetime
 
 from snap_tap.snapshots.models import (
     RawSnapshotCapture,
     SnapshotArtifactRef,
     SnapshotIdentity,
 )
-
 
 SNAPSHOT_HASH_VERSION = "raw_snapshot_hash.v1"
 

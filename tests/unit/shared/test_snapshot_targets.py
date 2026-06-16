@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import pytest
-
 from typing import cast
+
+import pytest
 
 from snap_tap.semantics import (
     SEMANTIC_SCREEN_METADATA_SCHEMA_VERSION,

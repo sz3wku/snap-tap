@@ -5,14 +5,15 @@ from pathlib import Path
 from time import perf_counter
 from typing import Protocol
 
+from snap_tap.backends.contracts import (
+    DriverError,
+    DriverScreenshotCapturer,
+    DriverXmlDumper,
+)
 from snap_tap.device.identity import DeviceInfo
-from snap_tap.backends.contracts import DriverError
-from snap_tap.backends.contracts import DriverScreenshotCapturer
-from snap_tap.backends.contracts import DriverXmlDumper
 from snap_tap.primitives.models import PrimitiveSnapshotResult
 from snap_tap.semantics import SemanticSnapshotError, build_semantic_snapshot
 from snap_tap.snapshots import capture_raw_snapshot, materialize_raw_snapshot_artifacts
-
 
 DEFAULT_PRIMITIVE_SNAPSHOT_ROOT = Path("temp/mobile-primitives")
 

@@ -23,9 +23,9 @@ from snap_tap.backends._shared.app_lifecycle import (
 )
 from snap_tap.backends._shared.errors import (
     ERROR_SPECS,
+    UNKNOWN_ERROR_SPEC,
     DriverError,
     ErrorSpec,
-    UNKNOWN_ERROR_SPEC,
     error_spec,
     is_driver_recoverable,
 )

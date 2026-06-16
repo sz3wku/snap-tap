@@ -16,7 +16,6 @@ from snap_tap.snapshots import (
     SnapshotNormalization,
 )
 
-
 SEMANTIC_TOP_LEVEL_KEYS = {
     "schema_version", "snapshot_id", "device_id", "captured_at",
     "refs", "elements", "screen_metadata", "role_normalization",

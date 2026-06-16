@@ -1,19 +1,22 @@
 from __future__ import annotations
 
+import math
+import sys
 from collections.abc import Mapping
 from datetime import UTC, datetime
-import math
 from time import perf_counter
-import sys
 
-from snap_tap.device.identity import normalize_serial
-from snap_tap.backends.contracts import DriverError, DriverTap
+from snap_tap.backends.android.uiautomator2.probe_payload import (
+    parse_probe_payload,
+    probe_error_detail,
+)
 from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessRunner,
     ProcessTimeoutError,
     SubprocessRunner,
 )
-from snap_tap.backends.android.uiautomator2.probe_payload import parse_probe_payload, probe_error_detail
+from snap_tap.backends.contracts import DriverError, DriverTap
+from snap_tap.device.identity import normalize_serial
 
 
 class Uiautomator2Tapper:

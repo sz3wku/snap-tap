@@ -5,18 +5,18 @@ from typing import Annotated, Protocol
 
 import typer
 
-from snap_tap.cli.mobile.device_discovery import resolve_requested_serial
-from snap_tap.cli.mobile.primitive_result_output import (
-    emit_primitive_result,
-)
-from snap_tap.cli.mobile.primitive_navigation_command import (
-    PrimitiveNavigationDependencies,
-    execute_primitive_navigation_request,
-)
 from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_BACK,
     NAVIGATION_HOME,
     NAVIGATION_SWIPE,
+)
+from snap_tap.cli.mobile.device_discovery import resolve_requested_serial
+from snap_tap.cli.mobile.primitive_navigation_command import (
+    PrimitiveNavigationDependencies,
+    execute_primitive_navigation_request,
+)
+from snap_tap.cli.mobile.primitive_result_output import (
+    emit_primitive_result,
 )
 from snap_tap.primitives import (
     NAVIGATION_WAIT,

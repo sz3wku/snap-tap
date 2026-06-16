@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from snap_tap.device.identity import DeviceInfo
 from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessResult,
     ProcessRunner,
     ProcessTimeoutError,
 )
-from snap_tap.backends.contracts import DriverXmlDump
 from snap_tap.backends.android.uiautomator2.xml_dump import (
     dump_device_xml,
     dump_uiautomator2_xml,
 )
+from snap_tap.backends.contracts import DriverXmlDump
+from snap_tap.device.identity import DeviceInfo
 
 
 class FakeProcessRunner(ProcessRunner):

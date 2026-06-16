@@ -17,7 +17,6 @@ from snap_tap.semantics import (
 from snap_tap.snapshots import SnapshotArtifactRef, SnapshotBounds
 from snap_tap.targets import build_snapshot_targets, snapshot_targets_to_dict
 
-
 TARGET_TOP_LEVEL_KEYS = {
     "schema_version",
     "snapshot_id",

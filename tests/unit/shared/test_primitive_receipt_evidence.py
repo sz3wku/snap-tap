@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import hashlib
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
+from primitives_tap_helpers import fake_tap_snapshot
 
 from snap_tap.evidence import (
     EvidenceWriteError,
@@ -19,7 +20,6 @@ from snap_tap.primitives.receipt import (
     invalid_request_receipt,
     primitive_receipt_to_dict,
 )
-from primitives_tap_helpers import fake_tap_snapshot
 
 
 def test_write_primitive_receipt_evidence_writes_canonical_json(

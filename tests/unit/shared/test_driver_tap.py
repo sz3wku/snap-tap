@@ -1,12 +1,16 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 import json
 import os
 import subprocess
 import sys
+from collections.abc import Sequence
 
-from snap_tap.backends.android.uiautomator2.process_runner import ProcessResult, ProcessRunner, ProcessTimeoutError
+from snap_tap.backends.android.uiautomator2.process_runner import (
+    ProcessResult,
+    ProcessRunner,
+    ProcessTimeoutError,
+)
 from snap_tap.backends.android.uiautomator2.tap import tap_uiautomator2
 
 

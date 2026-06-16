@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from snap_tap.cli.output import error_to_dict
-from snap_tap.device.discovery import DeviceDiscovery
-from snap_tap.device.identity import DeviceInfo
 from snap_tap.backends.contracts import (
     DriverError,
     DriverHealth,
     DriverLifecycleResult,
     DriverXmlDump,
 )
-
+from snap_tap.cli.output import error_to_dict
+from snap_tap.device.discovery import DeviceDiscovery
+from snap_tap.device.identity import DeviceInfo
 
 DISCOVERY_FAILURE_DETAIL = "Android device discovery failed before command execution."
 

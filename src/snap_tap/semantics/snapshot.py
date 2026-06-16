@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import re
+from dataclasses import replace
 
 from snap_tap.semantics.models import (
     SEMANTIC_SNAPSHOT_SCHEMA_VERSION,
@@ -22,7 +22,6 @@ from snap_tap.snapshots import (
     SnapshotBounds,
     SnapshotElement,
 )
-
 
 _SOURCE_SCHEMA_VERSION = "snapshot_elements.v1"
 _ACCESSIBILITY_FIELDS = ("text", "content_desc", "hint")

@@ -7,7 +7,6 @@ from snap_tap.backends.contracts import DriverError
 from snap_tap.semantics import SemanticSnapshot
 from snap_tap.targets import TargetResolution, TargetSignature
 
-
 PRIMITIVE_RECEIPT_SCHEMA_VERSION = "primitive_receipt.v1"
 DEFAULT_POST_ACTION_SETTLE_MS = 2000
 MAX_POST_ACTION_SETTLE_MS = 10000

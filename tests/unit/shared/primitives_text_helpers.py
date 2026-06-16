@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from snap_tap.backends.contracts import DriverError
-from snap_tap.backends.android.uiautomator2.process_runner import ProcessResult, ProcessRunner
-from snap_tap.backends.contracts import DriverText
+from snap_tap.backends.android.uiautomator2.process_runner import (
+    ProcessResult,
+    ProcessRunner,
+)
 from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE
+from snap_tap.backends.contracts import DriverError, DriverText
 from snap_tap.primitives import PrimitiveSnapshotResult, PrimitiveTextRequest
 from snap_tap.primitives.receipt import utc_now
 from snap_tap.semantics import (

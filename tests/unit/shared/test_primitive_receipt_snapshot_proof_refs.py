@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import replace
 import json
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, cast
+
+from primitives_tap_helpers import fake_tap_snapshot
 
 from snap_tap.evidence import write_primitive_receipt_evidence
 from snap_tap.primitives.models import PrimitiveReceipt
 from snap_tap.primitives.receipt import invalid_request_receipt
 from snap_tap.snapshots import SnapshotArtifactRef
-from primitives_tap_helpers import fake_tap_snapshot
 
 
 def test_receipt_evidence_marks_local_snapshot_refs_volatile(

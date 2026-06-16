@@ -6,7 +6,6 @@ from enum import Enum
 
 from snap_tap.snapshots import SnapshotArtifactRef, SnapshotBounds
 
-
 SEMANTIC_SNAPSHOT_SCHEMA_VERSION = "semantic_snapshot.v1"
 SEMANTIC_SCREEN_METADATA_SCHEMA_VERSION = "semantic_screen_metadata.v1"
 

@@ -1,10 +1,8 @@
 from __future__ import annotations
 
+from snap_tap.backends.contracts import DriverScreenshot, DriverXmlDump
 from snap_tap.device.identity import DeviceInfo
-from snap_tap.backends.contracts import DriverScreenshot
-from snap_tap.backends.contracts import DriverXmlDump
 from snap_tap.snapshots import capture_raw_snapshot
-
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\nfake-png"
 XML_TEXT = "<hierarchy><node /></hierarchy>"

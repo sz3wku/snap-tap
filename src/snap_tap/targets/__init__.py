@@ -1,24 +1,3 @@
-from snap_tap.targets.models import (
-    MOBILE_SNAP_SCHEMA_VERSION,
-    SNAPSHOT_TARGETS_SCHEMA_VERSION,
-    TARGET_RESOLUTION_SCHEMA_VERSION,
-    TARGET_SIGNATURE_SCHEMA_VERSION,
-    MobileSnap,
-    MobileSnapKind,
-    MobileSnapOperatorLabelCandidate,
-    MobileSnapTarget,
-    SnapshotTarget,
-    SnapshotTargets,
-    SnapshotTargetsError,
-    SnapshotTargetSummary,
-    TargetResolution,
-    TargetResolutionBlockingReason,
-    TargetResolutionError,
-    TargetResolutionMatch,
-    TargetSignature,
-    TargetSignatureError,
-    TargetSignatureRequirements,
-)
 from snap_tap.targets.latest_snap_source import (
     LATEST_SNAP_SOURCE_SCHEMA_VERSION,
     LatestSnapSource,
@@ -42,7 +21,31 @@ from snap_tap.targets.mobile_snap import (
     mobile_snap_failure,
 )
 from snap_tap.targets.mobile_snap_payload import mobile_snap_to_dict
-from snap_tap.targets.resolution import resolve_target_signature, target_resolution_to_dict
+from snap_tap.targets.models import (
+    MOBILE_SNAP_SCHEMA_VERSION,
+    SNAPSHOT_TARGETS_SCHEMA_VERSION,
+    TARGET_RESOLUTION_SCHEMA_VERSION,
+    TARGET_SIGNATURE_SCHEMA_VERSION,
+    MobileSnap,
+    MobileSnapKind,
+    MobileSnapOperatorLabelCandidate,
+    MobileSnapTarget,
+    SnapshotTarget,
+    SnapshotTargets,
+    SnapshotTargetsError,
+    SnapshotTargetSummary,
+    TargetResolution,
+    TargetResolutionBlockingReason,
+    TargetResolutionError,
+    TargetResolutionMatch,
+    TargetSignature,
+    TargetSignatureError,
+    TargetSignatureRequirements,
+)
+from snap_tap.targets.resolution import (
+    resolve_target_signature,
+    target_resolution_to_dict,
+)
 from snap_tap.targets.signature import build_target_signature, target_signature_to_dict
 from snap_tap.targets.snapshot import build_snapshot_targets, snapshot_targets_to_dict
 

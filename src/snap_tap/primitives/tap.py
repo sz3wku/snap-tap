@@ -3,8 +3,8 @@ from __future__ import annotations
 from time import perf_counter
 from typing import Protocol
 
-from snap_tap.device.identity import normalize_serial
 from snap_tap.backends.contracts import DriverError, DriverTap
+from snap_tap.device.identity import normalize_serial
 from snap_tap.primitives.lease import PrimitiveLeaseManager, default_lease_manager
 from snap_tap.primitives.models import (
     PRIMITIVE_RECEIPT_SCHEMA_VERSION,

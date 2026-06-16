@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from snap_tap.device.identity import DeviceInfo
 from snap_tap.backends.contracts import (
     DriverScreenshot,
     capture_device_screenshot,
 )
-
+from snap_tap.device.identity import DeviceInfo
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\nfake-png"
 

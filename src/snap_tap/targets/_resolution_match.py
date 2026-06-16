@@ -15,7 +15,6 @@ from snap_tap.targets.models import (
     TargetSignatureRequirements,
 )
 
-
 _IDENTITY_FIELD_ORDER = (
     "resource_id",
     "label",

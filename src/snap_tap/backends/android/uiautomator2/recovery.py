@@ -5,12 +5,11 @@ from dataclasses import dataclass, replace
 from time import perf_counter
 from typing import Any, Protocol, TypeVar, cast
 
-from snap_tap.backends.contracts import DriverError, is_driver_recoverable
 from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessRunner,
     ProcessTimeoutError,
 )
-
+from snap_tap.backends.contracts import DriverError, is_driver_recoverable
 
 DEFAULT_RECOVERY_TIMEOUT_S = 30.0
 RECOVERABLE_READ_OPERATIONS = frozenset(

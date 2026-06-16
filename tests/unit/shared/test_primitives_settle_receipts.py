@@ -4,6 +4,25 @@ from dataclasses import replace
 from typing import cast
 
 import pytest
+from primitives_tap_helpers import (
+    FakeSnapshotProvider as TapSnapshotProvider,
+)
+from primitives_tap_helpers import (
+    FakeTapper,
+    fake_driver_tap_result,
+    fake_tap_request,
+    fake_tap_snapshot_result,
+)
+from primitives_text_helpers import (
+    FakeSnapshotProvider as TextSnapshotProvider,
+)
+from primitives_text_helpers import (
+    FakeTexter,
+    fake_driver_result,
+    fake_request,
+    fake_snapshot_result,
+)
+from test_primitives_navigation import FakeNavigator, FakeProvider, _driver_result
 
 from snap_tap.backends.android.uiautomator2.navigation import NAVIGATION_BACK
 from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE
@@ -19,21 +38,6 @@ from snap_tap.primitives.models import (
     DEFAULT_POST_ACTION_SETTLE_MS,
     MAX_POST_ACTION_SETTLE_MS,
 )
-from primitives_tap_helpers import (
-    FakeSnapshotProvider as TapSnapshotProvider,
-    FakeTapper,
-    fake_driver_tap_result,
-    fake_tap_request,
-    fake_tap_snapshot_result,
-)
-from primitives_text_helpers import (
-    FakeSnapshotProvider as TextSnapshotProvider,
-    FakeTexter,
-    fake_driver_result,
-    fake_request,
-    fake_snapshot_result,
-)
-from test_primitives_navigation import FakeNavigator, FakeProvider, _driver_result
 
 
 @pytest.mark.parametrize(

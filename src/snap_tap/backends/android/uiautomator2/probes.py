@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import argparse
 import base64
-from io import BytesIO
 import json
 from collections.abc import Mapping, Sequence
+from io import BytesIO
 from typing import Any
 
 from snap_tap.backends.android.uiautomator2.probe_payload import safe_error_detail

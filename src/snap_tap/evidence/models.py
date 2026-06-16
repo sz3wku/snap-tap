@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 EVIDENCE_ARTIFACT_SCHEMA_VERSION = "evidence_artifact.v1"
 DEFAULT_REDACTION_CLASS = "receipt_safe"
 

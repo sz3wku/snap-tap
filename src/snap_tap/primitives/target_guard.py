@@ -7,7 +7,6 @@ from snap_tap.semantics import SemanticSnapshot
 from snap_tap.snapshots import SnapshotBounds
 from snap_tap.targets import TargetResolution, TargetSignature
 
-
 PRIMITIVE_TARGET_STALE_CODE = "primitive_target_stale"
 
 _CENTER_DRIFT_FLOOR_PX = 64.0

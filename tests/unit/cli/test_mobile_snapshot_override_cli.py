@@ -1,22 +1,27 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 import json
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
 import typer
 from typer.testing import CliRunner
 
+from snap_tap.backends.contracts import (
+    DriverHealth,
+    DriverLifecycleResult,
+    DriverScreenshot,
+    DriverXmlDump,
+)
 from snap_tap.cli.mobile.app import MobileDependencies, build_mobile_app
 from snap_tap.device.identity import DeviceInfo
-from snap_tap.backends.contracts import DriverHealth
-from snap_tap.backends.contracts import DriverLifecycleResult
-from snap_tap.backends.contracts import DriverScreenshot
-from snap_tap.backends.contracts import DriverXmlDump
-from snap_tap.primitives import PrimitiveReceipt, PrimitiveTapRequest, invalid_request_receipt
+from snap_tap.primitives import (
+    PrimitiveReceipt,
+    PrimitiveTapRequest,
+    invalid_request_receipt,
+)
 from snap_tap.snapshots import RawSnapshotCapture, materialize_raw_snapshot_artifacts
-
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\nfake-png"
 XML_TEXT = (

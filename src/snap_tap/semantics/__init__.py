@@ -13,7 +13,10 @@ from snap_tap.semantics.models import (
     ViewportOrientation,
 )
 from snap_tap.semantics.roles import classify_semantic_role
-from snap_tap.semantics.snapshot import build_semantic_snapshot, semantic_snapshot_to_dict
+from snap_tap.semantics.snapshot import (
+    build_semantic_snapshot,
+    semantic_snapshot_to_dict,
+)
 
 __all__ = [
     "SEMANTIC_SNAPSHOT_SCHEMA_VERSION",

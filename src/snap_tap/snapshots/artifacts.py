@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-from datetime import UTC, datetime
 import hashlib
 import os
-from pathlib import Path
 import shutil
+from collections.abc import Mapping
+from datetime import UTC, datetime
+from pathlib import Path
 from uuid import uuid4
 
 from snap_tap.snapshots.elements import (

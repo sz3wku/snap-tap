@@ -7,13 +7,35 @@ from typing import Annotated
 
 import typer
 
-from snap_tap.cli.output import (
-    device_to_dict,
-    emit_json,
-    health_to_dict,
-    lifecycle_to_dict,
-    screenshot_to_dict,
-    xml_dump_to_dict,
+from snap_tap.backends.android.uiautomator2.app_awareness import (
+    Uiautomator2AppAwarenessReader,
+)
+from snap_tap.backends.android.uiautomator2.app_lifecycle import (
+    Uiautomator2AppLifecycle,
+)
+from snap_tap.backends.android.uiautomator2.backend import Uiautomator2Backend
+from snap_tap.backends.android.uiautomator2.lifecycle import (
+    Uiautomator2LifecycleRunner,
+)
+from snap_tap.backends.android.uiautomator2.screenshot import (
+    Uiautomator2ScreenshotCapturer,
+)
+from snap_tap.backends.android.uiautomator2.xml_dump import (
+    Uiautomator2XmlDumper,
+    dump_device_xml,
+)
+from snap_tap.backends.contracts import (
+    DriverAppAwarenessReader,
+    DriverAppLifecycle,
+    DriverBackend,
+    DriverHealth,
+    DriverLifecycleResult,
+    DriverLifecycleRunner,
+    DriverScreenshot,
+    DriverScreenshotCapturer,
+    DriverXmlDump,
+    DriverXmlDumper,
+    check_device_health,
 )
 from snap_tap.cli.mobile.app_awareness_command import register_app_awareness_commands
 from snap_tap.cli.mobile.app_lifecycle_command import (
@@ -29,6 +51,11 @@ from snap_tap.cli.mobile.device_discovery import (
     read_visible_devices,
     resolve_requested_serial,
 )
+from snap_tap.cli.mobile.navigation_command import register_navigation_commands
+from snap_tap.cli.mobile.primitive_navigation_command import (
+    PrimitiveNavigationExecutor,
+    register_primitive_navigation_commands,
+)
 from snap_tap.cli.mobile.primitive_tap_command import (
     PrimitiveTapExecutor,
     register_primitive_tap_command,
@@ -37,45 +64,27 @@ from snap_tap.cli.mobile.primitive_text_command import (
     PrimitiveTextExecutor,
     register_primitive_text_commands,
 )
-from snap_tap.cli.mobile.primitive_navigation_command import (
-    PrimitiveNavigationExecutor,
-    register_primitive_navigation_commands,
-)
-from snap_tap.cli.mobile.navigation_command import register_navigation_commands
 from snap_tap.cli.mobile.screenshot_command import run_screenshot_command
 from snap_tap.cli.mobile.snap_command import register_snap_commands
 from snap_tap.cli.mobile.snapshot_command import register_snapshot_commands
 from snap_tap.cli.mobile.tap_command import register_tap_command
 from snap_tap.cli.mobile.text_command import register_text_commands
+from snap_tap.cli.output import (
+    device_to_dict,
+    emit_json,
+    health_to_dict,
+    lifecycle_to_dict,
+    screenshot_to_dict,
+    xml_dump_to_dict,
+)
 from snap_tap.device.discovery import AdbDeviceDiscovery, DeviceDiscovery
 from snap_tap.device.identity import DeviceInfo, select_device
-from snap_tap.backends.contracts import (
-    DriverAppAwarenessReader,
-    DriverAppLifecycle,
-    DriverBackend,
-    DriverHealth,
-    DriverLifecycleResult,
-    DriverLifecycleRunner,
-    DriverScreenshot,
-    DriverScreenshotCapturer,
-    DriverXmlDump,
-    DriverXmlDumper,
-    check_device_health,
-)
-from snap_tap.backends.android.uiautomator2.lifecycle import (
-    Uiautomator2LifecycleRunner,
-)
 from snap_tap.primitives import (
     PrimitiveAppOpener,
     PrimitiveNavigator,
     PrimitiveTapper,
     PrimitiveTexter,
 )
-from snap_tap.backends.android.uiautomator2.screenshot import Uiautomator2ScreenshotCapturer
-from snap_tap.backends.android.uiautomator2.backend import Uiautomator2Backend
-from snap_tap.backends.android.uiautomator2.app_awareness import Uiautomator2AppAwarenessReader
-from snap_tap.backends.android.uiautomator2.app_lifecycle import Uiautomator2AppLifecycle
-from snap_tap.backends.android.uiautomator2.xml_dump import Uiautomator2XmlDumper, dump_device_xml
 from snap_tap.snapshots import DEFAULT_LATEST_SNAPSHOT_CACHE_ROOT
 
 

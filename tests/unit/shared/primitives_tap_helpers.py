@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from snap_tap.backends.contracts import DriverError
-from snap_tap.backends.contracts import DriverTap
+from snap_tap.backends.contracts import DriverError, DriverTap
 from snap_tap.primitives import PrimitiveSnapshotResult, PrimitiveTapRequest
 from snap_tap.primitives.receipt import utc_now
 from snap_tap.semantics import (

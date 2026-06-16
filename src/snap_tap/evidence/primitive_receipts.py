@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-from datetime import UTC, datetime
 import hashlib
 import json
 import os
-from pathlib import Path
 import re
+from collections.abc import Mapping
+from datetime import UTC, datetime
+from pathlib import Path
 from uuid import uuid4
 
 from snap_tap.evidence.models import (
@@ -21,7 +21,6 @@ from snap_tap.primitives.models import (
     PrimitiveReceipt,
 )
 from snap_tap.primitives.receipt import primitive_receipt_to_dict
-
 
 PRIMITIVE_RECEIPT_ARTIFACT_KIND = PRIMITIVE_RECEIPT_SCHEMA_VERSION
 PRIMITIVE_RECEIPT_ARTIFACT_OWNER = "src/snap_tap/primitives"

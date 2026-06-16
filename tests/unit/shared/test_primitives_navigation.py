@@ -3,9 +3,13 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import cast
 
-from snap_tap.backends.contracts import DriverError
-from snap_tap.backends.contracts import DriverNavigation
-from snap_tap.backends.android.uiautomator2.navigation import NAVIGATION_BACK, NAVIGATION_SWIPE
+from primitives_text_helpers import fake_snapshot, fake_snapshot_result
+
+from snap_tap.backends.android.uiautomator2.navigation import (
+    NAVIGATION_BACK,
+    NAVIGATION_SWIPE,
+)
+from snap_tap.backends.contracts import DriverError, DriverNavigation
 from snap_tap.primitives import (
     PrimitiveLeaseManager,
     PrimitiveNavigationRequest,
@@ -15,7 +19,6 @@ from snap_tap.primitives import (
 )
 from snap_tap.primitives.receipt import utc_now
 from snap_tap.semantics import SemanticViewport, ViewportOrientation
-from primitives_text_helpers import fake_snapshot, fake_snapshot_result
 
 
 class FakeProvider:

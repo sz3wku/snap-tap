@@ -4,14 +4,14 @@ from dataclasses import dataclass
 from time import perf_counter, sleep
 from typing import Protocol
 
-from snap_tap.device.identity import normalize_serial
-from snap_tap.backends.contracts import DriverError, DriverNavigation
 from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_BACK,
     NAVIGATION_HOME,
     NAVIGATION_SWIPE,
     SWIPE_DIRECTIONS,
 )
+from snap_tap.backends.contracts import DriverError, DriverNavigation
+from snap_tap.device.identity import normalize_serial
 from snap_tap.primitives.lease import PrimitiveLeaseManager, default_lease_manager
 from snap_tap.primitives.models import (
     PrimitiveDriverResult,
@@ -33,7 +33,10 @@ from snap_tap.primitives.navigation_snapshot import (
     exception_detail,
     snapshot_failure_detail,
 )
-from snap_tap.primitives.proof import settle_after_driver_action, status_for_driver_and_proof
+from snap_tap.primitives.proof import (
+    settle_after_driver_action,
+    status_for_driver_and_proof,
+)
 from snap_tap.primitives.receipt import invalid_request_receipt, utc_now
 from snap_tap.primitives.snapshot_provider import PrimitiveSnapshotProvider
 from snap_tap.semantics import SemanticSnapshot
@@ -267,7 +270,9 @@ def _run_navigation_driver(
     started: float,
 ) -> PrimitiveDriverResult | DriverError:
     if navigator is None:
-        from snap_tap.backends.android.uiautomator2.navigation import Uiautomator2Navigator
+        from snap_tap.backends.android.uiautomator2.navigation import (
+            Uiautomator2Navigator,
+        )
 
         navigator = Uiautomator2Navigator()
     try:

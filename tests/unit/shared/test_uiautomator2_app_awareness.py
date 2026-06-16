@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
+from snap_tap.backends.android.uiautomator2.app_awareness import (
+    read_uiautomator2_app_current,
+    read_uiautomator2_package_info,
+)
 from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessResult,
     ProcessRunner,
     ProcessTimeoutError,
-)
-from snap_tap.backends.android.uiautomator2.app_awareness import (
-    read_uiautomator2_app_current,
-    read_uiautomator2_package_info,
 )
 
 

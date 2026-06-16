@@ -1,10 +1,18 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 import json
+from collections.abc import Sequence
 
-from snap_tap.backends.android.uiautomator2.process_runner import ProcessResult, ProcessRunner, ProcessTimeoutError
-from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_REPLACE_MODE, text_uiautomator2
+from snap_tap.backends.android.uiautomator2.process_runner import (
+    ProcessResult,
+    ProcessRunner,
+    ProcessTimeoutError,
+)
+from snap_tap.backends.android.uiautomator2.text import (
+    TEXT_INPUT_MODE,
+    TEXT_REPLACE_MODE,
+    text_uiautomator2,
+)
 
 
 class FakeRunner(ProcessRunner):

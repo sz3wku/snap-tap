@@ -4,16 +4,16 @@ from collections.abc import Mapping
 
 from snap_tap.semantics import SemanticSnapshot
 from snap_tap.snapshots import SnapshotArtifactRef
-from snap_tap.targets._resolution_payload import (
-    target_resolution_to_dict,
-    validated_resolution_refs,
-)
 from snap_tap.targets._resolution_match import (
     ResolutionBlocked,
     matched_fields,
     target_matches,
     validate_snapshot_identity,
     validated_signature_identity,
+)
+from snap_tap.targets._resolution_payload import (
+    target_resolution_to_dict,
+    validated_resolution_refs,
 )
 from snap_tap.targets.models import (
     TARGET_RESOLUTION_SCHEMA_VERSION,
@@ -25,7 +25,6 @@ from snap_tap.targets.models import (
     TargetSignature,
 )
 from snap_tap.targets.snapshot import build_snapshot_targets
-
 
 __all__ = [
     "TargetResolutionError",

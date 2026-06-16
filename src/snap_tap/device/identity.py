@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
-import re
-
 
 _VALID_SERIAL_RE = re.compile(r"^[A-Za-z0-9._:-]+$")
 

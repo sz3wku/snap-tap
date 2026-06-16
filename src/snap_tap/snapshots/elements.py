@@ -11,7 +11,6 @@ from snap_tap.snapshots.models import (
     SnapshotNormalization,
 )
 
-
 SNAPSHOT_ELEMENTS_SCHEMA_VERSION = "snapshot_elements.v1"
 _BOUNDS_RE = re.compile(r"^\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]$")
 _WHITESPACE_RE = re.compile(r"\s+")

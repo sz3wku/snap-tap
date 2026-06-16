@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 import json
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
 import typer
 from typer.testing import CliRunner
 
-from snap_tap.cli.mobile.app import MobileDependencies, build_mobile_app
-from snap_tap.device.identity import DeviceInfo
 from snap_tap.backends.contracts import (
     DriverAppCatalog,
     DriverAppEntry,
@@ -19,6 +17,8 @@ from snap_tap.backends.contracts import (
     DriverScreenshot,
     DriverXmlDump,
 )
+from snap_tap.cli.mobile.app import MobileDependencies, build_mobile_app
+from snap_tap.device.identity import DeviceInfo
 from snap_tap.primitives import (
     PrimitiveAppOpenRequest,
     PrimitiveReceipt,

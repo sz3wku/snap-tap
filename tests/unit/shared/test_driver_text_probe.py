@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from snap_tap.backends.android.uiautomator2.text_probe import focused_text, safe_focused_text, text_was_applied
+from snap_tap.backends.android.uiautomator2.text_probe import (
+    focused_text,
+    safe_focused_text,
+    text_was_applied,
+)
 
 
 def test_focused_text_reads_focused_node_text() -> None:

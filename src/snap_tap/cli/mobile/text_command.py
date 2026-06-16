@@ -5,8 +5,18 @@ from typing import Annotated, Protocol
 
 import typer
 
+from snap_tap.backends.android.uiautomator2.text import (
+    TEXT_INPUT_MODE,
+    TEXT_MODES,
+    TEXT_REPLACE_MODE,
+)
+from snap_tap.backends.contracts import DriverError
 from snap_tap.cli.mobile.primitive_result_output import (
     emit_primitive_result,
+)
+from snap_tap.cli.mobile.primitive_text_command import (
+    PrimitiveTextDependencies,
+    run_primitive_text_request,
 )
 from snap_tap.cli.mobile.text_alias_helpers import (
     blocked_text_receipt,
@@ -14,13 +24,7 @@ from snap_tap.cli.mobile.text_alias_helpers import (
     safe_text_request_metadata,
     target_id_error,
 )
-from snap_tap.cli.mobile.primitive_text_command import (
-    PrimitiveTextDependencies,
-    run_primitive_text_request,
-)
 from snap_tap.device.identity import normalize_serial
-from snap_tap.backends.contracts import DriverError
-from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_REPLACE_MODE, TEXT_MODES
 from snap_tap.primitives import PrimitiveReceipt, PrimitiveTextRequest
 from snap_tap.snapshots import (
     DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
