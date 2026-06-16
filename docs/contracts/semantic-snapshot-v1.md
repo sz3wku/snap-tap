@@ -67,7 +67,8 @@ Each S2 semantic element contains:
 - `clickable`,
 - `scrollable`,
 - `label`: primary normalized label string or `null`,
-- `label_source`: one of `content_desc`, `text`, `hint`, or `none`,
+- `label_source`: one of `content_desc`, `text`, `hint`, `descendant_text`, or
+  `none`,
 - `accessibility`: whitelisted non-empty accessibility/text fields,
 - optional structural source facts already allowed by `snapshot_elements.v1`:
   `class_name`, `resource_id`, `package`.
@@ -132,7 +133,9 @@ S2 derives labels using this precedence:
 1. `content-desc`
 2. `text`
 3. `hint`
-4. `none`
+4. `descendant_text` for unlabeled enabled clickable parents with exactly one
+   labeled descendant contained inside their bounds
+5. `none`
 
 Each source string is normalized before export:
 
@@ -144,12 +147,13 @@ Each source string is normalized before export:
 The semantic element `label` contains the first normalized non-empty value by
 precedence. `label_source` records which source won. `accessibility` may expose
 the normalized non-empty source fields with keys `text`, `content_desc`, and
-`hint`.
+`hint`. `descendant_text` does not add inherited text to `accessibility`; it is
+only a generic label on the clickable parent.
 
 S2 does not infer labels from screenshots, OCR, models, platform configs,
 package names, workflow state, or coordinates. Direct Android node attributes
-are sufficient for S2; descendant text aggregation is deferred unless a later
-slice explicitly opens it.
+are preferred; descendant text aggregation is allowed only for an unlabeled
+enabled clickable parent with exactly one labeled descendant inside its bounds.
 
 ## Screen Metadata Rules
 

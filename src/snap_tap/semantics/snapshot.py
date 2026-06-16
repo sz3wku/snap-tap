@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import re
 
 from snap_tap.semantics.models import (
@@ -27,6 +28,7 @@ _SOURCE_SCHEMA_VERSION = "snapshot_elements.v1"
 _ACCESSIBILITY_FIELDS = ("text", "content_desc", "hint")
 _LABEL_PRECEDENCE = ("content_desc", "text", "hint")
 _LABEL_NONE = "none"
+_LABEL_DESCENDANT_TEXT = "descendant_text"
 _SOURCE_TEXT_MAX_LENGTH = 256
 _WHITESPACE_RE = re.compile(r"\s+")
 __all__ = [
@@ -53,9 +55,8 @@ def build_semantic_snapshot(raw: RawSnapshotCapture) -> SemanticSnapshot:
             detail="Semantic snapshot received unsupported raw element schema.",
         )
 
-    elements = tuple(
-        _semantic_element(element) for element in raw.elements if element.visible
-    )
+    visible_elements = tuple(element for element in raw.elements if element.visible)
+    elements = _semantic_elements(visible_elements)
     return SemanticSnapshot(
         schema_version=SEMANTIC_SNAPSHOT_SCHEMA_VERSION,
         snapshot_id=raw.identity.snapshot_id,
@@ -93,6 +94,21 @@ def semantic_snapshot_to_dict(snapshot: SemanticSnapshot) -> dict[str, object]:
     return payload
 
 
+def _semantic_elements(elements: tuple[SnapshotElement, ...]) -> tuple[SemanticElement, ...]:
+    semantic_elements = tuple(_semantic_element(element) for element in elements)
+    return tuple(
+        _with_descendant_label(
+            semantic=semantic,
+            source=source,
+            elements=elements,
+            index=index,
+        )
+        for index, (source, semantic) in enumerate(
+            zip(elements, semantic_elements, strict=True)
+        )
+    )
+
+
 def _semantic_element(element: SnapshotElement) -> SemanticElement:
     accessibility = _accessibility_fields(element)
     label_source, label = _primary_label(accessibility)
@@ -109,6 +125,55 @@ def _semantic_element(element: SnapshotElement) -> SemanticElement:
         class_name=element.class_name,
         resource_id=element.resource_id,
         package=element.package,
+    )
+
+
+def _with_descendant_label(
+    *,
+    semantic: SemanticElement,
+    source: SnapshotElement,
+    elements: tuple[SnapshotElement, ...],
+    index: int,
+) -> SemanticElement:
+    if semantic.label is not None or not source.clickable or not source.enabled:
+        return semantic
+    label = _single_descendant_label(source, elements=elements, index=index)
+    if label is None:
+        return semantic
+    return replace(
+        semantic,
+        label=label,
+        label_source=_LABEL_DESCENDANT_TEXT,
+    )
+
+
+def _single_descendant_label(
+    source: SnapshotElement,
+    *,
+    elements: tuple[SnapshotElement, ...],
+    index: int,
+) -> str | None:
+    candidates: list[str] = []
+    for descendant in elements[index + 1 :]:
+        if descendant.depth <= source.depth:
+            break
+        if not _bounds_contain(source.bounds, descendant.bounds):
+            continue
+        label = _primary_label(_accessibility_fields(descendant))[1]
+        if label is not None:
+            candidates.append(label)
+    unique = tuple(dict.fromkeys(candidates))
+    if len(unique) != 1:
+        return None
+    return unique[0]
+
+
+def _bounds_contain(container: SnapshotBounds, child: SnapshotBounds) -> bool:
+    return (
+        container.left <= child.left
+        and container.top <= child.top
+        and container.right >= child.right
+        and container.bottom >= child.bottom
     )
 
 

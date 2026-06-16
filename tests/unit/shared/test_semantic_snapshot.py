@@ -121,6 +121,82 @@ def test_semantic_snapshot_exports_normalized_labels_by_precedence() -> None:
     }
 
 
+def test_semantic_snapshot_labels_unlabeled_clickable_parent_from_child_text() -> None:
+    from snap_tap.semantics.snapshot import (
+        build_semantic_snapshot,
+        semantic_snapshot_to_dict,
+    )
+
+    raw = _raw_capture(
+        elements=[
+            _element(
+                source_index=1,
+                class_name="android.view.View",
+                text=None,
+                depth=0,
+                bounds=_bounds_at(100, 100, 500, 180),
+            ),
+            _element(
+                source_index=2,
+                class_name="android.widget.TextView",
+                text=" Włącz ",
+                clickable=False,
+                depth=1,
+                bounds=_bounds_at(240, 120, 360, 160),
+            ),
+        ]
+    )
+
+    payload = semantic_snapshot_to_dict(build_semantic_snapshot(raw))
+    elements = cast(list[dict[str, object]], payload["elements"])
+
+    assert elements[0]["label"] == "Włącz"
+    assert elements[0]["label_source"] == "descendant_text"
+    assert elements[0]["accessibility"] == {}
+    assert elements[1]["label"] == "Włącz"
+    assert elements[1]["label_source"] == "text"
+
+
+def test_semantic_snapshot_does_not_guess_parent_label_from_multiple_children() -> None:
+    from snap_tap.semantics.snapshot import (
+        build_semantic_snapshot,
+        semantic_snapshot_to_dict,
+    )
+
+    raw = _raw_capture(
+        elements=[
+            _element(
+                source_index=1,
+                class_name="android.view.View",
+                depth=0,
+                bounds=_bounds_at(100, 100, 500, 220),
+            ),
+            _element(
+                source_index=2,
+                class_name="android.widget.TextView",
+                text="Odinstaluj",
+                clickable=False,
+                depth=1,
+                bounds=_bounds_at(140, 120, 260, 160),
+            ),
+            _element(
+                source_index=3,
+                class_name="android.widget.TextView",
+                text="Włącz",
+                clickable=False,
+                depth=1,
+                bounds=_bounds_at(300, 120, 380, 160),
+            ),
+        ]
+    )
+
+    payload = semantic_snapshot_to_dict(build_semantic_snapshot(raw))
+    elements = cast(list[dict[str, object]], payload["elements"])
+
+    assert elements[0]["label"] is None
+    assert elements[0]["label_source"] == "none"
+
+
 def test_semantic_snapshot_keeps_raw_refs_but_excludes_private_payloads() -> None:
     from snap_tap.semantics.snapshot import (
         build_semantic_snapshot,
@@ -238,6 +314,7 @@ def _raw_capture(
 def _element(
     *,
     source_index: int,
+    depth: int = 0,
     visible: bool = True,
     enabled: bool = True,
     clickable: bool = True,
@@ -246,20 +323,12 @@ def _element(
     text: str | None = None,
     content_desc: str | None = None,
     hint: str | None = None,
+    bounds: SnapshotBounds | None = None,
 ) -> SnapshotElement:
     return SnapshotElement(
         source_index=source_index,
-        depth=0,
-        bounds=SnapshotBounds(
-            left=10,
-            top=20,
-            right=110,
-            bottom=220,
-            width=100,
-            height=200,
-            center_x=60.0,
-            center_y=120.0,
-        ),
+        depth=depth,
+        bounds=bounds or _bounds_at(10, 20, 110, 220),
         visible=visible,
         enabled=enabled,
         clickable=clickable,
@@ -269,4 +338,19 @@ def _element(
         text=text,
         content_desc=content_desc,
         hint=hint,
+    )
+
+
+def _bounds_at(left: int, top: int, right: int, bottom: int) -> SnapshotBounds:
+    width = right - left
+    height = bottom - top
+    return SnapshotBounds(
+        left=left,
+        top=top,
+        right=right,
+        bottom=bottom,
+        width=width,
+        height=height,
+        center_x=left + (width / 2),
+        center_y=top + (height / 2),
     )
