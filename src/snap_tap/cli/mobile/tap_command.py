@@ -6,11 +6,10 @@ from typing import Annotated, Protocol
 import typer
 
 from snap_tap.cli.mobile.device_discovery import read_visible_devices
-from snap_tap.cli.mobile.snap_command import (
-    emit_snap_table,
-    write_latest_snap_source_for_snap,
+from snap_tap.cli.mobile.primitive_result_output import (
+    emit_primitive_receipt,
+    emit_primitive_result,
 )
-from snap_tap.cli.output import emit_json
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import normalize_serial
 from snap_tap.backends.contracts import DriverError, DriverScreenshotCapturer
@@ -23,7 +22,6 @@ from snap_tap.primitives import (
     PrimitiveTapRequest,
     PrimitiveTapper,
     invalid_request_receipt,
-    primitive_receipt_to_dict,
     resolved_tap,
 )
 from snap_tap.snapshots import (
@@ -37,10 +35,8 @@ from snap_tap.snapshots.manifest_source import (
 )
 from snap_tap.targets import (
     LatestSnapSourceError,
-    MobileSnap,
     TargetSignatureError,
     build_latest_snap_source,
-    build_mobile_snap_from_semantic,
     build_target_signature,
     latest_snap_source_target_for_tap,
     read_latest_snap_source,
@@ -121,7 +117,7 @@ def register_tap_command(app: typer.Typer, dependencies: TapDependencies) -> Non
             device=device,
         )
         if arg_error is not None:
-            _emit_receipt(
+            emit_primitive_receipt(
                 _blocked(
                     device_id=requested_device,
                     request=_request_payload(
@@ -165,7 +161,7 @@ def run_tap_command(
         snapshot=snapshot,
     )
     if target_id is None:
-        _emit_receipt(
+        emit_primitive_receipt(
             _blocked(
                 device_id=None,
                 request=request,
@@ -175,12 +171,14 @@ def run_tap_command(
         return
     target_id_error = _target_id_error(target_id)
     if target_id_error is not None:
-        _emit_receipt(_blocked(device_id=None, request=request, detail=target_id_error))
+        emit_primitive_receipt(
+            _blocked(device_id=None, request=request, detail=target_id_error)
+        )
         return
 
     serial = normalize_serial(device)
     if serial is None:
-        _emit_receipt(
+        emit_primitive_receipt(
             _blocked(
                 device_id=None,
                 request=request,
@@ -191,7 +189,7 @@ def run_tap_command(
 
     session_error = _session_error(session=session, snapshot=snapshot)
     if session_error is not None:
-        _emit_receipt(
+        emit_primitive_receipt(
             _blocked(
                 device_id=serial,
                 request=request,
@@ -228,7 +226,7 @@ def run_tap_command(
             target_id,
         )
     except LatestSnapSourceError as exc:
-        _emit_receipt(
+        emit_primitive_receipt(
             _blocked(
                 device_id=serial,
                 request=request,
@@ -238,7 +236,7 @@ def run_tap_command(
         )
         return
     except SnapshotManifestSourceError as exc:
-        _emit_receipt(
+        emit_primitive_receipt(
             _blocked(
                 device_id=serial,
                 request=request,
@@ -248,7 +246,7 @@ def run_tap_command(
         )
         return
     except TargetSignatureError as exc:
-        _emit_receipt(
+        emit_primitive_receipt(
             _blocked(
                 device_id=serial,
                 request=request,
@@ -266,7 +264,7 @@ def run_tap_command(
     )
     executor = dependencies.primitive_tap_executor
     if executor is not None:
-        _emit_tap_result(
+        emit_primitive_result(
             executor.tap(primitive_request),
             dependencies=dependencies,
             session_id=normalized_session,
@@ -276,7 +274,7 @@ def run_tap_command(
 
     visible = read_visible_devices(dependencies.discovery)
     if visible.error is not None:
-        _emit_receipt(
+        emit_primitive_receipt(
             _blocked(
                 device_id=serial,
                 request={
@@ -301,7 +299,7 @@ def run_tap_command(
         snapshot_provider=provider,
         tapper=dependencies.primitive_tapper or Uiautomator2Tapper(),
     )
-    _emit_tap_result(
+    emit_primitive_result(
         receipt,
         dependencies=dependencies,
         session_id=normalized_session,
@@ -390,55 +388,6 @@ def _target_id_error(target_id: str) -> str | None:
     ):
         return "Target id must look like e001."
     return None
-
-
-def _emit_receipt(receipt: PrimitiveReceipt) -> None:
-    emit_json(primitive_receipt_to_dict(receipt))
-    if not receipt.ok:
-        raise typer.Exit(code=1)
-
-
-def _emit_tap_result(
-    receipt: PrimitiveReceipt,
-    *,
-    dependencies: TapDependencies,
-    session_id: str,
-    json_output: bool,
-) -> None:
-    if json_output or not receipt.ok:
-        _emit_receipt(receipt)
-        return
-
-    next_snap = _next_snap_from_receipt(
-        receipt,
-        dependencies=dependencies,
-        session_id=session_id,
-    )
-    if next_snap is None:
-        _emit_receipt(receipt)
-        return
-
-    emit_snap_table(next_snap, debug=False)
-
-
-def _next_snap_from_receipt(
-    receipt: PrimitiveReceipt,
-    *,
-    dependencies: TapDependencies,
-    session_id: str,
-) -> MobileSnap | None:
-    if receipt.after_snapshot is None:
-        return None
-    snap = build_mobile_snap_from_semantic(
-        receipt.after_snapshot,
-        session_id=session_id,
-    )
-    if snap.ok:
-        snap = write_latest_snap_source_for_snap(
-            dependencies=dependencies,
-            snap=snap,
-        )
-    return snap
 
 
 def _screenshot_capturer(

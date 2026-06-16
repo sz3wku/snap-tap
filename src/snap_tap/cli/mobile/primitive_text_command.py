@@ -8,12 +8,16 @@ from typing import Annotated, Protocol
 
 import typer
 
-from snap_tap.cli.output import emit_json
 from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.primitive_result_output import emit_primitive_receipt
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import normalize_serial
 from snap_tap.backends.contracts import DriverScreenshotCapturer
-from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_REPLACE_MODE, Uiautomator2Texter
+from snap_tap.backends.android.uiautomator2.text import (
+    TEXT_INPUT_MODE,
+    TEXT_REPLACE_MODE,
+    Uiautomator2Texter,
+)
 from snap_tap.backends.android.uiautomator2.screenshot import Uiautomator2ScreenshotCapturer
 from snap_tap.backends.contracts import DriverXmlDumper
 from snap_tap.primitives import (
@@ -23,7 +27,6 @@ from snap_tap.primitives import (
     PrimitiveTexter,
     PrimitiveTextRequest,
     invalid_request_receipt,
-    primitive_receipt_to_dict,
     resolved_text,
     target_signature_from_dict,
 )
@@ -199,39 +202,44 @@ def execute_primitive_text_request(
     dependencies: PrimitiveTextDependencies,
     request: PrimitiveTextRequest,
 ) -> None:
+    emit_primitive_receipt(
+        run_primitive_text_request(dependencies=dependencies, request=request)
+    )
+
+
+def run_primitive_text_request(
+    *,
+    dependencies: PrimitiveTextDependencies,
+    request: PrimitiveTextRequest,
+) -> PrimitiveReceipt:
     executor = dependencies.primitive_text_executor
     if executor is not None:
-        _emit_receipt(executor.input_text(request))
-        return
+        return executor.input_text(request)
 
     visible = read_visible_devices(dependencies.discovery)
     if visible.error is not None:
-        _emit_receipt(
-            invalid_request_receipt(
+        return invalid_request_receipt(
+            device_id=request.device_id,
+            request=_request_metadata(
+                mode=request.mode,
                 device_id=request.device_id,
-                request=_request_metadata(
-                    mode=request.mode,
-                    device_id=request.device_id,
-                    text=request.text,
-                    signature_id=request.signature.signature_id,
-                    source_snapshot_id=request.signature.source_snapshot_id,
-                ),
-                detail=visible.error.detail,
-                operation=request.mode,
-            )
+                text=request.text,
+                signature_id=request.signature.signature_id,
+                source_snapshot_id=request.signature.source_snapshot_id,
+            ),
+            detail=visible.error.detail,
+            operation=request.mode,
         )
-        return
     provider = CorePrimitiveSnapshotProvider(
         devices=visible.devices,
         xml_dumper=dependencies.xml_dumper,
         screenshot_capturer=_screenshot_capturer(dependencies),
     )
-    receipt = resolved_text(
+    return resolved_text(
         request,
         snapshot_provider=provider,
         texter=dependencies.primitive_texter or Uiautomator2Texter(),
     )
-    _emit_receipt(receipt)
 
 
 def _read_signature_file(path: Path) -> Mapping[str, object]:
@@ -256,9 +264,7 @@ def _read_signature_file(path: Path) -> Mapping[str, object]:
 
 
 def _emit_receipt(receipt: PrimitiveReceipt) -> None:
-    emit_json(primitive_receipt_to_dict(receipt))
-    if not receipt.ok:
-        raise typer.Exit(code=1)
+    emit_primitive_receipt(receipt)
 
 
 def _screenshot_capturer(

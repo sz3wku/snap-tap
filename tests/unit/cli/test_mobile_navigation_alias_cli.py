@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 import json
+from pathlib import Path
 from typing import Any
 
 import typer
@@ -39,6 +40,7 @@ from snap_tap.semantics import (
     ViewportOrientation,
 )
 from snap_tap.snapshots import SnapshotArtifactRef, SnapshotBounds
+from snap_tap.targets import read_latest_snap_source
 
 
 class FakeDiscovery:
@@ -94,11 +96,12 @@ class FakeNavigationExecutor:
 
     def run(self, request: PrimitiveNavigationRequest) -> PrimitiveReceipt:
         self.calls.append(request)
+        results = [_snapshot_result("after")]
+        if request.operation in {NAVIGATION_SWIPE, NAVIGATION_WAIT}:
+            results = [_snapshot_result("before"), _snapshot_result("after")]
         return navigation_primitive(
             request,
-            snapshot_provider=_Provider(
-                [_snapshot_result("before"), _snapshot_result("after")]
-            ),
+            snapshot_provider=_Provider(results),
             navigator=_Navigator(_driver_result(request.operation)),
         )
 
@@ -175,6 +178,29 @@ def test_mobile_navigation_aliases_use_primitive_executor_path() -> None:
     assert executor.calls[3].seconds == 0
 
 
+def test_mobile_navigation_alias_default_output_renders_after_snap_table(
+    tmp_path: Path,
+) -> None:
+    executor = FakeNavigationExecutor()
+    app = _build_app(executor, cache_root=tmp_path)
+
+    result = CliRunner().invoke(app, ["back", "RFCN4010FCK"])
+
+    assert result.exit_code == 0
+    assert "targets: 1 tap | 0 input | 0 scroll areas | 1 visible" in result.stdout
+    assert "e001" in result.stdout
+    assert "Save" in result.stdout
+    assert "primitive_receipt.v1" not in result.stdout
+
+    latest = read_latest_snap_source(
+        device_id="RFCN4010FCK",
+        session_id="default",
+        cache_root=tmp_path,
+    )
+    assert latest.snapshot.snapshot_id == "after"
+    assert [target.display_id for target in latest.targets] == ["e001"]
+
+
 def test_mobile_navigation_alias_invalid_args_fail_before_executor() -> None:
     executor = FakeNavigationExecutor()
     app = _build_app(executor)
@@ -219,17 +245,30 @@ def test_mobile_navigation_alias_rejects_positional_serial_with_device_option() 
     assert executor.calls == []
 
 
-def _build_app(executor: FakeNavigationExecutor) -> typer.Typer:
-    return build_mobile_app(
-        MobileDependencies(
-            discovery=FakeDiscovery([DeviceInfo("RFCN4010FCK", "device")]),
-            backend=FakeBackend(),
-            lifecycle_runner=FakeLifecycleRunner(),
-            xml_dumper=FakeXmlDumper(),
-            screenshot_capturer=FakeScreenshotCapturer(),
-            primitive_navigation_executor=executor,
-        )
+def _build_app(
+    executor: FakeNavigationExecutor,
+    *,
+    cache_root: Path | None = None,
+) -> typer.Typer:
+    dependencies = MobileDependencies(
+        discovery=FakeDiscovery([DeviceInfo("RFCN4010FCK", "device")]),
+        backend=FakeBackend(),
+        lifecycle_runner=FakeLifecycleRunner(),
+        xml_dumper=FakeXmlDumper(),
+        screenshot_capturer=FakeScreenshotCapturer(),
+        primitive_navigation_executor=executor,
     )
+    if cache_root is not None:
+        dependencies = MobileDependencies(
+            discovery=dependencies.discovery,
+            backend=dependencies.backend,
+            lifecycle_runner=dependencies.lifecycle_runner,
+            xml_dumper=dependencies.xml_dumper,
+            screenshot_capturer=dependencies.screenshot_capturer,
+            primitive_navigation_executor=dependencies.primitive_navigation_executor,
+            latest_cache_root=cache_root,
+        )
+    return build_mobile_app(dependencies)
 
 
 def _driver_result(operation: str) -> DriverNavigation:

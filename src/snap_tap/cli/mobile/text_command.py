@@ -5,7 +5,10 @@ from typing import Annotated, Protocol
 
 import typer
 
-from snap_tap.cli.output import emit_json
+from snap_tap.cli.mobile.primitive_result_output import (
+    emit_primitive_receipt,
+    emit_primitive_result,
+)
 from snap_tap.cli.mobile.text_alias_helpers import (
     blocked_text_receipt,
     normalized_text,
@@ -14,15 +17,13 @@ from snap_tap.cli.mobile.text_alias_helpers import (
 )
 from snap_tap.cli.mobile.primitive_text_command import (
     PrimitiveTextDependencies,
-    execute_primitive_text_request,
+    run_primitive_text_request,
 )
 from snap_tap.device.identity import normalize_serial
 from snap_tap.backends.contracts import DriverError
 from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_REPLACE_MODE, TEXT_MODES
 from snap_tap.primitives import (
-    PrimitiveReceipt,
     PrimitiveTextRequest,
-    primitive_receipt_to_dict,
 )
 from snap_tap.snapshots import (
     DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
@@ -90,7 +91,7 @@ def register_text_commands(app: typer.Typer, dependencies: TextAliasDependencies
             device=device,
         )
         if arg_error is not None:
-            _emit_receipt(
+            emit_primitive_receipt(
                 blocked_text_receipt(
                     device_id=requested_device,
                     request=safe_text_request_metadata(
@@ -163,7 +164,7 @@ def register_text_commands(app: typer.Typer, dependencies: TextAliasDependencies
             device=device,
         )
         if arg_error is not None:
-            _emit_receipt(
+            emit_primitive_receipt(
                 blocked_text_receipt(
                     device_id=requested_device,
                     request=safe_text_request_metadata(
@@ -226,7 +227,6 @@ def run_text_command(
     timeout_s: float,
     lease_timeout_s: float,
 ) -> None:
-    del json_output
     request = safe_text_request_metadata(
         mode=mode,
         device_id=device,
@@ -235,7 +235,7 @@ def run_text_command(
         text=text,
     )
     if mode not in TEXT_MODES:
-        _emit_receipt(
+        emit_primitive_receipt(
             blocked_text_receipt(
                 device_id=None,
                 request=request,
@@ -245,7 +245,7 @@ def run_text_command(
         )
         return
     if target_id is None:
-        _emit_receipt(
+        emit_primitive_receipt(
             blocked_text_receipt(
                 device_id=None,
                 request=request,
@@ -256,7 +256,7 @@ def run_text_command(
         return
     id_error = target_id_error(target_id)
     if id_error is not None:
-        _emit_receipt(
+        emit_primitive_receipt(
             blocked_text_receipt(
                 device_id=None,
                 request=request,
@@ -267,7 +267,7 @@ def run_text_command(
         return
     serial = normalize_serial(device)
     if serial is None:
-        _emit_receipt(
+        emit_primitive_receipt(
             blocked_text_receipt(
                 device_id=None,
                 request=request,
@@ -279,7 +279,7 @@ def run_text_command(
     try:
         normalized_session = normalize_latest_snapshot_session_id(session)
     except LatestSnapshotRefError as exc:
-        _emit_receipt(
+        emit_primitive_receipt(
             blocked_text_receipt(
                 device_id=serial,
                 request=request,
@@ -291,7 +291,7 @@ def run_text_command(
         return
     text_value = normalized_text(text)
     if text_value is None:
-        _emit_receipt(
+        emit_primitive_receipt(
             blocked_text_receipt(
                 device_id=serial,
                 request=safe_text_request_metadata(
@@ -318,7 +318,7 @@ def run_text_command(
             target_id,
         )
     except LatestSnapSourceError as exc:
-        _emit_receipt(
+        emit_primitive_receipt(
             blocked_text_receipt(
                 device_id=serial,
                 request=safe_text_request_metadata(
@@ -335,7 +335,7 @@ def run_text_command(
         )
         return
     except TargetSignatureError as exc:
-        _emit_receipt(
+        emit_primitive_receipt(
             blocked_text_receipt(
                 device_id=serial,
                 request=safe_text_request_metadata(
@@ -360,13 +360,13 @@ def run_text_command(
         timeout_s=timeout_s,
         lease_timeout_s=lease_timeout_s,
     )
-    execute_primitive_text_request(
+    receipt = run_primitive_text_request(
         dependencies=dependencies,
         request=primitive_request,
     )
-
-
-def _emit_receipt(receipt: PrimitiveReceipt) -> None:
-    emit_json(primitive_receipt_to_dict(receipt))
-    if not receipt.ok:
-        raise typer.Exit(code=1)
+    emit_primitive_result(
+        receipt,
+        dependencies=dependencies,
+        session_id=normalized_session,
+        json_output=json_output,
+    )

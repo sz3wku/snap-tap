@@ -33,9 +33,9 @@ device/session as a source of target facts, then capture a fresh current
 snapshot before any touch. Snapshot-local ids such as `e080` are never executed
 directly.
 
-Successful human-mode `tap` can use the post-action observation to print the
-next snap table, keeping the common loop at `snap -> tap -> tap -> tap`.
-Machine-mode `--json` remains receipt-first.
+Successful human-mode primitives use the post-action observation to print the
+next snap table, keeping the common loop at
+`snap -> tap -> tap -> input`. Machine-mode `--json` remains receipt-first.
 
 `--device` remains accepted as a compatibility/debug alias, but docs and help
 should teach the positional serial form above.

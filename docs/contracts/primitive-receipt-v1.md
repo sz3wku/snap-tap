@@ -21,9 +21,9 @@ stale-target guard. P1.R5.S7 adds everyday CLI aliases for
 into the same primitive receipt path, not separate executors. P1.R5.S8 splits
 primitive execution truth from post-action observation proof and adds a central
 post-action settle policy before default after-snapshot proof. The everyday
-human `snap-tap tap` command may render a successful after-snapshot as the
-next snap table, but this is CLI presentation on top of the receipt, not a
-change to the receipt contract itself.
+human primitive aliases may render a successful after-snapshot as the next snap
+table, but this is CLI presentation on top of the receipt, not a change to the
+receipt contract itself.
 
 P1.R6.S1 persists one completed, blocked, failed, or partial
 `primitive_receipt.v1` payload as canonical UTF-8 JSON under the caller's

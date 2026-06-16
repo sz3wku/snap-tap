@@ -4,8 +4,8 @@ from typing import Annotated, Protocol
 
 import typer
 
-from snap_tap.cli.output import emit_json
 from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.primitive_result_output import emit_primitive_receipt
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import normalize_serial
 from snap_tap.backends.android.uiautomator2.navigation import (
@@ -25,7 +25,6 @@ from snap_tap.primitives import (
     PrimitiveReceipt,
     invalid_request_receipt,
     navigation_primitive,
-    primitive_receipt_to_dict,
 )
 from snap_tap.primitives.navigation_request import (
     invalid_navigation_request_detail,
@@ -153,18 +152,28 @@ def run_primitive_navigation_request(
     json_output: bool,
 ) -> None:
     del json_output
+    emit_primitive_receipt(
+        execute_primitive_navigation_request(
+            dependencies=dependencies,
+            request=request,
+        )
+    )
+
+
+def execute_primitive_navigation_request(
+    *,
+    dependencies: PrimitiveNavigationDependencies,
+    request: PrimitiveNavigationRequest,
+) -> PrimitiveReceipt:
     serial = normalize_serial(request.device_id)
     invalid_detail = invalid_navigation_request_detail(request, serial)
     if invalid_detail is not None:
-        _emit_receipt(
-            invalid_request_receipt(
-                device_id=serial,
-                request=navigation_request_payload(request),
-                detail=invalid_detail,
-                operation=safe_navigation_operation(request.operation),
-            )
+        return invalid_request_receipt(
+            device_id=serial,
+            request=navigation_request_payload(request),
+            detail=invalid_detail,
+            operation=safe_navigation_operation(request.operation),
         )
-        return
     assert serial is not None
     normalized = PrimitiveNavigationRequest(
         device_id=serial,
@@ -178,36 +187,25 @@ def run_primitive_navigation_request(
     )
     executor = dependencies.primitive_navigation_executor
     if executor is not None:
-        _emit_receipt(executor.run(normalized))
-        return
+        return executor.run(normalized)
     visible = read_visible_devices(dependencies.discovery)
     if visible.error is not None:
-        _emit_receipt(
-            invalid_request_receipt(
-                device_id=serial,
-                request=navigation_request_payload(normalized),
-                detail=visible.error.detail,
-                operation=normalized.operation,
-            )
+        return invalid_request_receipt(
+            device_id=serial,
+            request=navigation_request_payload(normalized),
+            detail=visible.error.detail,
+            operation=normalized.operation,
         )
-        return
     provider = CorePrimitiveSnapshotProvider(
         devices=visible.devices,
         xml_dumper=dependencies.xml_dumper,
         screenshot_capturer=_screenshot_capturer(dependencies),
     )
-    receipt = navigation_primitive(
+    return navigation_primitive(
         normalized,
         snapshot_provider=provider,
         navigator=dependencies.primitive_navigator or Uiautomator2Navigator(),
     )
-    _emit_receipt(receipt)
-
-
-def _emit_receipt(receipt: PrimitiveReceipt) -> None:
-    emit_json(primitive_receipt_to_dict(receipt))
-    if not receipt.ok:
-        raise typer.Exit(code=1)
 
 
 def _screenshot_capturer(

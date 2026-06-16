@@ -5,12 +5,80 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_REPLACE_MODE
+from snap_tap.targets import read_latest_snap_source
 from mobile_text_alias_helpers import (
     FakeTextExecutor,
     build_text_alias_app,
     json_payload,
     write_latest_text_source,
 )
+
+
+def test_mobile_input_default_output_renders_after_snap_table(
+    tmp_path: Path,
+) -> None:
+    write_latest_text_source(tmp_path)
+    executor = FakeTextExecutor()
+    result = CliRunner().invoke(
+        build_text_alias_app(tmp_path, executor),
+        [
+            "input",
+            "RFCN4010FCK",
+            "e001",
+            "--text",
+            "hakar smoke",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "targets: 0 tap | 1 input | 0 scroll areas | 1 visible" in result.stdout
+    assert "e001" in result.stdout
+    assert "Message" in result.stdout
+    assert "primitive_receipt.v1" not in result.stdout
+    assert "hakar smoke" not in result.stdout
+
+    latest = read_latest_snap_source(
+        device_id="RFCN4010FCK",
+        session_id="default",
+        cache_root=tmp_path,
+    )
+    assert latest.snapshot.snapshot_id == "after"
+    assert [target.display_id for target in latest.targets] == ["e001"]
+
+
+def test_mobile_input_json_does_not_refresh_latest_from_after_snap(
+    tmp_path: Path,
+) -> None:
+    write_latest_text_source(tmp_path)
+    before = read_latest_snap_source(
+        device_id="RFCN4010FCK",
+        session_id="default",
+        cache_root=tmp_path,
+    )
+    executor = FakeTextExecutor()
+
+    result = CliRunner().invoke(
+        build_text_alias_app(tmp_path, executor),
+        [
+            "input",
+            "RFCN4010FCK",
+            "e001",
+            "--text",
+            "hakar smoke",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json_payload(result.stdout)
+    assert payload["schema_version"] == "primitive_receipt.v1"
+    assert payload["after_snapshot"]["snapshot_id"] == "after"
+    after = read_latest_snap_source(
+        device_id="RFCN4010FCK",
+        session_id="default",
+        cache_root=tmp_path,
+    )
+    assert after.snapshot.snapshot_id == before.snapshot.snapshot_id
 
 
 def test_mobile_input_id_builds_text_request_from_latest_source(

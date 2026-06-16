@@ -41,7 +41,9 @@ The default CLI is for humans and everyday agent operation:
 
 `--json` is not the primary UX. Treat it as debug/inspect/machine mode: the
 "more is visible" path for agents, tests, CI, and support. Human mode should
-remain the clean loop: `snap -> tap -> fresh snap`.
+remain the clean loop: `snap -> tap -> tap -> input`, with each
+successful primitive rendering the next snap table from its post-action
+observation.
 
 ## Current Evidence
 

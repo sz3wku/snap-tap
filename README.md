@@ -39,6 +39,9 @@ The headline CLI uses positional serials. `--device` remains accepted as a
 compatibility/debug alias for scripts and support flows. `--json` is reserved
 for debug, inspection, tests, CI, and support. `devices` and `status` are
 human-readable by default; add `--json` for structured machine output.
+Successful human-mode primitives print the next snap table from their
+post-action observation, so the operator loop stays compact:
+`snap -> tap -> tap -> input`.
 
 ## Platform Direction
 
