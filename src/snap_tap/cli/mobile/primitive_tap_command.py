@@ -12,7 +12,7 @@ from snap_tap.backends.android.uiautomator2.screenshot import (
 )
 from snap_tap.backends.android.uiautomator2.tap import Uiautomator2Tapper
 from snap_tap.backends.contracts import DriverScreenshotCapturer, DriverXmlDumper
-from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.device_discovery import read_command_devices
 from snap_tap.cli.output import emit_json
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import normalize_serial
@@ -133,7 +133,10 @@ def run_primitive_tap_command(
         _emit_receipt(executor.tap(request))
         return
 
-    visible = read_visible_devices(dependencies.discovery)
+    visible = read_command_devices(
+        dependencies.discovery,
+        requested_serial=request.device_id,
+    )
     if visible.error is not None:
         _emit_receipt(
             invalid_request_receipt(

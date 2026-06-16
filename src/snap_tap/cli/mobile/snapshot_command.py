@@ -10,7 +10,7 @@ from snap_tap.backends.android.uiautomator2.screenshot import (
 )
 from snap_tap.backends.contracts import DriverScreenshotCapturer, DriverXmlDumper
 from snap_tap.cli.mobile.device_discovery import (
-    read_visible_devices,
+    read_command_devices,
     resolve_requested_serial,
 )
 from snap_tap.cli.output import emit_json
@@ -180,7 +180,10 @@ def run_snapshot_command(
         )
         return
 
-    snapshot = read_visible_devices(dependencies.discovery)
+    snapshot = read_command_devices(
+        dependencies.discovery,
+        requested_serial=device,
+    )
     if snapshot.error is not None:
         _emit_snapshot_result(
             RawSnapshotCapture.failure(

@@ -48,6 +48,7 @@ from snap_tap.cli.mobile.device_discovery import (
     discovery_health_failure,
     discovery_lifecycle_failure,
     discovery_xml_failure,
+    read_command_devices,
     read_visible_devices,
     resolve_requested_serial,
 )
@@ -182,7 +183,10 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             )
             _emit_status_result(health, json_output=json_output)
             return
-        snapshot = read_visible_devices(dependencies.discovery)
+        snapshot = read_command_devices(
+            dependencies.discovery,
+            requested_serial=requested_serial,
+        )
         if snapshot.error is not None:
             health = discovery_health_failure(
                 snapshot.error,
@@ -383,7 +387,10 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
                 )
             )
             return
-        snapshot = read_visible_devices(dependencies.discovery)
+        snapshot = read_command_devices(
+            dependencies.discovery,
+            requested_serial=requested_serial,
+        )
         if snapshot.error is not None:
             result = discovery_xml_failure(
                 snapshot.error,
@@ -485,7 +492,10 @@ def _run_lifecycle(
         _emit_lifecycle_result(result)
         return
 
-    snapshot = read_visible_devices(dependencies.discovery)
+    snapshot = read_command_devices(
+        dependencies.discovery,
+        requested_serial=device,
+    )
     if snapshot.error is not None:
         result = discovery_lifecycle_failure(
             snapshot.error,

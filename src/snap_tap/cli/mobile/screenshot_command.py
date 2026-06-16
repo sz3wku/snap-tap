@@ -15,7 +15,7 @@ from snap_tap.backends.contracts import (
     DriverScreenshotCapturer,
     capture_device_screenshot,
 )
-from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.device_discovery import read_command_devices
 from snap_tap.cli.output import emit_json, screenshot_to_dict
 from snap_tap.device.discovery import DeviceDiscovery
 
@@ -49,7 +49,10 @@ def run_screenshot_command(
         _emit_screenshot_result(result)
         return
 
-    snapshot = read_visible_devices(dependencies.discovery)
+    snapshot = read_command_devices(
+        dependencies.discovery,
+        requested_serial=device,
+    )
     if snapshot.error is not None:
         result = DriverScreenshot.failure(
             backend=capturer.backend_name,

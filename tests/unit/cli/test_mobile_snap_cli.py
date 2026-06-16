@@ -57,9 +57,19 @@ XML_OPERATOR_LABEL_TEXT = """
 class FakeDiscovery:
     def __init__(self, devices: Sequence[DeviceInfo]) -> None:
         self._devices = list(devices)
+        self.calls = 0
 
     def list_devices(self) -> Sequence[DeviceInfo]:
+        self.calls += 1
         return list(self._devices)
+
+
+class FailingDiscovery:
+    calls = 0
+
+    def list_devices(self) -> Sequence[DeviceInfo]:
+        self.calls += 1
+        raise RuntimeError("full discovery should not run for explicit serial")
 
 
 class FakeBackend:
@@ -265,6 +275,26 @@ def test_mobile_snap_json_contract_and_debug_fields(tmp_path: Path) -> None:
     assert "base64" not in result.stdout
 
 
+def test_mobile_snap_explicit_serial_bypasses_full_discovery(tmp_path: Path) -> None:
+    discovery = FailingDiscovery()
+    app, xml_dumper, capturer, app_reader = _build_app(
+        [],
+        cache_root=tmp_path / "latest",
+        discovery=discovery,
+    )
+
+    result = CliRunner().invoke(app, ["snap", "RFCN4010FCK", "--json"])
+
+    assert result.exit_code == 0
+    payload = _json(result.stdout)
+    assert payload["ok"] is True
+    assert payload["device_id"] == "RFCN4010FCK"
+    assert discovery.calls == 0
+    assert xml_dumper.calls == [("RFCN4010FCK", 10.0)]
+    assert capturer.calls == [("RFCN4010FCK", 10.0)]
+    assert app_reader.calls == [("RFCN4010FCK", 10.0)]
+
+
 def test_mobile_snap_requires_device_before_capture() -> None:
     app, xml_dumper, capturer, app_reader = _build_app(
         [DeviceInfo(serial="RFCN4010FCK", state="device")]
@@ -305,13 +335,14 @@ def _build_app(
     *,
     cache_root: Path | None = None,
     xml_text: str = XML_TEXT,
+    discovery: FakeDiscovery | FailingDiscovery | None = None,
 ) -> tuple[typer.Typer, FakeXmlDumper, FakeScreenshotCapturer, FakeAppReader]:
     xml_dumper = FakeXmlDumper(xml_text)
     capturer = FakeScreenshotCapturer()
     app_reader = FakeAppReader()
     app = build_mobile_app(
         MobileDependencies(
-            discovery=FakeDiscovery(devices),
+            discovery=discovery or FakeDiscovery(devices),
             backend=FakeBackend(),
             lifecycle_runner=FakeLifecycleRunner(),
             xml_dumper=xml_dumper,

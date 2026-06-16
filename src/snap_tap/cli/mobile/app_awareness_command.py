@@ -16,6 +16,7 @@ from snap_tap.backends.contracts import (
     read_device_package_info,
 )
 from snap_tap.cli.mobile.device_discovery import (
+    read_command_devices,
     read_visible_devices,
     resolve_requested_serial,
 )
@@ -83,7 +84,14 @@ def register_app_awareness_commands(
             )
             return
 
-        snapshot = read_visible_devices(dependencies.discovery)
+        snapshot = (
+            read_visible_devices(dependencies.discovery)
+            if all_devices
+            else read_command_devices(
+                dependencies.discovery,
+                requested_serial=requested_serial,
+            )
+        )
         if snapshot.error is not None:
             result = _blocked_result(
                 reader=reader,
@@ -171,7 +179,14 @@ def register_app_awareness_commands(
             return
 
         package_name = normalize_package(package)
-        snapshot = read_visible_devices(dependencies.discovery)
+        snapshot = (
+            read_visible_devices(dependencies.discovery)
+            if all_devices
+            else read_command_devices(
+                dependencies.discovery,
+                requested_serial=requested_serial,
+            )
+        )
         if snapshot.error is not None:
             result = _blocked_result(
                 reader=reader,

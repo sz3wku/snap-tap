@@ -14,7 +14,7 @@ from snap_tap.backends.contracts import (
     DriverScreenshotCapturer,
     DriverXmlDumper,
 )
-from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.device_discovery import read_command_devices
 from snap_tap.cli.mobile.primitive_result_output import (
     emit_primitive_result,
 )
@@ -300,7 +300,10 @@ def run_tap_command(
         )
         return
 
-    visible = read_visible_devices(dependencies.discovery)
+    visible = read_command_devices(
+        dependencies.discovery,
+        requested_serial=serial,
+    )
     if visible.error is not None:
         emit_primitive_result(
             _blocked(

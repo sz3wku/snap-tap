@@ -17,7 +17,7 @@ from snap_tap.backends.android.uiautomator2.text import (
     Uiautomator2Texter,
 )
 from snap_tap.backends.contracts import DriverScreenshotCapturer, DriverXmlDumper
-from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.device_discovery import read_command_devices
 from snap_tap.cli.mobile.primitive_result_output import emit_primitive_receipt
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import normalize_serial
@@ -217,7 +217,10 @@ def run_primitive_text_request(
     if executor is not None:
         return executor.input_text(request)
 
-    visible = read_visible_devices(dependencies.discovery)
+    visible = read_command_devices(
+        dependencies.discovery,
+        requested_serial=request.device_id,
+    )
     if visible.error is not None:
         return invalid_request_receipt(
             device_id=request.device_id,

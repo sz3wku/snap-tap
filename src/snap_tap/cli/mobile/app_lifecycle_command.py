@@ -21,7 +21,7 @@ from snap_tap.backends.contracts import (
     read_device_launchable_apps,
 )
 from snap_tap.cli.mobile.device_discovery import (
-    read_visible_devices,
+    read_command_devices,
     resolve_requested_serial,
 )
 from snap_tap.cli.mobile.primitive_result_output import emit_primitive_result
@@ -111,7 +111,10 @@ def register_app_lifecycle_commands(
                 json_output=json_output,
             )
             return
-        snapshot = read_visible_devices(dependencies.discovery)
+        snapshot = read_command_devices(
+            dependencies.discovery,
+            requested_serial=requested_serial,
+        )
         if snapshot.error is not None:
             _emit_apps_result(
                 DriverAppCatalog.failure(
@@ -239,7 +242,10 @@ def execute_primitive_app_open_request(
     executor = dependencies.primitive_app_open_executor
     if executor is not None:
         return executor.run(request)
-    snapshot = read_visible_devices(dependencies.discovery)
+    snapshot = read_command_devices(
+        dependencies.discovery,
+        requested_serial=request.device_id,
+    )
     if snapshot.error is not None:
         return invalid_request_receipt(
             device_id=request.device_id,

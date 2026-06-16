@@ -10,7 +10,7 @@ from snap_tap.backends.contracts import (
 )
 from snap_tap.cli.output import error_to_dict
 from snap_tap.device.discovery import DeviceDiscovery
-from snap_tap.device.identity import DeviceInfo
+from snap_tap.device.identity import DeviceInfo, normalize_serial
 
 DISCOVERY_FAILURE_DETAIL = "Android device discovery failed before command execution."
 
@@ -36,6 +36,25 @@ def read_visible_devices(discovery: DeviceDiscovery) -> DeviceDiscoverySnapshot:
                 detail=DISCOVERY_FAILURE_DETAIL,
             ),
         )
+
+
+def read_command_devices(
+    discovery: DeviceDiscovery,
+    *,
+    requested_serial: str | None,
+) -> DeviceDiscoverySnapshot:
+    if requested_serial is None:
+        return read_visible_devices(discovery)
+    serial = normalize_serial(requested_serial)
+    if serial is None:
+        return DeviceDiscoverySnapshot(
+            devices=[],
+            error=DriverError(
+                code="device_offline",
+                detail="Device serial is required and must be a valid ADB serial.",
+            ),
+        )
+    return DeviceDiscoverySnapshot(devices=[DeviceInfo(serial=serial, state="device")])
 
 
 def devices_failure_payload(error: DriverError) -> dict[str, object]:

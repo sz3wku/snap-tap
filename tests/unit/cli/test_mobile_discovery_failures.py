@@ -98,20 +98,18 @@ def test_mobile_devices_discovery_failure_is_structured_json() -> None:
 @pytest.mark.parametrize(
     "args",
     [
-        ["status", "--device", "RFCN4010FCK"],
         ["status", "--all"],
-        ["init", "--device", "RFCN4010FCK"],
-        ["doctor", "--device", "RFCN4010FCK"],
-        ["dump-xml", "--device", "RFCN4010FCK"],
-        ["screenshot", "--device", "RFCN4010FCK", "--out", "screen.png"],
-        ["app-current", "--device", "RFCN4010FCK"],
+        ["status"],
+        ["dump-xml"],
+        ["screenshot", "--out", "screen.png"],
+        ["app-current", "--all"],
         [
             "package-info",
-            "--device",
-            "RFCN4010FCK",
+            "--all",
             "--package",
             "com.example.app",
         ],
+        ["apps", "--json"],
     ],
 )
 def test_mobile_commands_block_discovery_failure_without_raw_output(

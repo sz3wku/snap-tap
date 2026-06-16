@@ -19,7 +19,7 @@ from snap_tap.backends.contracts import (
     read_device_app_current,
 )
 from snap_tap.cli.mobile.device_discovery import (
-    read_visible_devices,
+    read_command_devices,
     resolve_requested_serial,
 )
 from snap_tap.cli.output import emit_json
@@ -194,7 +194,10 @@ def _capture_snap(
             detail="Pass a device serial to observe a snap-tap snap.",
         )
 
-    visible = read_visible_devices(dependencies.discovery)
+    visible = read_command_devices(
+        dependencies.discovery,
+        requested_serial=device,
+    )
     if visible.error is not None:
         return mobile_snap_failure(
             device_id=device,

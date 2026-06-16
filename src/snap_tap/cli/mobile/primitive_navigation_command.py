@@ -14,7 +14,7 @@ from snap_tap.backends.android.uiautomator2.screenshot import (
     Uiautomator2ScreenshotCapturer,
 )
 from snap_tap.backends.contracts import DriverScreenshotCapturer, DriverXmlDumper
-from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.device_discovery import read_command_devices
 from snap_tap.cli.mobile.primitive_result_output import emit_primitive_receipt
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import normalize_serial
@@ -189,7 +189,10 @@ def execute_primitive_navigation_request(
     executor = dependencies.primitive_navigation_executor
     if executor is not None:
         return executor.run(normalized)
-    visible = read_visible_devices(dependencies.discovery)
+    visible = read_command_devices(
+        dependencies.discovery,
+        requested_serial=serial,
+    )
     if visible.error is not None:
         return invalid_request_receipt(
             device_id=serial,
