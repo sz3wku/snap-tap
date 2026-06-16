@@ -1,0 +1,51 @@
+name: Live validation
+description: Record sanitized live-device validation evidence.
+title: "live: "
+labels: ["live-validation", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use explicit device ids. Keep screenshots, XML, typed text, private paths, and tokens out of the issue.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Device Platform
+      options:
+        - Android
+        - iOS
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host OS and Python
+      placeholder: "Windows 11, Python 3.11.15"
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands Run
+      description: Include exact commands with sanitized device ids.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: Summarize receipts, structured failures, and artifacts.
+    validations:
+      required: true
+  - type: checkboxes
+    id: gates
+    attributes:
+      label: Validation Gates
+      options:
+        - label: Started read-only before any mutating command.
+          required: true
+        - label: Mutating commands emitted primitive receipts.
+          required: false
+        - label: No private raw artifacts or typed text were committed or pasted.
+          required: true

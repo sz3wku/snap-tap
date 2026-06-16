@@ -1,0 +1,45 @@
+name: Feature request
+description: Suggest a new capability or improvement.
+title: "feature: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow should become safer or easier?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should snap-tap do?
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Device Platform
+      options:
+        - Android
+        - iOS
+        - Both
+        - Platform-neutral
+        - Unknown
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety Boundary
+      options:
+        - label: This does not require raw coordinate-click or selector-click as public authority.
+          required: true
+        - label: This can fit behind primitive receipts and fresh target resolution.
+          required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Optional notes about other designs.
