@@ -19,6 +19,7 @@ snap-tap back <serial>
 snap-tap home <serial>
 snap-tap swipe <serial> --direction up
 snap-tap wait <serial> --seconds 1
+snap-tap android-driver-purge <serial>
 ```
 
 ## Quick Start
@@ -64,6 +65,15 @@ uv run snap-tap app-open <serial> com.android.settings
 uv run snap-tap back <serial>
 ```
 
+Remove device-side Android helper artifacts:
+
+```powershell
+uv run snap-tap android-driver-purge <serial>
+```
+
+After purge, `uv run snap-tap status <serial>` may reinitialize the
+UIAutomator2 bridge before reporting health.
+
 ## Safety Model
 
 - `snap` observes the current screen and prints snapshot-local handles like
@@ -74,6 +84,9 @@ uv run snap-tap back <serial>
   process-isolated Android backend, and emit a primitive receipt.
 - `app-open` is a small lifecycle primitive for opening a package or exact
   package/activity component. It does not guess social app names.
+- `android-driver-purge` removes Android UIAutomator2 helper artifacts from the
+  selected device. It is explicit, platform-specific, and never runs
+  automatically before a touch primitive.
 - There is no public raw coordinate-click or selector-click API in the v0 shared
   runtime.
 

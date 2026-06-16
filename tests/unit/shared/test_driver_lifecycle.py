@@ -70,6 +70,26 @@ def test_lifecycle_runs_supported_operation_as_argument_list() -> None:
     ]
 
 
+def test_lifecycle_runs_purge_as_argument_list() -> None:
+    runner = FakeProcessRunner(
+        result=ProcessResult(returncode=0, stdout="purge ok", stderr="")
+    )
+
+    result = run_uiautomator2_lifecycle(
+        operation="purge",
+        device_id="RFCN4010FCK",
+        timeout_s=7.0,
+        process_runner=runner,
+        python_executable=".venv",
+    )
+
+    assert result.ok is True
+    assert result.operation == "purge"
+    assert runner.calls == [
+        ([".venv", "-m", "uiautomator2", "-s", "RFCN4010FCK", "purge"], 7.0)
+    ]
+
+
 def test_lifecycle_timeout_returns_structured_failure() -> None:
     runner = FakeProcessRunner(exc=ProcessTimeoutError("doctor timed out"))
 

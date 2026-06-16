@@ -336,6 +336,50 @@ def test_mobile_doctor_runs_lifecycle_for_explicit_device() -> None:
     assert lifecycle.calls == [("doctor", "RFCN4010FCK", 3.0)]
 
 
+def test_mobile_android_driver_purge_requires_explicit_device() -> None:
+    app, _, lifecycle, _ = _build_app(
+        [DeviceInfo(serial="RFCN4010FCK", state="device")]
+    )
+
+    result = CliRunner().invoke(app, ["android-driver-purge"])
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["ok"] is False
+    assert payload["result"]["operation"] == "purge"
+    assert payload["result"]["error"]["code"] == "device_required"
+    assert "android-driver-purge" in payload["result"]["error"]["detail"]
+    assert lifecycle.calls == []
+
+
+def test_mobile_android_driver_purge_runs_lifecycle_for_explicit_device() -> None:
+    app, _, lifecycle, _ = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
+
+    result = CliRunner().invoke(
+        app,
+        ["android-driver-purge", "RFCN4010FCK", "--timeout-s", "7"],
+    )
+
+    assert result.exit_code == 0
+    payload = _json(result.stdout)
+    assert payload["ok"] is True
+    assert payload["result"]["operation"] == "purge"
+    assert lifecycle.calls == [("purge", "RFCN4010FCK", 7.0)]
+
+
+def test_mobile_android_driver_purge_rejects_malformed_serial() -> None:
+    app, _, lifecycle, _ = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
+
+    result = CliRunner().invoke(app, ["android-driver-purge", "--device", "bad serial"])
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["ok"] is False
+    assert payload["result"]["operation"] == "purge"
+    assert payload["result"]["error"]["code"] == "device_offline"
+    assert lifecycle.calls == []
+
+
 def test_mobile_dump_xml_blocks_ambiguous_multi_device_selection() -> None:
     app, _, _, xml_dumper = _build_app(
         [

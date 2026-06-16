@@ -312,6 +312,46 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             timeout_s=timeout_s,
         )
 
+    @app.command("android-driver-purge")
+    def android_driver_purge(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to clean up."),
+        ] = None,
+        device: Annotated[
+            str | None,
+            typer.Option("--device", "-d", help="ADB serial to clean up."),
+        ] = None,
+        timeout_s: Annotated[
+            float,
+            typer.Option("--timeout-s", min=0.001, help="Operation timeout."),
+        ] = 60.0,
+    ) -> None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            _emit_lifecycle_result(
+                DriverLifecycleResult.failure(
+                    backend=dependencies.lifecycle_runner.backend_name,
+                    operation="purge",
+                    code=serial_error.code,
+                    detail=serial_error.detail,
+                    device_id=serial or device,
+                    elapsed_ms=0.0,
+                    status="blocked",
+                )
+            )
+            return
+        _run_lifecycle(
+            dependencies=dependencies,
+            operation="purge",
+            device=requested_serial,
+            timeout_s=timeout_s,
+            command_name="android-driver-purge",
+        )
+
     @app.command("dump-xml")
     def dump_xml(
         serial: Annotated[
@@ -429,13 +469,16 @@ def _run_lifecycle(
     operation: str,
     device: str | None,
     timeout_s: float,
+    command_name: str | None = None,
 ) -> None:
     if device is None:
         result = DriverLifecycleResult.failure(
             backend=dependencies.lifecycle_runner.backend_name,
             operation=operation,
             code="device_required",
-            detail=f"Pass a device serial to run snap-tap {operation}.",
+            detail=(
+                f"Pass a device serial to run snap-tap {command_name or operation}."
+            ),
             elapsed_ms=0.0,
             status="blocked",
         )

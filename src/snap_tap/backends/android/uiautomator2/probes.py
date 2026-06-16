@@ -423,6 +423,7 @@ def _bridge_error_code(exc: Exception, default: str) -> str:
         "httpconnectionpool",
         "jsonrpc",
         "max retries exceeded",
+        "remote end closed",
         "uiautomator service",
         "uiautomator stopped",
     )

@@ -5,6 +5,7 @@
 - Standalone Python package and CLI.
 - Android device readiness, screenshot/XML capture, `snap` target table.
 - Safe `tap`, `input`, `replace-text`, `back`, `home`, `swipe`, and `wait`.
+- Explicit Android driver purge for removing device-side helper artifacts.
 - Primitive receipts and minimal proof refs.
 - Platform-neutral backend capability model for Android-first and future iOS
   backend lines.

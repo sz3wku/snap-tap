@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 from collections.abc import Sequence
 
+from snap_tap.backends.android.uiautomator2.probes import _bridge_error_code
 from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessResult,
     ProcessRunner,
@@ -187,6 +188,14 @@ def test_capture_uiautomator2_screenshot_redacts_sensitive_structured_error() ->
     assert result.error.code == "screenshot_failed"
     assert "image_base64" not in result.error.detail
     assert "secret-screenshot-bytes" not in result.error.detail
+
+
+def test_screenshot_remote_disconnect_is_recoverable_driver_error() -> None:
+    error = RuntimeError(
+        "RemoteDisconnected: Remote end closed connection without response"
+    )
+
+    assert _bridge_error_code(error, "screenshot_failed") == "driver_unavailable"
 
 
 def test_capture_uiautomator2_screenshot_omits_hostile_probe_metadata() -> None:

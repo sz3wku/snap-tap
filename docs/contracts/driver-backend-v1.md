@@ -142,6 +142,14 @@ Launchable app lifecycle is a separate small surface:
 exposed through the high-level CLI. It must not guess display names such as
 `Settings`, infer app readiness, or encode app-specific flows.
 
+Android driver lifecycle cleanup is an explicit platform-specific surface:
+
+- `android-driver-purge` runs the bounded UIAutomator2 `purge` lifecycle
+  operation for one explicit serial.
+
+It removes device-side Android helper artifacts. It must not run implicitly
+before touch/write primitives.
+
 ## Invariants
 
 - No platform business logic.

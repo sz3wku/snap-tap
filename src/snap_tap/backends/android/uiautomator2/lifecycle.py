@@ -11,7 +11,7 @@ from snap_tap.backends.android.uiautomator2.process_runner import (
 from snap_tap.backends.contracts import DriverLifecycleResult
 from snap_tap.device.identity import normalize_serial
 
-SUPPORTED_LIFECYCLE_OPERATIONS = frozenset({"init", "doctor"})
+SUPPORTED_LIFECYCLE_OPERATIONS = frozenset({"init", "doctor", "purge"})
 
 
 class Uiautomator2LifecycleRunner:
