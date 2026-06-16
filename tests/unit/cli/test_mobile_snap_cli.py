@@ -154,7 +154,7 @@ def test_mobile_snap_default_table_has_targets_and_writes_latest_source(
         [DeviceInfo(serial="RFCN4010FCK", state="device")],
         cache_root=tmp_path / "latest",
     )
-    result = CliRunner().invoke(app, ["snap", "--device", "RFCN4010FCK"])
+    result = CliRunner().invoke(app, ["snap", "RFCN4010FCK"])
 
     assert result.exit_code == 0
     latest = read_latest_snap_source(
@@ -189,7 +189,7 @@ def test_mobile_snap_debug_table_includes_scroll_rows(tmp_path: Path) -> None:
 
     result = CliRunner().invoke(
         app,
-        ["snap", "--device", "RFCN4010FCK", "--debug"],
+        ["snap", "RFCN4010FCK", "--debug"],
     )
 
     assert result.exit_code == 0
@@ -206,7 +206,7 @@ def test_mobile_snap_json_contract_and_debug_fields(tmp_path: Path) -> None:
 
     result = CliRunner().invoke(
         app,
-        ["snap", "--device", "RFCN4010FCK", "--json", "--debug"],
+        ["snap", "RFCN4010FCK", "--json", "--debug"],
     )
 
     assert result.exit_code == 0
@@ -238,6 +238,25 @@ def test_mobile_snap_requires_device_before_capture() -> None:
     payload = _json(result.stdout)
     assert payload["ok"] is False
     assert payload["error"]["code"] == "device_required"
+    assert xml_dumper.calls == []
+    assert capturer.calls == []
+    assert app_reader.calls == []
+
+
+def test_mobile_snap_rejects_positional_serial_with_device_option() -> None:
+    app, xml_dumper, capturer, app_reader = _build_app(
+        [DeviceInfo(serial="RFCN4010FCK", state="device")]
+    )
+
+    result = CliRunner().invoke(
+        app,
+        ["snap", "RFCN4010FCK", "--device", "RFCN4010FCK", "--json"],
+    )
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["ok"] is False
+    assert payload["error"]["code"] == "invalid_arguments"
     assert xml_dumper.calls == []
     assert capturer.calls == []
     assert app_reader.calls == []

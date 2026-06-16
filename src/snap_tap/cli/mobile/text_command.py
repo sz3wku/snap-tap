@@ -17,6 +17,7 @@ from snap_tap.cli.mobile.primitive_text_command import (
     execute_primitive_text_request,
 )
 from snap_tap.device.identity import normalize_serial
+from snap_tap.backends.contracts import DriverError
 from snap_tap.backends.android.uiautomator2.text import TEXT_INPUT_MODE, TEXT_REPLACE_MODE, TEXT_MODES
 from snap_tap.primitives import (
     PrimitiveReceipt,
@@ -46,13 +47,21 @@ class TextAliasDependencies(PrimitiveTextDependencies, Protocol):
 def register_text_commands(app: typer.Typer, dependencies: TextAliasDependencies) -> None:
     @app.command("input")
     def input_text(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial."),
+        ] = None,
         target_id: Annotated[
             str | None,
             typer.Argument(help="Snapshot-local input id from latest snap-tap snap."),
         ] = None,
         device: Annotated[
             str | None,
-            typer.Option("--device", "-d", help="ADB serial for text input."),
+            typer.Option(
+                "--device",
+                "-d",
+                help="Compatibility/debug serial alias.",
+            ),
         ] = None,
         text: Annotated[
             str | None,
@@ -75,10 +84,32 @@ def register_text_commands(app: typer.Typer, dependencies: TextAliasDependencies
             typer.Option("--lease-timeout-s", min=0.001, help="Lease timeout."),
         ] = 30.0,
     ) -> None:
-        run_text_command(
-            dependencies=dependencies,
+        requested_device, requested_target, arg_error = _text_arguments(
+            serial_or_target=serial,
             target_id=target_id,
             device=device,
+        )
+        if arg_error is not None:
+            _emit_receipt(
+                blocked_text_receipt(
+                    device_id=requested_device,
+                    request=safe_text_request_metadata(
+                        mode=TEXT_INPUT_MODE,
+                        device_id=requested_device,
+                        target_id=requested_target,
+                        session_id=session,
+                        text=text,
+                    ),
+                    code=arg_error.code,
+                    detail=arg_error.detail,
+                    operation=TEXT_INPUT_MODE,
+                )
+            )
+            return
+        run_text_command(
+            dependencies=dependencies,
+            target_id=requested_target,
+            device=requested_device,
             text=text,
             mode=TEXT_INPUT_MODE,
             session=session,
@@ -89,13 +120,21 @@ def register_text_commands(app: typer.Typer, dependencies: TextAliasDependencies
 
     @app.command("replace-text")
     def replace_text(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial."),
+        ] = None,
         target_id: Annotated[
             str | None,
             typer.Argument(help="Snapshot-local input id from latest snap-tap snap."),
         ] = None,
         device: Annotated[
             str | None,
-            typer.Option("--device", "-d", help="ADB serial for replace text."),
+            typer.Option(
+                "--device",
+                "-d",
+                help="Compatibility/debug serial alias.",
+            ),
         ] = None,
         text: Annotated[
             str | None,
@@ -118,10 +157,32 @@ def register_text_commands(app: typer.Typer, dependencies: TextAliasDependencies
             typer.Option("--lease-timeout-s", min=0.001, help="Lease timeout."),
         ] = 30.0,
     ) -> None:
-        run_text_command(
-            dependencies=dependencies,
+        requested_device, requested_target, arg_error = _text_arguments(
+            serial_or_target=serial,
             target_id=target_id,
             device=device,
+        )
+        if arg_error is not None:
+            _emit_receipt(
+                blocked_text_receipt(
+                    device_id=requested_device,
+                    request=safe_text_request_metadata(
+                        mode=TEXT_REPLACE_MODE,
+                        device_id=requested_device,
+                        target_id=requested_target,
+                        session_id=session,
+                        text=text,
+                    ),
+                    code=arg_error.code,
+                    detail=arg_error.detail,
+                    operation=TEXT_REPLACE_MODE,
+                )
+            )
+            return
+        run_text_command(
+            dependencies=dependencies,
+            target_id=requested_target,
+            device=requested_device,
             text=text,
             mode=TEXT_REPLACE_MODE,
             session=session,
@@ -129,6 +190,28 @@ def register_text_commands(app: typer.Typer, dependencies: TextAliasDependencies
             timeout_s=timeout_s,
             lease_timeout_s=lease_timeout_s,
         )
+
+
+def _text_arguments(
+    *,
+    serial_or_target: str | None,
+    target_id: str | None,
+    device: str | None,
+) -> tuple[str | None, str | None, DriverError | None]:
+    if device is not None:
+        if target_id is not None:
+            return (
+                device,
+                target_id,
+                DriverError(
+                    code="invalid_arguments",
+                    detail="Use either positional serial or --device, not both.",
+                ),
+            )
+        return (device, serial_or_target, None)
+    if serial_or_target is None:
+        return (None, target_id, None)
+    return (serial_or_target, target_id, None)
 
 
 def run_text_command(
@@ -188,7 +271,7 @@ def run_text_command(
             blocked_text_receipt(
                 device_id=None,
                 request=request,
-                detail="Pass --device with a valid ADB serial.",
+                detail="Pass a valid device serial.",
                 operation=mode,
             )
         )

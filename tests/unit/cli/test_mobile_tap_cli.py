@@ -215,11 +215,11 @@ def test_mobile_snap_then_tap_id_builds_signature_for_executor(
 
     snap = runner.invoke(
         app,
-        ["snap", "--device", "RFCN4010FCK", "--session", "default"],
+        ["snap", "RFCN4010FCK", "--session", "default"],
     )
     tap = runner.invoke(
         app,
-        ["tap", "e002", "--device", "RFCN4010FCK", "--session", "default", "--json"],
+        ["tap", "RFCN4010FCK", "e002", "--session", "default", "--json"],
     )
 
     assert snap.exit_code == 0
@@ -248,6 +248,24 @@ def test_mobile_tap_missing_source_blocks_before_phone_work(tmp_path: Path) -> N
     payload = _json(result.stdout)
     assert payload["error"]["code"] == "latest_snap_source_missing"
     assert payload["attempted_touch"] is False
+    assert xml_dumper.calls == []
+    assert executor.calls == []
+
+
+def test_mobile_tap_rejects_positional_serial_with_device_option(
+    tmp_path: Path,
+) -> None:
+    executor = FakeExecutor()
+    app, xml_dumper = _build_app(tmp_path, executor)
+
+    result = CliRunner().invoke(
+        app,
+        ["tap", "RFCN4010FCK", "e002", "--device", "RFCN4010FCK", "--json"],
+    )
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["error"]["code"] == "invalid_arguments"
     assert xml_dumper.calls == []
     assert executor.calls == []
 

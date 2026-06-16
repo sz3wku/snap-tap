@@ -214,7 +214,7 @@ ERROR_SPECS: dict[str, ErrorSpec] = {
         category="selection",
         recoverable=False,
         retryable=False,
-        recovery_hint="Pass --device for lifecycle operations.",
+        recovery_hint="Pass an explicit device serial for lifecycle operations.",
     ),
     "invalid_arguments": ErrorSpec(
         category="arguments",

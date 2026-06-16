@@ -123,7 +123,7 @@ def test_mobile_snapshot_updates_latest_after_success(tmp_path: Path) -> None:
 
     result = CliRunner().invoke(
         app,
-        ["snapshot", "--device", "RFCN4010FCK", "--out-dir", str(tmp_path / "out")],
+        ["snapshot", "RFCN4010FCK", "--out-dir", str(tmp_path / "out")],
     )
 
     assert result.exit_code == 0
@@ -218,7 +218,7 @@ def test_mobile_snapshot_latest_emits_json_ref(tmp_path: Path) -> None:
 
     latest = runner.invoke(
         app,
-        ["snapshot-latest", "--device", "RFCN4010FCK", "--session", "default"],
+        ["snapshot-latest", "RFCN4010FCK", "--session", "default"],
     )
 
     assert capture.exit_code == 0

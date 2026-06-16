@@ -197,7 +197,6 @@ def test_mobile_screenshot_writes_png_and_omits_image_bytes(tmp_path: Path) -> N
         app,
         [
             "screenshot",
-            "--device",
             "RFCN4010FCK",
             "--out",
             str(out),
@@ -221,6 +220,30 @@ def test_mobile_screenshot_writes_png_and_omits_image_bytes(tmp_path: Path) -> N
     assert "image_base64" not in result.stdout
     assert "image_bytes" not in result.stdout
     assert capturer.calls == [("RFCN4010FCK", 3.0)]
+
+
+def test_mobile_screenshot_rejects_positional_serial_with_device_option(
+    tmp_path: Path,
+) -> None:
+    app, capturer = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "screenshot",
+            "RFCN4010FCK",
+            "--device",
+            "RFCN4010FCK",
+            "--out",
+            str(tmp_path / "screen.png"),
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["ok"] is False
+    assert payload["result"]["error"]["code"] == "invalid_arguments"
+    assert capturer.calls == []
 
 
 def test_mobile_screenshot_does_not_write_when_capture_fails(tmp_path: Path) -> None:

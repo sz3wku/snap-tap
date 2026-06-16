@@ -154,6 +154,23 @@ def test_mobile_app_current_auto_selects_single_online_device() -> None:
     assert reader.calls == [("app_current", "RFCN4010FCK", None, 3.0)]
 
 
+def test_mobile_app_current_accepts_positional_serial() -> None:
+    app, reader = _build_app(
+        [
+            DeviceInfo(serial="RFCN4010FCK", state="device"),
+            DeviceInfo(serial="R58R502HMSJ", state="device"),
+        ]
+    )
+
+    result = CliRunner().invoke(app, ["app-current", "RFCN4010FCK", "--timeout-s", "3"])
+
+    assert result.exit_code == 0
+    payload = _json(result.stdout)
+    assert payload["ok"] is True
+    assert payload["result"]["device_id"] == "RFCN4010FCK"
+    assert reader.calls == [("app_current", "RFCN4010FCK", None, 3.0)]
+
+
 def test_mobile_app_current_all_outputs_results_array() -> None:
     app, reader = _build_app(
         [
@@ -193,6 +210,21 @@ def test_mobile_app_current_rejects_all_with_explicit_device() -> None:
     assert reader.calls == []
 
 
+def test_mobile_app_current_rejects_positional_serial_with_device_option() -> None:
+    app, reader = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
+
+    result = CliRunner().invoke(
+        app,
+        ["app-current", "RFCN4010FCK", "--device", "RFCN4010FCK"],
+    )
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["ok"] is False
+    assert payload["result"]["error"]["code"] == "invalid_arguments"
+    assert reader.calls == []
+
+
 def test_mobile_package_info_requires_valid_package_before_reader() -> None:
     for package_args in (["--package", "bad package"], []):
         app, reader = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
@@ -216,7 +248,6 @@ def test_mobile_package_info_outputs_public_metadata_only() -> None:
         app,
         [
             "package-info",
-            "--device",
             "RFCN4010FCK",
             "--package",
             "com.example.app",

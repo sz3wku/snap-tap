@@ -144,15 +144,15 @@ def test_mobile_navigation_aliases_use_primitive_executor_path() -> None:
     app = _build_app(executor)
     runner = CliRunner()
 
-    back = runner.invoke(app, ["back", "--device", "RFCN4010FCK", "--json"])
-    home = runner.invoke(app, ["home", "--device", "RFCN4010FCK", "--json"])
+    back = runner.invoke(app, ["back", "RFCN4010FCK", "--json"])
+    home = runner.invoke(app, ["home", "RFCN4010FCK", "--json"])
     swipe = runner.invoke(
         app,
-        ["swipe", "--device", "RFCN4010FCK", "--direction", "left", "--json"],
+        ["swipe", "RFCN4010FCK", "--direction", "left", "--json"],
     )
     wait = runner.invoke(
         app,
-        ["wait", "--device", "RFCN4010FCK", "--seconds", "0", "--json"],
+        ["wait", "RFCN4010FCK", "--seconds", "0", "--json"],
     )
 
     assert back.exit_code == 0
@@ -199,6 +199,20 @@ def test_mobile_navigation_alias_invalid_args_fail_before_executor() -> None:
     assert _json(bad_serial.stdout)["error"]["code"] == "primitive_invalid_request"
     assert _json(bad_direction.stdout)["error"]["code"] == "primitive_invalid_request"
     assert _json(bad_wait.stdout)["error"]["code"] == "primitive_invalid_request"
+    assert executor.calls == []
+
+
+def test_mobile_navigation_alias_rejects_positional_serial_with_device_option() -> None:
+    executor = FakeNavigationExecutor()
+    app = _build_app(executor)
+
+    result = CliRunner().invoke(
+        app,
+        ["back", "RFCN4010FCK", "--device", "RFCN4010FCK", "--json"],
+    )
+
+    assert result.exit_code == 1
+    assert _json(result.stdout)["error"]["code"] == "invalid_arguments"
     assert executor.calls == []
 
 

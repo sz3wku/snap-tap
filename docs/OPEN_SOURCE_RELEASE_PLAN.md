@@ -27,8 +27,8 @@ snap-tap swipe <serial> --direction up
 snap-tap wait <serial> --seconds 1
 ```
 
-Current bootstrap commands may still use `--device`; the release target is the
-clean positional serial form above.
+`--device` remains accepted as a compatibility/debug alias, but the headline
+human and agent loop is the clean positional serial form above.
 
 ## CLI UX Decision
 
@@ -48,16 +48,22 @@ remain the clean loop: `snap -> tap -> fresh snap`.
 Latest local verification from this repo:
 
 - `uv lock --check` passed.
-- `uv run pytest` passed with 423 tests.
 - `uv run ruff check src tests` passed.
 - `uv run mypy --explicit-package-bases src tests` passed.
+- `uv run pytest` passed with 433 tests.
 - `uv build --out-dir temp\build-check` produced sdist and wheel.
 - `snap-tap devices` detected two local Android devices.
-- `snap-tap status --all` reported both visible devices healthy.
+- `snap-tap status <serial>` reported both visible Android devices healthy.
+- Positional read-only live smoke passed on a local Android phone:
+  - `snap-tap snap <serial>`,
+  - `snap-tap app-current <serial>`,
+  - `snap-tap snapshot <serial> --out-dir temp\live-readonly\snapshot`,
+  - `snap-tap screenshot <serial> --out temp\live-readonly\screen.png`.
 
 Known gaps:
 
-- no initial commit yet by user request,
+- initial baseline commit exists locally: `0b19b34`; current CLI polish is
+  uncommitted until reviewed,
 - no public remote yet,
 - OSS shell exists locally: `LICENSE`, `SECURITY.md`, `CONTRIBUTING.md`,
   `CHANGELOG.md`, GitHub issue templates, PR template, and GitHub Actions CI,
@@ -65,10 +71,9 @@ Known gaps:
   URLs; verify the real public remote before publishing,
 - public docs/source strings are guarded against legacy command language and
   private serial examples,
-- CLI still needs the positional serial polish described above,
 - platform architecture now includes an iOS backend line, with `snap` proved in
   a temp spike and `tap/input` blocked on WDA signing/setup,
-- no committed live smoke protocol yet.
+- mutating L1/L2 live gates have not run in this slice.
 
 ## Phase 0 - Freeze Baseline
 
@@ -156,6 +161,9 @@ CI should run:
 
 Goal: make v0 simple before people learn the wrong shape.
 
+Status: locally implemented and validated with unit/static/build gates plus
+read-only live smoke.
+
 Tasks:
 
 - implement positional serial everyday commands:
@@ -167,8 +175,8 @@ Tasks:
   - `snap-tap home <serial>`,
   - `snap-tap swipe <serial> --direction up`,
   - `snap-tap wait <serial> --seconds 1`.
-- keep `--device` only if we want compatibility, but do not make it the
-  headline UX,
+- keep `--device` as compatibility/debug alias, but do not make it the headline
+  UX,
 - define `--json` as debug/inspect/machine mode,
 - keep `--debug` for extra diagnostics where useful,
 - decide whether `devices` should be human-readable by default with optional
@@ -204,6 +212,11 @@ snap-tap snap <serial> --json
 snap-tap screenshot <serial> --out temp\live-smoke\screen.png
 snap-tap snapshot <serial> --out-dir temp\live-smoke\snapshot
 ```
+
+Latest local L0 note: positional `devices`, `status`, `snap`, `app-current`,
+`snapshot`, and `screenshot` were verified on 2026-06-16. A parallel
+`screenshot`/`snapshot` attempt produced one transient `screenshot_failed`;
+rerunning `screenshot` alone passed.
 
 Done when:
 

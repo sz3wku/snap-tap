@@ -22,9 +22,8 @@ def test_mobile_input_id_builds_text_request_from_latest_source(
         build_text_alias_app(tmp_path, executor),
         [
             "input",
-            "e001",
-            "--device",
             "RFCN4010FCK",
+            "e001",
             "--text",
             "hakar smoke",
             "--json",
@@ -53,9 +52,8 @@ def test_mobile_replace_text_id_uses_replace_mode(tmp_path: Path) -> None:
         build_text_alias_app(tmp_path, executor),
         [
             "replace-text",
-            "e001",
-            "--device",
             "RFCN4010FCK",
+            "e001",
             "--text",
             "new caption",
             "--json",
@@ -118,6 +116,32 @@ def test_mobile_text_alias_invalid_inputs_fail_before_executor(
     assert json_payload(missing_source.stdout)["error"]["code"] == (
         "latest_snap_source_missing"
     )
+    assert executor.calls == []
+
+
+def test_mobile_text_alias_rejects_positional_serial_with_device_option(
+    tmp_path: Path,
+) -> None:
+    write_latest_text_source(tmp_path)
+    executor = FakeTextExecutor()
+
+    result = CliRunner().invoke(
+        build_text_alias_app(tmp_path, executor),
+        [
+            "input",
+            "RFCN4010FCK",
+            "e001",
+            "--device",
+            "RFCN4010FCK",
+            "--text",
+            "hello",
+            "--json",
+        ],
+    )
+
+    payload = json_payload(result.stdout)
+    assert result.exit_code == 1
+    assert payload["error"]["code"] == "invalid_arguments"
     assert executor.calls == []
 
 

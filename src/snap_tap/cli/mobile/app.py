@@ -11,6 +11,7 @@ from snap_tap.cli.output import (
     emit_json,
     health_to_dict,
     lifecycle_to_dict,
+    screenshot_to_dict,
     xml_dump_to_dict,
 )
 from snap_tap.cli.mobile.app_awareness_command import register_app_awareness_commands
@@ -21,6 +22,7 @@ from snap_tap.cli.mobile.device_discovery import (
     discovery_lifecycle_failure,
     discovery_xml_failure,
     read_visible_devices,
+    resolve_requested_serial,
 )
 from snap_tap.cli.mobile.primitive_tap_command import (
     PrimitiveTapExecutor,
@@ -48,6 +50,7 @@ from snap_tap.backends.contracts import (
     DriverHealth,
     DriverLifecycleResult,
     DriverLifecycleRunner,
+    DriverScreenshot,
     DriverScreenshotCapturer,
     DriverXmlDump,
     DriverXmlDumper,
@@ -102,6 +105,10 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
 
     @app.command("status")
     def status(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to inspect."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to inspect."),
@@ -115,12 +122,24 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             typer.Option("--timeout-s", min=0.001, help="Per-device timeout."),
         ] = 5.0,
     ) -> None:
-        if all_devices and device is not None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            health = blocked_health(
+                backend=dependencies.backend.backend_name,
+                code=serial_error.code,
+                detail=serial_error.detail,
+                device_id=serial or device,
+            )
+            _emit_status_result(health)
+        if all_devices and requested_serial is not None:
             health = blocked_health(
                 backend=dependencies.backend.backend_name,
                 code="invalid_arguments",
-                detail="Use either --all or --device, not both.",
-                device_id=device,
+                detail="Use either --all or an explicit device serial, not both.",
+                device_id=requested_serial,
             )
             _emit_status_result(health)
         snapshot = read_visible_devices(dependencies.discovery)
@@ -128,7 +147,7 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             health = discovery_health_failure(
                 snapshot.error,
                 backend=dependencies.backend.backend_name,
-                device_id=device,
+                device_id=requested_serial,
             )
             if all_devices:
                 emit_json(
@@ -165,13 +184,17 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
         health = check_device_health(
             backend=dependencies.backend,
             devices=visible,
-            requested_serial=device,
+            requested_serial=requested_serial,
             timeout_s=timeout_s,
         )
         _emit_status_result(health)
 
     @app.command("init")
     def init(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to prepare."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to prepare."),
@@ -181,15 +204,36 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             typer.Option("--timeout-s", min=0.001, help="Operation timeout."),
         ] = 60.0,
     ) -> None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            _emit_lifecycle_result(
+                DriverLifecycleResult.failure(
+                    backend=dependencies.lifecycle_runner.backend_name,
+                    operation="init",
+                    code=serial_error.code,
+                    detail=serial_error.detail,
+                    device_id=serial or device,
+                    elapsed_ms=0.0,
+                    status="blocked",
+                )
+            )
+            return
         _run_lifecycle(
             dependencies=dependencies,
             operation="init",
-            device=device,
+            device=requested_serial,
             timeout_s=timeout_s,
         )
 
     @app.command("doctor")
     def doctor(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to diagnose."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to diagnose."),
@@ -199,15 +243,36 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             typer.Option("--timeout-s", min=0.001, help="Operation timeout."),
         ] = 60.0,
     ) -> None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            _emit_lifecycle_result(
+                DriverLifecycleResult.failure(
+                    backend=dependencies.lifecycle_runner.backend_name,
+                    operation="doctor",
+                    code=serial_error.code,
+                    detail=serial_error.detail,
+                    device_id=serial or device,
+                    elapsed_ms=0.0,
+                    status="blocked",
+                )
+            )
+            return
         _run_lifecycle(
             dependencies=dependencies,
             operation="doctor",
-            device=device,
+            device=requested_serial,
             timeout_s=timeout_s,
         )
 
     @app.command("dump-xml")
     def dump_xml(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to read."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to read."),
@@ -217,12 +282,28 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             typer.Option("--timeout-s", min=0.001, help="Operation timeout."),
         ] = 10.0,
     ) -> None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            _emit_xml_dump_result(
+                DriverXmlDump.failure(
+                    backend=dependencies.xml_dumper.backend_name,
+                    code=serial_error.code,
+                    detail=serial_error.detail,
+                    device_id=serial or device,
+                    elapsed_ms=0.0,
+                    status="blocked",
+                )
+            )
+            return
         snapshot = read_visible_devices(dependencies.discovery)
         if snapshot.error is not None:
             result = discovery_xml_failure(
                 snapshot.error,
                 backend=dependencies.xml_dumper.backend_name,
-                device_id=device,
+                device_id=requested_serial,
             )
             _emit_xml_dump_result(result)
             return
@@ -230,13 +311,17 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
         result = _dump_xml_result(
             dependencies=dependencies,
             visible=visible,
-            device=device,
+            device=requested_serial,
             timeout_s=timeout_s,
         )
         _emit_xml_dump_result(result)
 
     @app.command("screenshot")
     def screenshot(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to capture."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to capture."),
@@ -250,9 +335,31 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             typer.Option("--timeout-s", min=0.001, help="Operation timeout."),
         ] = 10.0,
     ) -> None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            result = DriverScreenshot.failure(
+                backend=dependencies.screenshot_capturer.backend_name
+                if dependencies.screenshot_capturer is not None
+                else "uiautomator2",
+                code=serial_error.code,
+                detail=serial_error.detail,
+                device_id=serial or device,
+                elapsed_ms=0.0,
+                status="blocked",
+            )
+            emit_json(
+                {
+                    "ok": False,
+                    "result": screenshot_to_dict(result),
+                }
+            )
+            raise typer.Exit(code=1)
         run_screenshot_command(
             dependencies=dependencies,
-            device=device,
+            device=requested_serial,
             out=out,
             timeout_s=timeout_s,
         )
@@ -282,7 +389,7 @@ def _run_lifecycle(
             backend=dependencies.lifecycle_runner.backend_name,
             operation=operation,
             code="device_required",
-            detail=f"Pass --device to run mobile {operation}.",
+            detail=f"Pass a device serial to run snap-tap {operation}.",
             elapsed_ms=0.0,
             status="blocked",
         )

@@ -13,7 +13,7 @@ from snap_tap.cli.mobile.snap_command import (
 from snap_tap.cli.output import emit_json
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import normalize_serial
-from snap_tap.backends.contracts import DriverScreenshotCapturer
+from snap_tap.backends.contracts import DriverError, DriverScreenshotCapturer
 from snap_tap.backends.android.uiautomator2.tap import Uiautomator2Tapper
 from snap_tap.backends.android.uiautomator2.screenshot import Uiautomator2ScreenshotCapturer
 from snap_tap.backends.contracts import DriverXmlDumper
@@ -75,13 +75,21 @@ class TapDependencies(Protocol):
 def register_tap_command(app: typer.Typer, dependencies: TapDependencies) -> None:
     @app.command("tap")
     def tap(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial."),
+        ] = None,
         target_id: Annotated[
             str | None,
             typer.Argument(help="Snapshot-local target id from latest snap-tap snap."),
         ] = None,
         device: Annotated[
             str | None,
-            typer.Option("--device", "-d", help="ADB serial to tap."),
+            typer.Option(
+                "--device",
+                "-d",
+                help="Compatibility/debug serial alias.",
+            ),
         ] = None,
         json_output: Annotated[
             bool,
@@ -107,10 +115,30 @@ def register_tap_command(app: typer.Typer, dependencies: TapDependencies) -> Non
             ),
         ] = None,
     ) -> None:
-        run_tap_command(
-            dependencies=dependencies,
+        requested_device, requested_target, arg_error = _tap_arguments(
+            serial_or_target=serial,
             target_id=target_id,
             device=device,
+        )
+        if arg_error is not None:
+            _emit_receipt(
+                _blocked(
+                    device_id=requested_device,
+                    request=_request_payload(
+                        device=requested_device,
+                        target_id=requested_target,
+                        session=session,
+                        snapshot=snapshot,
+                    ),
+                    code=arg_error.code,
+                    detail=arg_error.detail,
+                )
+            )
+            return
+        run_tap_command(
+            dependencies=dependencies,
+            target_id=requested_target,
+            device=requested_device,
             json_output=json_output,
             timeout_s=timeout_s,
             lease_timeout_s=lease_timeout_s,
@@ -156,7 +184,7 @@ def run_tap_command(
             _blocked(
                 device_id=None,
                 request=request,
-                detail="Pass --device with a valid ADB serial.",
+                detail="Pass a valid device serial.",
             )
         )
         return
@@ -294,6 +322,28 @@ def _blocked(
         code=code,
         detail=detail,
     )
+
+
+def _tap_arguments(
+    *,
+    serial_or_target: str | None,
+    target_id: str | None,
+    device: str | None,
+) -> tuple[str | None, str | None, DriverError | None]:
+    if device is not None:
+        if target_id is not None:
+            return (
+                device,
+                target_id,
+                DriverError(
+                    code="invalid_arguments",
+                    detail="Use either positional serial or --device, not both.",
+                ),
+            )
+        return (device, serial_or_target, None)
+    if serial_or_target is None:
+        return (None, target_id, None)
+    return (serial_or_target, target_id, None)
 
 
 def _request_payload(

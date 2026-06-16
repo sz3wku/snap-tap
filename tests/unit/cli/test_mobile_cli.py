@@ -138,12 +138,44 @@ def test_mobile_status_all_checks_each_visible_device() -> None:
     assert backend.calls == [("RFCN4010FCK", 2.0), ("R58R502HMSJ", 2.0)]
 
 
+def test_mobile_status_accepts_positional_serial() -> None:
+    app, backend, _, _ = _build_app(
+        [
+            DeviceInfo(serial="RFCN4010FCK", state="device"),
+            DeviceInfo(serial="R58R502HMSJ", state="device"),
+        ]
+    )
+
+    result = CliRunner().invoke(app, ["status", "RFCN4010FCK", "--timeout-s", "2"])
+
+    assert result.exit_code == 0
+    payload = _json(result.stdout)
+    assert payload["ok"] is True
+    assert payload["result"]["device_id"] == "RFCN4010FCK"
+    assert backend.calls == [("RFCN4010FCK", 2.0)]
+
+
 def test_mobile_status_rejects_all_with_explicit_device() -> None:
     app, backend, _, _ = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
 
     result = CliRunner().invoke(
         app,
         ["status", "--all", "--device", "RFCN4010FCK"],
+    )
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["ok"] is False
+    assert payload["result"]["error"]["code"] == "invalid_arguments"
+    assert backend.calls == []
+
+
+def test_mobile_status_rejects_positional_serial_with_device_option() -> None:
+    app, backend, _, _ = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
+
+    result = CliRunner().invoke(
+        app,
+        ["status", "RFCN4010FCK", "--device", "RFCN4010FCK"],
     )
 
     assert result.exit_code == 1
@@ -197,7 +229,7 @@ def test_mobile_doctor_runs_lifecycle_for_explicit_device() -> None:
 
     result = CliRunner().invoke(
         app,
-        ["doctor", "--device", "RFCN4010FCK", "--timeout-s", "3"],
+        ["doctor", "RFCN4010FCK", "--timeout-s", "3"],
     )
 
     assert result.exit_code == 0
@@ -257,7 +289,7 @@ def test_mobile_dump_xml_outputs_raw_xml_for_explicit_device() -> None:
 
     result = CliRunner().invoke(
         app,
-        ["dump-xml", "--device", "RFCN4010FCK", "--timeout-s", "3"],
+        ["dump-xml", "RFCN4010FCK", "--timeout-s", "3"],
     )
 
     assert result.exit_code == 0

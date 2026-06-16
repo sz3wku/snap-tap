@@ -178,7 +178,6 @@ def test_mobile_snapshot_writes_refs_and_omits_raw_payloads(tmp_path: Path) -> N
         app,
         [
             "snapshot",
-            "--device",
             "RFCN4010FCK",
             "--out-dir",
             str(out_dir),
@@ -311,6 +310,33 @@ def test_mobile_snapshot_writes_refs_and_omits_raw_payloads(tmp_path: Path) -> N
     assert XML_TEXT not in result.stdout
     assert xml_dumper.calls == [("RFCN4010FCK", 3.0)]
     assert capturer.calls == [("RFCN4010FCK", 3.0)]
+
+
+def test_mobile_snapshot_rejects_positional_serial_with_device_option(
+    tmp_path: Path,
+) -> None:
+    app, xml_dumper, capturer = _build_app(
+        [DeviceInfo(serial="RFCN4010FCK", state="device")]
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "snapshot",
+            "RFCN4010FCK",
+            "--device",
+            "RFCN4010FCK",
+            "--out-dir",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["ok"] is False
+    assert payload["result"]["error"]["code"] == "invalid_arguments"
+    assert xml_dumper.calls == []
+    assert capturer.calls == []
 
 
 def test_mobile_snapshot_exposes_recovery_metadata(tmp_path: Path) -> None:

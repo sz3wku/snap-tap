@@ -5,7 +5,7 @@ is Android-first today, with an iOS backend line being designed behind the same
 CLI. It was extracted from the proven HAKAR phone spine, but it is a separate
 open-source project and not the HAKAR product runtime.
 
-The release target is a small agent/operator loop:
+The public v0 loop is a small agent/operator loop:
 
 ```powershell
 snap-tap devices
@@ -35,9 +35,9 @@ This repository is in pre-alpha release hardening. The extracted runtime already
 keeps the hard parts: process isolation, fail-closed errors, leases, target
 resolution, stale guards, after-proof, and primitive receipts.
 
-The current bootstrap CLI may still use `--device` for some commands. The v0
-release target is the cleaner positional serial flow shown above, with `--json`
-reserved for debug, inspection, tests, CI, and support.
+The headline CLI uses positional serials. `--device` remains accepted as a
+compatibility/debug alias for scripts and support flows. `--json` is reserved
+for debug, inspection, tests, CI, and support.
 
 ## Platform Direction
 

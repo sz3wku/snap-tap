@@ -48,6 +48,22 @@ def devices_failure_payload(error: DriverError) -> dict[str, object]:
     }
 
 
+def resolve_requested_serial(
+    *,
+    serial: str | None,
+    device: str | None,
+) -> tuple[str | None, DriverError | None]:
+    if serial is not None and device is not None:
+        return (
+            None,
+            DriverError(
+                code="invalid_arguments",
+                detail="Use either positional serial or --device, not both.",
+            ),
+        )
+    return (serial if serial is not None else device, None)
+
+
 def discovery_health_failure(
     error: DriverError,
     *,

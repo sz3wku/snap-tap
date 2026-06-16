@@ -7,7 +7,10 @@ from typing import Annotated, Protocol
 import typer
 
 from snap_tap.cli.output import emit_json
-from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.device_discovery import (
+    read_visible_devices,
+    resolve_requested_serial,
+)
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.backends.contracts import DriverAppAwarenessReader, read_device_app_current
 from snap_tap.backends.contracts import DriverScreenshotCapturer
@@ -66,6 +69,10 @@ def register_snap_commands(
 ) -> None:
     @app.command("snap")
     def snap(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to observe."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to observe."),
@@ -94,9 +101,25 @@ def register_snap_commands(
             ),
         ] = None,
     ) -> None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            snap_result = mobile_snap_failure(
+                device_id=serial or device,
+                session_id=session,
+                code=serial_error.code,
+                detail=serial_error.detail,
+            )
+            if json_output:
+                emit_json(mobile_snap_to_dict(snap_result, debug=debug))
+            else:
+                emit_snap_table(snap_result, debug=debug)
+            raise typer.Exit(code=1)
         run_snap_command(
             dependencies=dependencies,
-            device=device,
+            device=requested_serial,
             json_output=json_output,
             debug=debug,
             timeout_s=timeout_s,
@@ -159,7 +182,7 @@ def _capture_snap(
             device_id=None,
             session_id=session_id,
             code="device_required",
-            detail="Pass --device to observe a snap-tap snap.",
+            detail="Pass a device serial to observe a snap-tap snap.",
         )
 
     visible = read_visible_devices(dependencies.discovery)

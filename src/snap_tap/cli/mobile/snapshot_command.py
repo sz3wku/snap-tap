@@ -7,7 +7,10 @@ import typer
 
 from snap_tap.cli.output import emit_json
 from snap_tap.cli.snapshot_output import raw_snapshot_capture_to_dict
-from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.device_discovery import (
+    read_visible_devices,
+    resolve_requested_serial,
+)
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.backends.contracts import DriverScreenshotCapturer
 from snap_tap.backends.android.uiautomator2.screenshot import Uiautomator2ScreenshotCapturer
@@ -47,6 +50,10 @@ def register_snapshot_commands(
 ) -> None:
     @app.command("snapshot")
     def snapshot(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to capture."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to capture."),
@@ -64,9 +71,30 @@ def register_snapshot_commands(
             typer.Option("--session", help="Latest snapshot cache session id."),
         ] = DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
     ) -> None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            capturer = _screenshot_capturer(dependencies)
+            backend = _combined_backend(
+                dependencies.xml_dumper.backend_name,
+                capturer.backend_name,
+            )
+            _emit_snapshot_result(
+                RawSnapshotCapture.failure(
+                    backend=backend,
+                    code=serial_error.code,
+                    detail=serial_error.detail,
+                    device_id=serial or device,
+                    elapsed_ms=0.0,
+                    status="blocked",
+                )
+            )
+            return
         run_snapshot_command(
             dependencies=dependencies,
-            device=device,
+            device=requested_serial,
             out_dir=out_dir,
             timeout_s=timeout_s,
             session=session,
@@ -74,6 +102,10 @@ def register_snapshot_commands(
 
     @app.command("snapshot-latest")
     def snapshot_latest(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to read."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to read."),
@@ -83,9 +115,23 @@ def register_snapshot_commands(
             typer.Option("--session", help="Latest snapshot cache session id."),
         ] = DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
     ) -> None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            _emit_latest_failure(
+                LatestSnapshotRefError(
+                    code=serial_error.code,
+                    detail=serial_error.detail,
+                ),
+                device_id=serial or device,
+                session_id=session,
+            )
+            return
         run_snapshot_latest_command(
             dependencies=dependencies,
-            device=device,
+            device=requested_serial,
             session=session,
         )
 
@@ -108,7 +154,7 @@ def run_snapshot_command(
             RawSnapshotCapture.failure(
                 backend=backend,
                 code="device_required",
-                detail="Pass --device to capture a snap-tap snapshot.",
+                detail="Pass a device serial to capture a snap-tap snapshot.",
                 elapsed_ms=0.0,
                 status="blocked",
                 metadata={"timeout_s": timeout_s},
@@ -184,7 +230,7 @@ def run_snapshot_latest_command(
         _emit_latest_failure(
             LatestSnapshotRefError(
                 code="device_required",
-                detail="Pass --device to read the latest snap-tap snapshot ref.",
+                detail="Pass a device serial to read the latest snap-tap snapshot ref.",
             ),
             device_id=device,
             session_id=session,

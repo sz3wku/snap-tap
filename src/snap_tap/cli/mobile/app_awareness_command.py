@@ -6,7 +6,10 @@ from typing import Annotated, Protocol
 import typer
 
 from snap_tap.cli.output import app_awareness_to_dict, emit_json
-from snap_tap.cli.mobile.device_discovery import read_visible_devices
+from snap_tap.cli.mobile.device_discovery import (
+    read_visible_devices,
+    resolve_requested_serial,
+)
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import DeviceInfo
 from snap_tap.backends.contracts import (
@@ -33,6 +36,10 @@ def register_app_awareness_commands(
 ) -> None:
     @app.command("app-current")
     def app_current(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to inspect."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to inspect."),
@@ -47,14 +54,29 @@ def register_app_awareness_commands(
         ] = 5.0,
     ) -> None:
         reader = _reader(dependencies)
-        if all_devices and device is not None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            _emit_app_result(
+                _blocked_result(
+                    reader=reader,
+                    operation="app_current",
+                    code=serial_error.code,
+                    detail=serial_error.detail,
+                    device_id=serial or device,
+                )
+            )
+            return
+        if all_devices and requested_serial is not None:
             _emit_app_result(
                 _blocked_result(
                     reader=reader,
                     operation="app_current",
                     code="invalid_arguments",
-                    detail="Use either --all or --device, not both.",
-                    device_id=device,
+                    detail="Use either --all or an explicit device serial, not both.",
+                    device_id=requested_serial,
                 )
             )
             return
@@ -66,7 +88,7 @@ def register_app_awareness_commands(
                 operation="app_current",
                 code=snapshot.error.code,
                 detail=snapshot.error.detail,
-                device_id=device,
+                device_id=requested_serial,
             )
             if all_devices:
                 _emit_all_results([result])
@@ -90,13 +112,17 @@ def register_app_awareness_commands(
         result = read_device_app_current(
             reader=reader,
             devices=visible,
-            requested_serial=device,
+            requested_serial=requested_serial,
             timeout_s=timeout_s,
         )
         _emit_app_result(result)
 
     @app.command("package-info")
     def package_info(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to inspect."),
+        ] = None,
         device: Annotated[
             str | None,
             typer.Option("--device", "-d", help="ADB serial to inspect."),
@@ -115,14 +141,29 @@ def register_app_awareness_commands(
         ] = 5.0,
     ) -> None:
         reader = _reader(dependencies)
-        if all_devices and device is not None:
+        requested_serial, serial_error = resolve_requested_serial(
+            serial=serial,
+            device=device,
+        )
+        if serial_error is not None:
+            _emit_app_result(
+                _blocked_result(
+                    reader=reader,
+                    operation="package_info",
+                    code=serial_error.code,
+                    detail=serial_error.detail,
+                    device_id=serial or device,
+                )
+            )
+            return
+        if all_devices and requested_serial is not None:
             _emit_app_result(
                 _blocked_result(
                     reader=reader,
                     operation="package_info",
                     code="invalid_arguments",
-                    detail="Use either --all or --device, not both.",
-                    device_id=device,
+                    detail="Use either --all or an explicit device serial, not both.",
+                    device_id=requested_serial,
                 )
             )
             return
@@ -135,7 +176,7 @@ def register_app_awareness_commands(
                 operation="package_info",
                 code=snapshot.error.code,
                 detail=snapshot.error.detail,
-                device_id=device,
+                device_id=requested_serial,
             )
             if all_devices:
                 _emit_all_results([result])
@@ -163,7 +204,7 @@ def register_app_awareness_commands(
         result = read_device_package_info(
             reader=reader,
             devices=visible,
-            requested_serial=device,
+            requested_serial=requested_serial,
             package=package or "",
             timeout_s=timeout_s,
         )
