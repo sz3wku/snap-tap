@@ -261,6 +261,24 @@ def test_mobile_navigation_alias_rejects_positional_serial_with_device_option() 
     assert executor.calls == []
 
 
+def test_mobile_navigation_alias_rejects_malformed_session_before_executor() -> None:
+    executor = FakeNavigationExecutor()
+    app = _build_app(executor)
+
+    result = CliRunner().invoke(
+        app,
+        ["back", "RFCN4010FCK", "--session", "../bad", "--json"],
+    )
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["operation"] == NAVIGATION_BACK
+    assert payload["receipt"]["error"]["code"] == "latest_snapshot_ref_invalid"
+    assert payload["next_snap"] is None
+    assert executor.calls == []
+
+
 def _build_app(
     executor: FakeNavigationExecutor,
     *,

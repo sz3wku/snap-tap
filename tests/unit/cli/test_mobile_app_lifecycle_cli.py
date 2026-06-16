@@ -242,6 +242,30 @@ def test_mobile_app_open_rejects_plain_alias_before_executor() -> None:
     assert executor.calls == []
 
 
+def test_mobile_app_open_rejects_malformed_session_before_executor() -> None:
+    executor = FakeAppOpenExecutor()
+    app = _build_app(app_open_executor=executor)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "app-open",
+            "RFCN4010FCK",
+            "com.instagram.android",
+            "--session",
+            "../bad",
+            "--json",
+        ],
+    )
+
+    assert result.exit_code == 1
+    payload = _json(result.stdout)
+    assert payload["schema_version"] == "primitive_result.v1"
+    assert payload["receipt"]["error"]["code"] == "latest_snapshot_ref_invalid"
+    assert payload["next_snap"] is None
+    assert executor.calls == []
+
+
 def _build_app(
     *,
     app_lifecycle: FakeAppLifecycle | None = None,
