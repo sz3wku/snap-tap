@@ -148,6 +148,7 @@ def run_snap_command(
             device=device,
             timeout_s=timeout_s,
             session=session,
+            include_app_current=debug,
         )
     if snap.ok and snapshot is None:
         snap = write_latest_snap_source_for_snap(
@@ -168,6 +169,7 @@ def _capture_snap(
     device: str | None,
     timeout_s: float,
     session: str,
+    include_app_current: bool,
 ) -> MobileSnap:
     session_error = _validate_session(session)
     if session_error is not None:
@@ -208,7 +210,7 @@ def _capture_snap(
         raw = complete_operator_observation(raw)
 
     app_current = None
-    if raw.ok and raw.device_id is not None:
+    if include_app_current and raw.ok and raw.device_id is not None:
         app_current = read_device_app_current(
             reader=_app_reader(dependencies),
             devices=visible.devices,

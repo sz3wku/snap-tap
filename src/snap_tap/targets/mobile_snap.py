@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 
@@ -23,6 +24,7 @@ _OPERATOR_LABEL_SOURCE_SINGLE = "single_descendant_text"
 _OPERATOR_LABEL_SOURCE_PRIMARY = "primary_descendant_text"
 _OPERATOR_LABEL_CONFIDENCE_MEDIUM = "medium"
 _OPERATOR_LABEL_CONFIDENCE_HINT = "hint"
+_SYSTEM_UI_PACKAGES = frozenset({"com.android.systemui"})
 
 
 def build_mobile_snap(
@@ -64,7 +66,7 @@ def build_mobile_snap(
         device_id=raw.device_id,
         session_id=session_id,
         captured_at=raw.checked_at,
-        app=_app_to_dict(app_current),
+        app=_app_from_snap(semantic, app_current),
         viewport=_viewport_to_dict(semantic.screen_metadata.viewport),
         summary=_summary(raw=raw, targets=targets),
         snapshot=_snapshot_identity_to_dict(raw),
@@ -448,19 +450,43 @@ def _app_to_dict(app_current: DriverAppAwareness | None) -> dict[str, object]:
     }
 
 
+def _app_from_snap(
+    snapshot: SemanticSnapshot,
+    app_current: DriverAppAwareness | None,
+) -> dict[str, object]:
+    if app_current is not None and app_current.ok:
+        return _app_to_dict(app_current)
+    return _semantic_app(snapshot)
+
+
 def _semantic_app(snapshot: SemanticSnapshot) -> dict[str, object]:
-    package = snapshot.screen_metadata.dominant_package
-    if package is None:
-        package = next(
-            (element.package for element in snapshot.elements if element.package),
-            None,
-        )
+    package = _preferred_snapshot_package(
+        packages=tuple(element.package for element in snapshot.elements if element.package),
+        dominant_package=snapshot.screen_metadata.dominant_package,
+    )
     return {
         "status": "snapshot",
         "package": package,
         "activity": None,
         "pid": None,
     }
+
+
+def _preferred_snapshot_package(
+    *,
+    packages: Sequence[str],
+    dominant_package: str | None,
+) -> str | None:
+    if dominant_package is not None and dominant_package not in _SYSTEM_UI_PACKAGES:
+        return dominant_package
+    non_system_counts = Counter(
+        package for package in packages if package not in _SYSTEM_UI_PACKAGES
+    )
+    if non_system_counts:
+        return non_system_counts.most_common(1)[0][0]
+    if dominant_package is not None:
+        return dominant_package
+    return packages[0] if packages else None
 
 
 def _viewport_to_dict(viewport: SemanticViewport) -> dict[str, object]:

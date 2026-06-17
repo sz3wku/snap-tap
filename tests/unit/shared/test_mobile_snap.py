@@ -90,6 +90,49 @@ def test_mobile_snap_debug_adds_diagnostics_without_raw_payloads() -> None:
     assert "base64" not in encoded
 
 
+def test_mobile_snap_snapshot_app_prefers_non_system_package() -> None:
+    payload = mobile_snap_to_dict(
+        build_mobile_snap(
+            _raw_capture(
+                elements=(
+                    _element(
+                        1,
+                        "android.widget.TextView",
+                        None,
+                        text="16:47",
+                        clickable=False,
+                        package="com.android.systemui",
+                    ),
+                    _element(
+                        2,
+                        "android.widget.ImageView",
+                        None,
+                        text=None,
+                        clickable=False,
+                        package="com.android.systemui",
+                    ),
+                    _element(
+                        3,
+                        "android.widget.Button",
+                        "com.example:id/save",
+                        text="Save",
+                        package="com.example",
+                    ),
+                )
+            ),
+            app_current=None,
+            session_id="default",
+        )
+    )
+
+    assert payload["app"] == {
+        "status": "snapshot",
+        "package": "com.example",
+        "activity": None,
+        "pid": None,
+    }
+
+
 def test_mobile_snap_orders_actionable_targets_before_layout_noise() -> None:
     raw = _raw_capture(
         elements=(
@@ -372,6 +415,7 @@ def _element(
     scrollable: bool = False,
     depth: int = 0,
     bounds: SnapshotBounds | None = None,
+    package: str = "com.example",
 ) -> SnapshotElement:
     return SnapshotElement(
         source_index=source_index,
@@ -383,7 +427,7 @@ def _element(
         scrollable=scrollable,
         class_name=class_name,
         resource_id=resource_id,
-        package="com.example",
+        package=package,
         text=text,
     )
 

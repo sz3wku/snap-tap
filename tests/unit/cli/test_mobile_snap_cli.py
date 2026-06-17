@@ -207,11 +207,11 @@ def test_mobile_snap_default_table_has_targets_and_writes_latest_source(
     assert "image_bytes" not in result.stdout
     assert xml_dumper.calls == [("RFCN4010FCK", 10.0)]
     assert capturer.calls == []
-    assert app_reader.calls == [("RFCN4010FCK", 10.0)]
+    assert app_reader.calls == []
 
 
 def test_mobile_snap_debug_table_includes_scroll_rows(tmp_path: Path) -> None:
-    app, _xml_dumper, _capturer, _app_reader = _build_app(
+    app, _xml_dumper, _capturer, app_reader = _build_app(
         [DeviceInfo(serial="RFCN4010FCK", state="device")],
         cache_root=tmp_path / "latest",
     )
@@ -225,6 +225,7 @@ def test_mobile_snap_debug_table_includes_scroll_rows(tmp_path: Path) -> None:
     assert "e003" in result.stdout
     assert "scroll" in result.stdout
     assert "scrollable" in result.stdout
+    assert app_reader.calls == [("RFCN4010FCK", 10.0)]
 
 
 def test_mobile_snap_default_table_marks_operator_label(tmp_path: Path) -> None:
@@ -248,7 +249,7 @@ def test_mobile_snap_default_table_marks_operator_label(tmp_path: Path) -> None:
 
 
 def test_mobile_snap_json_contract_and_debug_fields(tmp_path: Path) -> None:
-    app, _xml_dumper, _capturer, _app_reader = _build_app(
+    app, _xml_dumper, _capturer, app_reader = _build_app(
         [DeviceInfo(serial="RFCN4010FCK", state="device")],
         cache_root=tmp_path / "latest",
     )
@@ -262,6 +263,7 @@ def test_mobile_snap_json_contract_and_debug_fields(tmp_path: Path) -> None:
     payload = _json(result.stdout)
     assert payload["schema_version"] == "mobile_snap.v1"
     assert payload["ok"] is True
+    assert payload["app"]["status"] == "current"
     assert payload["snapshot"]["hash_version"] == "operator_observation_hash.v1"
     assert payload["summary"]["target_count"] == 3
     targets = payload["targets"]
@@ -275,6 +277,7 @@ def test_mobile_snap_json_contract_and_debug_fields(tmp_path: Path) -> None:
     assert "xml" not in payload
     assert XML_TEXT not in result.stdout
     assert "base64" not in result.stdout
+    assert app_reader.calls == [("RFCN4010FCK", 10.0)]
 
 
 def test_mobile_snap_explicit_serial_bypasses_full_discovery(tmp_path: Path) -> None:
@@ -294,7 +297,7 @@ def test_mobile_snap_explicit_serial_bypasses_full_discovery(tmp_path: Path) -> 
     assert discovery.calls == 0
     assert xml_dumper.calls == [("RFCN4010FCK", 10.0)]
     assert capturer.calls == []
-    assert app_reader.calls == [("RFCN4010FCK", 10.0)]
+    assert app_reader.calls == []
 
 
 def test_mobile_snap_requires_device_before_capture() -> None:
