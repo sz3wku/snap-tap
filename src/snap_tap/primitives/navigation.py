@@ -8,6 +8,8 @@ from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_BACK,
     NAVIGATION_HOME,
     NAVIGATION_SWIPE,
+    NAVIGATION_UNLOCK,
+    NAVIGATION_WAKE,
     SWIPE_DIRECTIONS,
 )
 from snap_tap.backends.contracts import DriverError, DriverNavigation
@@ -48,6 +50,12 @@ class PrimitiveNavigator(Protocol):
     def back(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation: ...
 
     def home(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation: ...
+
+    def wake(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation: ...
+
+    def unlock(
+        self, *, device_id: str, timeout_s: float = 10.0
+    ) -> DriverNavigation: ...
 
     def swipe(
         self,
@@ -284,6 +292,14 @@ def _run_navigation_driver(
             return _primitive_driver_result(
                 navigator.home(device_id=device_id, timeout_s=request.timeout_s)
             )
+        if request.operation == NAVIGATION_WAKE:
+            return _primitive_driver_result(
+                navigator.wake(device_id=device_id, timeout_s=request.timeout_s)
+            )
+        if request.operation == NAVIGATION_UNLOCK:
+            return _primitive_driver_result(
+                navigator.unlock(device_id=device_id, timeout_s=request.timeout_s)
+            )
         if before_snapshot is None:
             return DriverError(
                 code="primitive_viewport_blocked",
@@ -339,8 +355,12 @@ def _swipe_coordinates(
     if direction in {"up", "down"}:
         distance = min(height * request.distance_ratio, height * 0.80)
         x = width / 2
-        start_y = (height + distance) / 2 if direction == "up" else (height - distance) / 2
-        end_y = (height - distance) / 2 if direction == "up" else (height + distance) / 2
+        start_y = (
+            (height + distance) / 2 if direction == "up" else (height - distance) / 2
+        )
+        end_y = (
+            (height - distance) / 2 if direction == "up" else (height + distance) / 2
+        )
         return _SwipeCoordinates(x, start_y, x, end_y)
     distance = min(width * request.distance_ratio, width * 0.80)
     y = height / 2

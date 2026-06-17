@@ -8,6 +8,8 @@ mutating commands:
 - `snap-tap tap <serial> eNN --json`
 - `snap-tap input <serial> eNN --text "hello" --json`
 - `snap-tap replace-text <serial> eNN --text "hello" --json`
+- `snap-tap wake <serial> --json`
+- `snap-tap unlock <serial> --json`
 - `snap-tap back <serial> --json`
 - `snap-tap home <serial> --json`
 - `snap-tap swipe <serial> --direction up --json`

@@ -202,6 +202,7 @@ def test_uiautomator2_backend_localizes_successful_health_metadata() -> None:
                 "brand": "samsung",
                 "model": "SM_G981B",
                 "sdkInt": 33,
+                "screenOn": True,
                 "ignored": "not exported",
             }
         )
@@ -213,6 +214,9 @@ def test_uiautomator2_backend_localizes_successful_health_metadata() -> None:
     assert health.device_id == "RFCN4010FCK"
     assert health.backend == "uiautomator2"
     assert health.metadata["model"] == "SM_G981B"
+    assert health.metadata["screen_on"] == "true"
+    assert health.metadata["keyguard_locked"] == "unknown"
+    assert health.metadata["keyguard_secure"] == "unknown"
     assert health.metadata["timeout_s"] == "2.0"
     assert "ignored" not in health.metadata
 

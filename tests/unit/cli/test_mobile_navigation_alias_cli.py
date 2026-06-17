@@ -12,6 +12,8 @@ from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_BACK,
     NAVIGATION_HOME,
     NAVIGATION_SWIPE,
+    NAVIGATION_UNLOCK,
+    NAVIGATION_WAKE,
 )
 from snap_tap.backends.contracts import (
     DriverHealth,
@@ -128,6 +130,12 @@ class _Navigator:
     def home(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
         return self.result
 
+    def wake(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
+        return self.result
+
+    def unlock(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
+        return self.result
+
     def swipe(
         self,
         *,
@@ -151,6 +159,8 @@ def test_mobile_navigation_aliases_use_primitive_executor_path() -> None:
 
     back = runner.invoke(app, ["back", "RFCN4010FCK", "--json"])
     home = runner.invoke(app, ["home", "RFCN4010FCK", "--json"])
+    wake = runner.invoke(app, ["wake", "RFCN4010FCK", "--json"])
+    unlock = runner.invoke(app, ["unlock", "RFCN4010FCK", "--json"])
     swipe = runner.invoke(
         app,
         ["swipe", "RFCN4010FCK", "--direction", "left", "--json"],
@@ -162,15 +172,22 @@ def test_mobile_navigation_aliases_use_primitive_executor_path() -> None:
 
     assert back.exit_code == 0
     assert home.exit_code == 0
+    assert wake.exit_code == 0
+    assert unlock.exit_code == 0
     assert swipe.exit_code == 0
     assert wait.exit_code == 0
-    assert [_json(item.stdout)["operation"] for item in (back, home, swipe, wait)] == [
+    assert [
+        _json(item.stdout)["operation"]
+        for item in (back, home, wake, unlock, swipe, wait)
+    ] == [
         NAVIGATION_BACK,
         NAVIGATION_HOME,
+        NAVIGATION_WAKE,
+        NAVIGATION_UNLOCK,
         NAVIGATION_SWIPE,
         NAVIGATION_WAIT,
     ]
-    for item in (back, home, swipe, wait):
+    for item in (back, home, wake, unlock, swipe, wait):
         payload = _json(item.stdout)
         assert payload["schema_version"] == "primitive_result.v1"
         assert payload["receipt"]["schema_version"] == "primitive_receipt.v1"
@@ -178,11 +195,13 @@ def test_mobile_navigation_aliases_use_primitive_executor_path() -> None:
     assert [call.operation for call in executor.calls] == [
         NAVIGATION_BACK,
         NAVIGATION_HOME,
+        NAVIGATION_WAKE,
+        NAVIGATION_UNLOCK,
         NAVIGATION_SWIPE,
         NAVIGATION_WAIT,
     ]
-    assert executor.calls[2].direction == "left"
-    assert executor.calls[3].seconds == 0
+    assert executor.calls[4].direction == "left"
+    assert executor.calls[5].seconds == 0
 
 
 def test_mobile_navigation_alias_default_output_renders_after_snap_table(

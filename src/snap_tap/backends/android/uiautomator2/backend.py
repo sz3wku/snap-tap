@@ -5,6 +5,7 @@ from collections.abc import Callable, Mapping
 from time import perf_counter
 from typing import Any
 
+from snap_tap.backends.android.uiautomator2.device_state import read_device_state
 from snap_tap.backends.android.uiautomator2.probe_payload import (
     parse_probe_payload,
     probe_error_code,
@@ -160,7 +161,9 @@ class Uiautomator2Backend:
 
     def _connect_and_read_info(self, device_id: str) -> dict[str, object]:
         device = self._connect(device_id)
-        return _metadata_from_info(_read_info(device))
+        metadata = _metadata_from_info(_read_info(device))
+        metadata.update(read_device_state(device))
+        return metadata
 
 
 def _read_info(device: object) -> object:

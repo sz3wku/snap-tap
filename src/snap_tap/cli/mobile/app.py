@@ -597,7 +597,11 @@ def _emit_status_table(results: list[DriverHealth]) -> None:
     if not results:
         typer.echo("No Android devices visible.")
         return
-    typer.echo(_format_row(["SERIAL", "STATUS", "BACKEND", "DISPLAY", "SDK", "ELAPSED"]))
+    typer.echo(
+        _format_row(
+            ["SERIAL", "STATUS", "BACKEND", "DISPLAY", "SDK", "SCREEN", "ELAPSED"]
+        )
+    )
     for health in results:
         typer.echo(
             _format_row(
@@ -607,6 +611,7 @@ def _emit_status_table(results: list[DriverHealth]) -> None:
                     health.backend,
                     _display_size(health.metadata),
                     _display_sdk(health.metadata),
+                    _display_device_state(health.metadata),
                     _display_elapsed(health.elapsed_ms),
                 ]
             )
@@ -625,6 +630,7 @@ def _emit_status_line(health: DriverHealth) -> None:
                     health.backend,
                     _display_size(health.metadata),
                     f"sdk {_display_sdk(health.metadata)}",
+                    _display_device_state(health.metadata),
                     _display_elapsed(health.elapsed_ms),
                 ]
             )
@@ -634,13 +640,12 @@ def _emit_status_line(health: DriverHealth) -> None:
         typer.echo(f"snap-tap status {health.status}: unavailable")
         return
     typer.echo(
-        f"snap-tap status {health.status}: "
-        f"{health.error.code} - {health.error.detail}"
+        f"snap-tap status {health.status}: {health.error.code} - {health.error.detail}"
     )
 
 
 def _format_row(values: list[str]) -> str:
-    widths = [18, 10, 18, 18, 12, 10]
+    widths = [18, 10, 18, 18, 12, 22, 10]
     if values:
         widths[0] = max(widths[0], len(values[0]))
     return "  ".join(
@@ -676,6 +681,29 @@ def _display_sdk(metadata: Mapping[str, object]) -> str:
     if isinstance(sdk, str) and sdk:
         return sdk
     return "-"
+
+
+def _display_device_state(metadata: Mapping[str, object]) -> str:
+    screen = _state_word(metadata.get("screen_on"), true="on", false="off")
+    locked = metadata.get("keyguard_locked")
+    secure = metadata.get("keyguard_secure")
+    if locked == "false":
+        lock = "unlocked"
+    elif locked == "true" and secure == "true":
+        lock = "secure-lock"
+    elif locked == "true":
+        lock = "locked"
+    else:
+        lock = "lock-unknown"
+    return f"screen {screen} {lock}"
+
+
+def _state_word(value: object, *, true: str, false: str) -> str:
+    if value == "true":
+        return true
+    if value == "false":
+        return false
+    return "unknown"
 
 
 def _display_elapsed(elapsed_ms: float) -> str:

@@ -8,6 +8,8 @@ from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_BACK,
     NAVIGATION_HOME,
     NAVIGATION_SWIPE,
+    NAVIGATION_UNLOCK,
+    NAVIGATION_WAKE,
     Uiautomator2Navigator,
 )
 from snap_tap.backends.android.uiautomator2.screenshot import (
@@ -89,6 +91,42 @@ def register_primitive_navigation_commands(
             request=PrimitiveNavigationRequest(
                 device_id=device,
                 operation=NAVIGATION_HOME,
+                timeout_s=timeout_s,
+                lease_timeout_s=lease_timeout_s,
+            ),
+            json_output=json_output,
+        )
+
+    @app.command("primitive-wake")
+    def primitive_wake(
+        device: Annotated[str, typer.Option("--device", "-d", help="ADB serial.")],
+        json_output: Annotated[bool, typer.Option("--json")] = False,
+        timeout_s: Annotated[float, typer.Option("--timeout-s")] = 10.0,
+        lease_timeout_s: Annotated[float, typer.Option("--lease-timeout-s")] = 30.0,
+    ) -> None:
+        run_primitive_navigation_request(
+            dependencies=dependencies,
+            request=PrimitiveNavigationRequest(
+                device_id=device,
+                operation=NAVIGATION_WAKE,
+                timeout_s=timeout_s,
+                lease_timeout_s=lease_timeout_s,
+            ),
+            json_output=json_output,
+        )
+
+    @app.command("primitive-unlock")
+    def primitive_unlock(
+        device: Annotated[str, typer.Option("--device", "-d", help="ADB serial.")],
+        json_output: Annotated[bool, typer.Option("--json")] = False,
+        timeout_s: Annotated[float, typer.Option("--timeout-s")] = 10.0,
+        lease_timeout_s: Annotated[float, typer.Option("--lease-timeout-s")] = 30.0,
+    ) -> None:
+        run_primitive_navigation_request(
+            dependencies=dependencies,
+            request=PrimitiveNavigationRequest(
+                device_id=device,
+                operation=NAVIGATION_UNLOCK,
                 timeout_s=timeout_s,
                 lease_timeout_s=lease_timeout_s,
             ),
@@ -185,6 +223,7 @@ def execute_primitive_navigation_request(
         seconds=request.seconds,
         timeout_s=request.timeout_s,
         lease_timeout_s=request.lease_timeout_s,
+        post_action_settle_ms=request.post_action_settle_ms,
     )
     executor = dependencies.primitive_navigation_executor
     if executor is not None:

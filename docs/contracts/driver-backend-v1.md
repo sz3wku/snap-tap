@@ -61,6 +61,8 @@ Supported operations:
 - open app package/component,
 - tap coordinates or resolved target geometry,
 - input text,
+- wake,
+- unlock,
 - back,
 - home,
 - swipe,
@@ -69,6 +71,15 @@ Supported operations:
 ## Outputs
 
 Driver operations return structured results:
+
+`status` metadata may include Android screen/keyguard facts:
+
+- `screen_on`: `true`, `false`, or `unknown`,
+- `keyguard_locked`: `true`, `false`, or `unknown`,
+- `keyguard_secure`: `true`, `false`, or `unknown`.
+
+These are sanitized state facts only. Raw `dumpsys` output is never public
+metadata.
 
 - `ok`,
 - `status`,
@@ -211,6 +222,7 @@ must not emit them directly.
 - `tap_failed`
 - `input_failed`
 - `navigation_failed`
+- `secure_keyguard_required`
 - `primitive_target_stale`
 - `primitive_target_not_tappable`
 - `primitive_app_open_foreground_mismatch`
@@ -218,6 +230,8 @@ must not emit them directly.
 - `device_required`
 - `invalid_arguments`
 - `unsupported_operation`
+- `unlock_failed`
+- `wake_failed`
 
 Failure taxonomy rules:
 
@@ -241,6 +255,10 @@ Failure taxonomy rules:
   boundary; inspect the post-launch snapshot or current app before retrying.
 - Latest snap source failures are non-retryable at the tap operation boundary;
   run `snap-tap snap` again for the requested device/session before tapping.
+- `secure_keyguard_required` is non-retryable by `snap-tap`; unlock the device
+  manually because the backend must not enter credentials.
+- `wake_failed` and `unlock_failed` fail closed and should be inspected through
+  `snap-tap status <serial>` and a fresh `snap`.
 
 ## Recovery
 

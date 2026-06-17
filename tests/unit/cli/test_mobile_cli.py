@@ -36,7 +36,12 @@ class FakeBackend:
             device_id=device_id,
             backend=self.backend_name,
             elapsed_ms=1.0,
-            metadata={"timeout_s": str(timeout_s)},
+            metadata={
+                "timeout_s": str(timeout_s),
+                "screen_on": "true",
+                "keyguard_locked": "false",
+                "keyguard_secure": "false",
+            },
         )
 
 
@@ -183,6 +188,9 @@ def test_mobile_status_all_checks_each_visible_device() -> None:
         "RFCN4010FCK",
         "R58R502HMSJ",
     ]
+    assert payload["results"][0]["metadata"]["screen_on"] == "true"
+    assert payload["results"][0]["metadata"]["keyguard_locked"] == "false"
+    assert payload["results"][0]["metadata"]["keyguard_secure"] == "false"
     assert backend.calls == [("RFCN4010FCK", 2.0), ("R58R502HMSJ", 2.0)]
 
 
@@ -203,6 +211,9 @@ def test_mobile_status_accepts_positional_serial() -> None:
     payload = _json(result.stdout)
     assert payload["ok"] is True
     assert payload["result"]["device_id"] == "RFCN4010FCK"
+    assert payload["result"]["metadata"]["screen_on"] == "true"
+    assert payload["result"]["metadata"]["keyguard_locked"] == "false"
+    assert payload["result"]["metadata"]["keyguard_secure"] == "false"
     assert backend.calls == [("RFCN4010FCK", 2.0)]
 
 
@@ -217,6 +228,7 @@ def test_mobile_status_default_outputs_human_line() -> None:
     assert "RFCN4010FCK" in result.stdout
     assert "healthy" in result.stdout
     assert "fake" in result.stdout
+    assert "screen on unlocked" in result.stdout
     assert not result.stdout.lstrip().startswith("{")
     assert backend.calls == [("RFCN4010FCK", 2.0)]
 
@@ -234,8 +246,10 @@ def test_mobile_status_all_default_outputs_human_table() -> None:
     assert result.exit_code == 0
     assert "SERIAL" in result.stdout
     assert "STATUS" in result.stdout
+    assert "SCREEN" in result.stdout
     assert "RFCN4010FCK" in result.stdout
     assert "R58R502HMSJ" in result.stdout
+    assert "screen on unlocked" in result.stdout
     assert not result.stdout.lstrip().startswith("{")
     assert backend.calls == [("RFCN4010FCK", 2.0), ("R58R502HMSJ", 2.0)]
 

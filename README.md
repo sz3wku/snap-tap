@@ -15,6 +15,8 @@ snap-tap snap <serial>
 snap-tap app-open <serial> com.android.settings
 snap-tap tap <serial> e001
 snap-tap input <serial> e004 --text "hello"
+snap-tap wake <serial>
+snap-tap unlock <serial>
 snap-tap back <serial>
 snap-tap home <serial>
 snap-tap swipe <serial> --direction up
@@ -67,6 +69,7 @@ Android UIAutomator2 helper path for the selected phone:
 uv run snap-tap devices
 uv run snap-tap android-driver-init <serial>
 uv run snap-tap status <serial>
+uv run snap-tap unlock <serial>
 uv run snap-tap snap <serial>
 ```
 
@@ -76,6 +79,7 @@ On Linux, use the same commands after ADB and any required udev rules are ready:
 uv run snap-tap devices
 uv run snap-tap android-driver-init <serial>
 uv run snap-tap status <serial>
+uv run snap-tap unlock <serial>
 uv run snap-tap snap <serial>
 ```
 
@@ -109,9 +113,15 @@ After purge, run `uv run snap-tap android-driver-init <serial>` or
   process-isolated Android backend, and emit a primitive receipt.
 - `app-open` is a small lifecycle primitive for opening a package or exact
   package/activity component. It does not guess social app names.
+- `wake` and `unlock` are explicit Android primitives with receipts. `unlock`
+  may dismiss only a non-secure keyguard; it never enters PINs, passwords, or
+  patterns and fails closed as `secure_keyguard_required` when credentials are
+  needed.
 - `android-driver-purge` removes Android UIAutomator2 helper artifacts from the
   selected device. It is explicit, platform-specific, and never runs
   automatically before a touch primitive.
+- `snap`, `tap`, `input`, `app-open`, and `android-driver-init` do not
+  auto-unlock the phone.
 - There is no public raw coordinate-click or selector-click API in the v0 shared
   runtime.
 

@@ -6,6 +6,8 @@ from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_BACK,
     NAVIGATION_HOME,
     NAVIGATION_SWIPE,
+    NAVIGATION_UNLOCK,
+    NAVIGATION_WAKE,
     SWIPE_DIRECTIONS,
 )
 from snap_tap.primitives.models import PrimitiveNavigationRequest
@@ -16,6 +18,8 @@ NAVIGATION_PRIMITIVES = {
     NAVIGATION_BACK,
     NAVIGATION_HOME,
     NAVIGATION_SWIPE,
+    NAVIGATION_WAKE,
+    NAVIGATION_UNLOCK,
     NAVIGATION_WAIT,
 }
 MIN_SWIPE_DISTANCE_RATIO = 0.05
@@ -53,7 +57,7 @@ def invalid_navigation_request_detail(
     if serial is None:
         return "Device serial is required and must be a valid ADB serial."
     if request.operation not in NAVIGATION_PRIMITIVES:
-        return "Primitive operation must be back, home, swipe, or wait."
+        return "Primitive operation must be back, home, swipe, wake, unlock, or wait."
     if not _positive_finite(request.timeout_s) or not _positive_finite(
         request.lease_timeout_s
     ):
@@ -85,12 +89,16 @@ def safe_navigation_operation(operation: str) -> str:
 
 
 def _positive_finite(value: object) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and (
-        math.isfinite(float(value)) and float(value) > 0
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and (math.isfinite(float(value)) and float(value) > 0)
     )
 
 
 def _bounded_number(value: object, *, minimum: float, maximum: float) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and (
-        math.isfinite(float(value)) and minimum <= float(value) <= maximum
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and (math.isfinite(float(value)) and minimum <= float(value) <= maximum)
     )

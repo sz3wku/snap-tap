@@ -21,7 +21,15 @@ from snap_tap.device.identity import normalize_serial
 NAVIGATION_BACK = "back"
 NAVIGATION_HOME = "home"
 NAVIGATION_SWIPE = "swipe"
-NAVIGATION_OPERATIONS = {NAVIGATION_BACK, NAVIGATION_HOME, NAVIGATION_SWIPE}
+NAVIGATION_WAKE = "wake"
+NAVIGATION_UNLOCK = "unlock"
+NAVIGATION_OPERATIONS = {
+    NAVIGATION_BACK,
+    NAVIGATION_HOME,
+    NAVIGATION_SWIPE,
+    NAVIGATION_WAKE,
+    NAVIGATION_UNLOCK,
+}
 SWIPE_DIRECTIONS = {"up", "down", "left", "right"}
 
 
@@ -49,6 +57,24 @@ class Uiautomator2Navigator:
     def home(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
         return navigation_uiautomator2(
             operation=NAVIGATION_HOME,
+            device_id=device_id,
+            timeout_s=timeout_s,
+            process_runner=self._process_runner,
+            python_executable=self._python_executable,
+        )
+
+    def wake(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
+        return navigation_uiautomator2(
+            operation=NAVIGATION_WAKE,
+            device_id=device_id,
+            timeout_s=timeout_s,
+            process_runner=self._process_runner,
+            python_executable=self._python_executable,
+        )
+
+    def unlock(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
+        return navigation_uiautomator2(
+            operation=NAVIGATION_UNLOCK,
             device_id=device_id,
             timeout_s=timeout_s,
             process_runner=self._process_runner,
@@ -176,6 +202,7 @@ def navigation_uiautomator2(
         duration_ms=duration_ms,
     )
     confirmed = _confirmed_value(payload, operation=operation)
+    attempted = _attempted_value(payload)
     if result.returncode != 0 or payload.get("ok") is not True:
         return _failure(
             code=_probe_error_code(payload),
@@ -184,7 +211,7 @@ def navigation_uiautomator2(
             device_id=serial,
             elapsed_ms=_elapsed_ms(started),
             metadata=_with_ambiguous_touch(metadata),
-            attempted=True,
+            attempted=attempted,
         )
     if not isinstance(confirmed, bool):
         return _failure(
@@ -194,7 +221,7 @@ def navigation_uiautomator2(
             device_id=serial,
             elapsed_ms=_elapsed_ms(started),
             metadata=_with_ambiguous_touch(metadata),
-            attempted=True,
+            attempted=attempted,
         )
     return DriverNavigation(
         ok=True,
@@ -203,7 +230,7 @@ def navigation_uiautomator2(
         backend="uiautomator2",
         operation=_safe_operation(operation),
         elapsed_ms=_elapsed_ms(started),
-        attempted=True,
+        attempted=attempted,
         confirmed=confirmed,
         checked_at=_utc_now(),
         metadata=metadata,
@@ -226,7 +253,7 @@ def _probe_args(
     if operation not in NAVIGATION_OPERATIONS:
         return DriverError(
             code="unsupported_operation",
-            detail="Navigation operation must be back, home, or swipe.",
+            detail="Navigation operation must be back, home, swipe, wake, or unlock.",
         )
     args = [
         executable,
@@ -314,7 +341,18 @@ def _confirmed_value(payload: Mapping[str, object], *, operation: str) -> object
         return payload.get("pressed")
     if operation == NAVIGATION_SWIPE:
         return payload.get("swiped")
+    if operation == NAVIGATION_WAKE:
+        return payload.get("woke")
+    if operation == NAVIGATION_UNLOCK:
+        return payload.get("unlocked")
     return None
+
+
+def _attempted_value(payload: Mapping[str, object]) -> bool:
+    raw = payload.get("metadata")
+    if isinstance(raw, Mapping) and isinstance(raw.get("attempted"), bool):
+        return bool(raw["attempted"])
+    return True
 
 
 def _probe_error_code(payload: Mapping[str, object]) -> str:
@@ -343,9 +381,25 @@ def _probe_metadata(
     )
     raw = payload.get("metadata")
     if isinstance(raw, Mapping):
-        for key in ("touch_may_have_occurred", "press_returned", "swipe_returned"):
+        for key in (
+            "attempted",
+            "touch_may_have_occurred",
+            "press_returned",
+            "swipe_returned",
+            "dismiss_attempted",
+        ):
             value = raw.get(key)
             if isinstance(value, bool):
+                metadata[key] = value
+        for key in (
+            "screen_on_before",
+            "screen_on_after",
+            "keyguard_locked_before",
+            "keyguard_locked_after",
+            "keyguard_secure",
+        ):
+            value = raw.get(key)
+            if isinstance(value, str) and value:
                 metadata[key] = value
     return metadata
 
@@ -387,14 +441,18 @@ def _safe_operation(operation: str) -> str:
 
 
 def _valid_coordinate(value: object) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and (
-        math.isfinite(float(value)) and float(value) >= 0
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and (math.isfinite(float(value)) and float(value) >= 0)
     )
 
 
 def _valid_ratio(value: object) -> bool:
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and (
-        math.isfinite(float(value)) and float(value) > 0
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and (math.isfinite(float(value)) and float(value) > 0)
     )
 
 

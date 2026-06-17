@@ -21,6 +21,8 @@ snap-tap snap <serial>
 snap-tap app-open <serial> <package>
 snap-tap tap <serial> <target-id>
 snap-tap input <serial> <target-id> --text "hello"
+snap-tap wake <serial>
+snap-tap unlock <serial>
 snap-tap back <serial>
 snap-tap home <serial>
 snap-tap swipe <serial> --direction up
@@ -81,6 +83,7 @@ Live Android smoke:
 snap-tap devices
 snap-tap android-driver-init <serial>
 snap-tap status <serial>
+snap-tap unlock <serial>
 snap-tap snap <serial>
 snap-tap app-open <serial> com.android.settings
 snap-tap home <serial>

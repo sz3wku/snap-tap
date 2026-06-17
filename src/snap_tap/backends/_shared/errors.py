@@ -210,6 +210,26 @@ ERROR_SPECS: dict[str, ErrorSpec] = {
         retryable=False,
         recovery_hint="Inspect current screen state before retrying navigation.",
     ),
+    "wake_failed": ErrorSpec(
+        category="device_state",
+        recoverable=False,
+        retryable=False,
+        recovery_hint="Inspect screen and power state before retrying wake.",
+    ),
+    "unlock_failed": ErrorSpec(
+        category="device_state",
+        recoverable=False,
+        retryable=False,
+        recovery_hint="Inspect the lockscreen or unlock the device manually.",
+    ),
+    "secure_keyguard_required": ErrorSpec(
+        category="device_state",
+        recoverable=False,
+        retryable=False,
+        recovery_hint=(
+            "Unlock the device manually; snap-tap does not enter credentials."
+        ),
+    ),
     "primitive_target_stale": ErrorSpec(
         category="primitive",
         recoverable=False,

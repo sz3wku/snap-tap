@@ -22,6 +22,11 @@ PROOF_UNAVAILABLE = "unavailable"
 PROOF_REQUIRED_FAILED = "required_failed"
 
 REAL_SETTLE_BACKENDS = {"uiautomator2"}
+PUBLIC_DRIVER_FAILURE_CODES = {
+    "secure_keyguard_required",
+    "unlock_failed",
+    "wake_failed",
+}
 
 
 def normalize_post_action_settle_ms(value: int) -> int:
@@ -30,7 +35,9 @@ def normalize_post_action_settle_ms(value: int) -> int:
     return max(MIN_POST_ACTION_SETTLE_MS, min(MAX_POST_ACTION_SETTLE_MS, value))
 
 
-def settle_after_driver_action(driver: PrimitiveDriverResult, *, settle_ms: int) -> None:
+def settle_after_driver_action(
+    driver: PrimitiveDriverResult, *, settle_ms: int
+) -> None:
     normalized = normalize_post_action_settle_ms(settle_ms)
     if normalized <= 0 or not (driver.attempted or driver.confirmed):
         return
@@ -82,6 +89,11 @@ def status_for_driver_and_proof(
             code = "primitive_driver_timeout"
         elif driver.error is not None and driver.error.code == "driver_unavailable":
             code = "primitive_driver_unavailable"
+        elif (
+            driver.error is not None
+            and driver.error.code in PUBLIC_DRIVER_FAILURE_CODES
+        ):
+            code = driver.error.code
         detail = driver.error.detail if driver.error else "Driver primitive failed."
         return "failed", DriverError(code=code, detail=detail)
     if proof_required and (after is None or not after.ok or after.snapshot is None):

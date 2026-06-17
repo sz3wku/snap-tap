@@ -8,6 +8,7 @@ from io import BytesIO
 from time import sleep
 from typing import Any
 
+from snap_tap.backends.android.uiautomator2.device_state import read_device_state
 from snap_tap.backends.android.uiautomator2.probe_payload import safe_error_detail
 from snap_tap.backends.android.uiautomator2.text_probe import (
     enable_fast_input,
@@ -91,9 +92,11 @@ def _health(device_id: str) -> int:
         import uiautomator2 as u2  # type: ignore[import-untyped]
 
         device = u2.connect(device_id)
+        metadata = _metadata_from_info(_read_info(device))
+        metadata.update(read_device_state(device))
         payload: dict[str, object] = {
             "ok": True,
-            "metadata": _metadata_from_info(_read_info(device)),
+            "metadata": metadata,
         }
         print(json.dumps(payload, sort_keys=True))
         return 0
@@ -502,7 +505,10 @@ def _failure(
     detail: str,
     metadata: Mapping[str, object] | None = None,
 ) -> int:
-    payload: dict[str, object] = {"ok": False, "error": {"code": code, "detail": detail}}
+    payload: dict[str, object] = {
+        "ok": False,
+        "error": {"code": code, "detail": detail},
+    }
     if metadata is not None:
         payload["metadata"] = dict(metadata)
     print(json.dumps(payload, sort_keys=True))

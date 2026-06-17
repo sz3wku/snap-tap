@@ -1,3 +1,7 @@
+from snap_tap.backends.android.uiautomator2.navigation import (
+    NAVIGATION_UNLOCK,
+    NAVIGATION_WAKE,
+)
 from snap_tap.primitives.app_open import PrimitiveAppOpener, app_open_primitive
 from snap_tap.primitives.app_open_request import APP_OPEN_OPERATION
 from snap_tap.primitives.lease import (
@@ -39,7 +43,9 @@ from snap_tap.primitives.text import PrimitiveTexter, resolved_text
 
 __all__ = [
     "APP_OPEN_OPERATION",
+    "NAVIGATION_UNLOCK",
     "NAVIGATION_WAIT",
+    "NAVIGATION_WAKE",
     "PRIMITIVE_RECEIPT_SCHEMA_VERSION",
     "CorePrimitiveSnapshotProvider",
     "CorePrimitiveObservationProvider",

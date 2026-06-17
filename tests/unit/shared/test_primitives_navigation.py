@@ -8,6 +8,8 @@ from primitives_text_helpers import fake_snapshot, fake_snapshot_result
 from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_BACK,
     NAVIGATION_SWIPE,
+    NAVIGATION_UNLOCK,
+    NAVIGATION_WAKE,
 )
 from snap_tap.backends.contracts import DriverError, DriverNavigation
 from snap_tap.primitives import (
@@ -26,7 +28,9 @@ class FakeProvider:
         self.results = results
         self.calls: list[str] = []
 
-    def capture(self, device_id: str, timeout_s: float = 10.0) -> PrimitiveSnapshotResult:
+    def capture(
+        self, device_id: str, timeout_s: float = 10.0
+    ) -> PrimitiveSnapshotResult:
         self.calls.append(device_id)
         return self.results.pop(0)
 
@@ -44,6 +48,14 @@ class FakeNavigator:
 
     def home(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
         self.calls.append(("home", (device_id,)))
+        return self.result
+
+    def wake(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
+        self.calls.append(("wake", (device_id,)))
+        return self.result
+
+    def unlock(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
+        self.calls.append(("unlock", (device_id,)))
         return self.result
 
     def swipe(
@@ -111,7 +123,87 @@ def test_wait_uses_snapshots_and_never_reports_phone_touch() -> None:
     assert payload["proof_status"] == "completed"
 
 
-def test_swipe_derives_coordinates_from_viewport_without_public_coordinate_api() -> None:
+def test_wake_noop_can_complete_without_reporting_phone_touch() -> None:
+    navigator = FakeNavigator(
+        _driver_result(
+            operation=NAVIGATION_WAKE,
+            attempted=False,
+            metadata={
+                "touch_may_have_occurred": False,
+                "screen_on_before": "true",
+                "screen_on_after": "true",
+                "keyguard_locked_before": "false",
+                "keyguard_locked_after": "false",
+                "keyguard_secure": "false",
+            },
+        )
+    )
+    provider = FakeProvider([fake_snapshot_result("after")])
+
+    receipt = navigation_primitive(
+        PrimitiveNavigationRequest(device_id="RFCN4010FCK", operation=NAVIGATION_WAKE),
+        snapshot_provider=provider,
+        navigator=navigator,
+        lease_manager=PrimitiveLeaseManager(in_memory_only=True),
+    )
+
+    payload = primitive_receipt_to_dict(receipt)
+    assert payload["ok"] is True
+    assert payload["attempted_touch"] is False
+    assert payload["touched_phone"] is False
+    assert payload["execution_status"] == "completed"
+    assert payload["proof_status"] == "not_requested"
+    assert payload["after_snapshot_status"] == "completed"
+    assert provider.calls == ["RFCN4010FCK"]
+    assert navigator.calls == [("wake", ("RFCN4010FCK",))]
+
+
+def test_unlock_secure_keyguard_failure_receipt_is_fail_closed() -> None:
+    navigator = FakeNavigator(
+        _driver_result(
+            operation=NAVIGATION_UNLOCK,
+            ok=False,
+            confirmed=False,
+            attempted=False,
+            error=DriverError(
+                code="secure_keyguard_required",
+                detail="manual unlock required",
+            ),
+            metadata={
+                "touch_may_have_occurred": False,
+                "screen_on_before": "true",
+                "screen_on_after": "true",
+                "keyguard_locked_before": "true",
+                "keyguard_locked_after": "true",
+                "keyguard_secure": "true",
+            },
+        )
+    )
+
+    receipt = navigation_primitive(
+        PrimitiveNavigationRequest(
+            device_id="RFCN4010FCK", operation=NAVIGATION_UNLOCK
+        ),
+        snapshot_provider=FakeProvider([]),
+        navigator=navigator,
+        lease_manager=PrimitiveLeaseManager(in_memory_only=True),
+    )
+
+    payload = primitive_receipt_to_dict(receipt)
+    assert payload["status"] == "failed"
+    assert payload["attempted_touch"] is False
+    assert payload["touched_phone"] is False
+    assert payload["after_snapshot_status"] == "not_attempted"
+    error = cast(dict[str, object], payload["error"])
+    assert error["code"] == "secure_keyguard_required"
+    driver = cast(dict[str, object], payload["driver_result"])
+    metadata = cast(dict[str, object], driver["metadata"])
+    assert metadata["keyguard_secure"] == "true"
+
+
+def test_swipe_derives_coordinates_from_viewport_without_public_coordinate_api() -> (
+    None
+):
     navigator = FakeNavigator(_driver_result(operation=NAVIGATION_SWIPE))
     receipt = navigation_primitive(
         PrimitiveNavigationRequest(
@@ -253,7 +345,9 @@ def test_false_success_is_failed_receipt() -> None:
         snapshot_provider=FakeProvider(
             [fake_snapshot_result("before"), fake_snapshot_result("after")]
         ),
-        navigator=FakeNavigator(_driver_result(operation=NAVIGATION_BACK, confirmed=False)),
+        navigator=FakeNavigator(
+            _driver_result(operation=NAVIGATION_BACK, confirmed=False)
+        ),
         lease_manager=PrimitiveLeaseManager(in_memory_only=True),
     )
 
@@ -267,6 +361,7 @@ def _driver_result(
     operation: str = NAVIGATION_BACK,
     ok: bool = True,
     confirmed: bool = True,
+    attempted: bool = True,
     error: DriverError | None = None,
     metadata: dict[str, object] | None = None,
 ) -> DriverNavigation:
@@ -277,7 +372,7 @@ def _driver_result(
         backend="fake",
         operation=operation,
         elapsed_ms=1.0,
-        attempted=True,
+        attempted=attempted,
         confirmed=confirmed,
         checked_at=utc_now(),
         metadata=metadata or {},

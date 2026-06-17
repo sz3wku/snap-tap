@@ -10,6 +10,8 @@ from typer.testing import CliRunner
 from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_BACK,
     NAVIGATION_SWIPE,
+    NAVIGATION_UNLOCK,
+    NAVIGATION_WAKE,
 )
 from snap_tap.backends.contracts import (
     DriverHealth,
@@ -123,6 +125,12 @@ class _Navigator:
     def home(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
         return self.result
 
+    def wake(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
+        return self.result
+
+    def unlock(self, *, device_id: str, timeout_s: float = 10.0) -> DriverNavigation:
+        return self.result
+
     def swipe(
         self,
         *,
@@ -152,6 +160,29 @@ def test_primitive_back_success_outputs_receipt_json() -> None:
     assert payload["operation"] == "back"
     assert payload["ok"] is True
     assert len(executor.calls) == 1
+
+
+def test_primitive_wake_and_unlock_success_output_receipts() -> None:
+    executor = FakeExecutor()
+    app = _build_app(executor)
+
+    wake = CliRunner().invoke(
+        app,
+        ["primitive-wake", "--device", "RFCN4010FCK", "--json"],
+    )
+    unlock = CliRunner().invoke(
+        app,
+        ["primitive-unlock", "--device", "RFCN4010FCK", "--json"],
+    )
+
+    assert wake.exit_code == 0
+    assert unlock.exit_code == 0
+    assert _json(wake.stdout)["operation"] == NAVIGATION_WAKE
+    assert _json(unlock.stdout)["operation"] == NAVIGATION_UNLOCK
+    assert [call.operation for call in executor.calls] == [
+        NAVIGATION_WAKE,
+        NAVIGATION_UNLOCK,
+    ]
 
 
 def test_primitive_swipe_exposes_direction_only_request() -> None:

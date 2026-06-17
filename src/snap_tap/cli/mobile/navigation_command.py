@@ -9,6 +9,8 @@ from snap_tap.backends.android.uiautomator2.navigation import (
     NAVIGATION_BACK,
     NAVIGATION_HOME,
     NAVIGATION_SWIPE,
+    NAVIGATION_UNLOCK,
+    NAVIGATION_WAKE,
 )
 from snap_tap.cli.mobile.device_discovery import resolve_requested_serial
 from snap_tap.cli.mobile.primitive_navigation_command import (
@@ -85,6 +87,58 @@ def register_navigation_commands(
             serial=serial,
             device=device,
             operation=NAVIGATION_HOME,
+            json_output=json_output,
+            session=session,
+            timeout_s=timeout_s,
+            lease_timeout_s=lease_timeout_s,
+        )
+
+    @app.command("wake")
+    def wake(
+        serial: Annotated[str | None, typer.Argument(help="ADB serial.")] = None,
+        device: Annotated[
+            str | None,
+            typer.Option("--device", "-d", help="ADB serial."),
+        ] = None,
+        json_output: Annotated[bool, typer.Option("--json")] = False,
+        session: Annotated[
+            str,
+            typer.Option("--session", help="Latest snap source cache session id."),
+        ] = DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
+        timeout_s: Annotated[float, typer.Option("--timeout-s")] = 10.0,
+        lease_timeout_s: Annotated[float, typer.Option("--lease-timeout-s")] = 30.0,
+    ) -> None:
+        _run(
+            dependencies=dependencies,
+            serial=serial,
+            device=device,
+            operation=NAVIGATION_WAKE,
+            json_output=json_output,
+            session=session,
+            timeout_s=timeout_s,
+            lease_timeout_s=lease_timeout_s,
+        )
+
+    @app.command("unlock")
+    def unlock(
+        serial: Annotated[str | None, typer.Argument(help="ADB serial.")] = None,
+        device: Annotated[
+            str | None,
+            typer.Option("--device", "-d", help="ADB serial."),
+        ] = None,
+        json_output: Annotated[bool, typer.Option("--json")] = False,
+        session: Annotated[
+            str,
+            typer.Option("--session", help="Latest snap source cache session id."),
+        ] = DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
+        timeout_s: Annotated[float, typer.Option("--timeout-s")] = 10.0,
+        lease_timeout_s: Annotated[float, typer.Option("--lease-timeout-s")] = 30.0,
+    ) -> None:
+        _run(
+            dependencies=dependencies,
+            serial=serial,
+            device=device,
+            operation=NAVIGATION_UNLOCK,
             json_output=json_output,
             session=session,
             timeout_s=timeout_s,

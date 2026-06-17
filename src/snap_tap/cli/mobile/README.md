@@ -17,6 +17,8 @@ snap-tap app-open <serial> com.android.settings
 snap-tap tap <serial> e080
 snap-tap input <serial> e004 --text "hello"
 snap-tap replace-text <serial> e004 --text "hello"
+snap-tap wake <serial>
+snap-tap unlock <serial>
 snap-tap back <serial>
 snap-tap home <serial>
 snap-tap swipe <serial> --direction up
@@ -25,6 +27,8 @@ snap-tap wait <serial> --seconds 1
 
 `devices` and `status` default to compact human-readable output. Add `--json`
 when an agent, test, CI job, or support flow needs the structured payload.
+`status` includes small screen/keyguard metadata such as
+`screen on unlocked` or `screen on secure-lock`.
 
 `apps` lists launchable packages/components. `app-open` opens a package or
 exact package/activity component as a lifecycle primitive with a receipt and
@@ -39,6 +43,10 @@ stable machine contract, and `snap --debug` includes diagnostic source facts.
 device/session as a source of target facts, then capture a fresh current
 snapshot before any touch. Snapshot-local ids such as `e080` are never executed
 directly.
+
+`wake` only wakes the screen. `unlock` performs wake plus a safe dismiss/swipe
+attempt for non-secure keyguards. It never enters credentials and returns a
+failed receipt when a PIN, password, or pattern is required.
 
 Successful human-mode primitives use the post-action observation to print the
 next snap table, keeping the common loop at
@@ -78,7 +86,7 @@ Plain `snap` does not persist those bundles.
 The `primitive-*` commands are lower-level debug/repro surfaces that accept
 target signatures directly and return `primitive_receipt.v1` JSON. Everyday
 automation should prefer `snap`, `tap`, `input`, `replace-text`, `back`, `home`,
-`swipe`, and `wait`.
+`wake`, `unlock`, `swipe`, and `wait`.
 
 ## Boundaries
 

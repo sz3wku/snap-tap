@@ -10,11 +10,11 @@ Every phone touch, attempted phone touch, or blocked-before-touch primitive
 attempt must produce a receipt. A failed primitive is still operation evidence.
 
 The same receipt shape covers resolved `tap`, targeted `input` and
-`replace_text`, non-targeted `back`, `home`, `swipe`, and `wait`, latest-source
-CLI conveniences such as `tap eNN`, and explicit snapshot debug/repro source
-overrides. Snapshot-local ids and explicit snapshot sources are never
-executable by themselves; they still enter this receipt path only after fresh
-resolution and stale-target guards.
+`replace_text`, non-targeted `wake`, `unlock`, `back`, `home`, `swipe`, and
+`wait`, latest-source CLI conveniences such as `tap eNN`, and explicit snapshot
+debug/repro source overrides. Snapshot-local ids and explicit snapshot sources
+are never executable by themselves; they still enter this receipt path only
+after fresh resolution and stale-target guards.
 
 Primitive execution truth is separate from post-action observation proof. The
 everyday human primitive aliases may render a successful post-action
@@ -301,6 +301,8 @@ Everyday CLI commands:
 - `snap-tap tap <serial> eNN`
 - `snap-tap input <serial> eNN --text ...`
 - `snap-tap replace-text <serial> eNN --text ...`
+- `snap-tap wake <serial>`
+- `snap-tap unlock <serial>`
 - `snap-tap back <serial>`
 - `snap-tap home <serial>`
 - `snap-tap swipe <serial> --direction ...`
@@ -316,9 +318,9 @@ disabled, or has insufficient identity. After fresh snapshot
 capture, stale or ambiguous resolution still blocks before driver work. Public
 receipt request metadata records text length only, not raw text.
 
-`back`, `home`, `swipe`, and `wait` are everyday aliases for the navigation
-primitive path. `swipe` remains direction-only with bounded distance/duration;
-it does not expose arbitrary coordinates or selectors.
+`wake`, `unlock`, `back`, `home`, `swipe`, and `wait` are everyday aliases for
+the navigation primitive path. `swipe` remains direction-only with bounded
+distance/duration; it does not expose arbitrary coordinates or selectors.
 
 ## Stale Target Guard Boundary
 
@@ -350,11 +352,13 @@ This contract includes explicit debug-oriented non-targeted primitives:
 
 - `back`: press Android back through the process-isolated driver bridge.
 - `home`: press Android home through the process-isolated driver bridge.
+- `wake`: wake the Android screen without dismissing keyguard.
+- `unlock`: wake, then dismiss only a non-secure Android keyguard.
 - `swipe`: derive a directional viewport swipe from the current snapshot.
 - `wait`: hold the same primitive lease for a bounded sleep and prove
   before/after snapshots without touching the phone.
 
-`back`, `home`, and `swipe` primitives must:
+`wake`, `unlock`, `back`, `home`, and `swipe` primitives must:
 
 1. validate device id and primitive arguments before subprocess work,
 2. acquire the same per-device primitive lease,
@@ -367,7 +371,8 @@ This contract includes explicit debug-oriented non-targeted primitives:
 6. call only the process-isolated UIAutomator2 navigation driver operation,
 7. treat false-success, malformed output, non-JSON payloads, timeout, and
    nonzero child exits as structured failures,
-8. capture an after-snapshot when touch was attempted or may have occurred,
+8. capture an after-snapshot when touch was attempted, may have occurred, or a
+    no-op state transition was confirmed,
 9. return one receipt with attempted/touched truth and structured failure when
    applicable.
 
@@ -379,10 +384,17 @@ For UIAutomator2 `back`/`home`, raw `press(...)` return values are not public
 confirmation truth. The child process normalizes a no-exception press call as
 confirmed and may keep safe raw-return facts only as diagnostic metadata.
 
-`back` and `home` are exempt from pre-action screenshot blocking.
+`wake`, `unlock`, `back`, and `home` are exempt from pre-action screenshot
+blocking.
 They still acquire the primitive lease, execute through the process-isolated
 driver bridge, apply post-action settle, attempt after-snapshot proof, and
 record execution/proof truth separately.
+
+`unlock` never enters PINs, passwords, or patterns. If the backend reports a
+secure keyguard and dismiss/swipe cannot complete unlock, it must fail closed
+with `secure_keyguard_required`. Wake/unlock receipts may include only safe
+state metadata such as `screen_on_before`, `screen_on_after`,
+`keyguard_locked_before`, `keyguard_locked_after`, and `keyguard_secure`.
 
 `wait` must acquire the primitive lease, capture before and after snapshots,
 sleep only for a bounded duration, and report `attempted_touch=false` and
@@ -404,6 +416,9 @@ sleep only for a bounded duration, and report `attempted_touch=false` and
 - `primitive_receipt_failed`
 - `primitive_target_not_input`
 - `primitive_target_not_tappable`
+- `secure_keyguard_required`
+- `unlock_failed`
+- `wake_failed`
 
 ## Validation Expectations
 
@@ -417,6 +432,8 @@ sleep only for a bounded duration, and report `attempted_touch=false` and
 - Tests prove false-success driver payload returns `primitive_false_success`.
 - Tests prove after-snapshot failure after touch returns non-clean status.
 - Tests prove wait returns before/after proof with no attempted/touched phone.
+- Tests prove wake can complete without reporting touch when already awake.
+- Tests prove secure keyguard unlock fails closed without credential entry.
 - Tests prove swipe blocks on missing viewport before driver touch.
 - Tests assert public receipt JSON excludes raw XML, screenshot bytes, base64,
   selectors, raw text payloads, model prompts, platform semantics, and private

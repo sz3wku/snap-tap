@@ -38,13 +38,7 @@ def build_navigation_receipt(
     error: DriverError | None = None,
 ) -> PrimitiveReceipt:
     attempted = driver.attempted if driver is not None else False
-    touched = bool(
-        driver is not None
-        and (
-            driver.confirmed
-            or driver.metadata.get("touch_may_have_occurred") is True
-        )
-    )
+    touched = _touched_phone(driver)
     return PrimitiveReceipt(
         schema_version=PRIMITIVE_RECEIPT_SCHEMA_VERSION,
         receipt_id=new_receipt_id(),
@@ -98,6 +92,16 @@ def _blocking_reason(
     return {"code": code, "detail": detail or code, "touched_phone": False}
 
 
+def _touched_phone(driver: PrimitiveDriverResult | None) -> bool:
+    if driver is None:
+        return False
+    if driver.metadata.get("touch_may_have_occurred") is False:
+        return False
+    return bool(
+        driver.confirmed or driver.metadata.get("touch_may_have_occurred") is True
+    )
+
+
 def _after_status(after: PrimitiveSnapshotResult | None) -> str:
     if after is None:
         return "not_attempted"
@@ -118,7 +122,11 @@ def _execution_status(
     if blocking_code is not None:
         return "blocked"
     if request.operation == "wait":
-        return EXECUTION_COMPLETED if status in {"completed", "partial"} else EXECUTION_FAILED
+        return (
+            EXECUTION_COMPLETED
+            if status in {"completed", "partial"}
+            else EXECUTION_FAILED
+        )
     return "blocked"
 
 
