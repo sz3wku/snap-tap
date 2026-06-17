@@ -62,24 +62,9 @@ _ANDROID_UIAUTOMATOR2_SUPPORTED: frozenset[CapabilityName] = frozenset(
     )
 )
 
-_IOS_DVT_SNAP_SUPPORTED: frozenset[CapabilityName] = frozenset(
-    (
-        "discover",
-        "snap",
-    )
-)
+_IOS_DVT_SNAP_SUPPORTED: frozenset[CapabilityName] = frozenset()
 
-_IOS_WDA_SUPPORTED: frozenset[CapabilityName] = frozenset(
-    (
-        "discover",
-        "snap",
-        "targets",
-        "tap",
-        "text",
-        "swipe",
-        "navigation",
-    )
-)
+_IOS_WDA_SUPPORTED: frozenset[CapabilityName] = frozenset()
 
 IOS_DEVELOPER_MODE = BackendRequirement(
     code="ios_developer_mode_required",
@@ -132,8 +117,8 @@ IOS_DVT_SNAP_CAPABILITIES = BackendCapabilities(
         IOS_ADMIN_TUNNELD,
     ),
     notes=(
-        "DVT screenshot proves the iOS snap path but does not provide target "
-        "tables or tap/input primitives.",
+        "DVT screenshot is a planned iOS observation path. It is not an "
+        "implemented public backend in v0.",
     ),
 )
 
@@ -149,7 +134,7 @@ IOS_WDA_CAPABILITIES = BackendCapabilities(
     ),
     notes=(
         "WDA/XCUITest is the planned iOS target, tap, text, and gesture "
-        "driver line after one-time signing/setup.",
+        "driver line after Mac/Xcode signing/setup. It is not implemented in v0.",
     ),
 )
 

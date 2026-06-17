@@ -295,12 +295,12 @@ def test_mobile_status_all_blocks_when_no_devices_are_visible() -> None:
     assert backend.calls == []
 
 
-def test_mobile_init_requires_explicit_device() -> None:
+def test_mobile_android_driver_init_requires_explicit_device() -> None:
     app, _, lifecycle, _ = _build_app(
         [DeviceInfo(serial="RFCN4010FCK", state="device")]
     )
 
-    result = CliRunner().invoke(app, ["init"])
+    result = CliRunner().invoke(app, ["android-driver-init"])
 
     assert result.exit_code == 1
     payload = _json(result.stdout)
@@ -309,16 +309,27 @@ def test_mobile_init_requires_explicit_device() -> None:
     assert lifecycle.calls == []
 
 
-def test_mobile_init_rejects_malformed_serial_before_lifecycle_runner() -> None:
+def test_mobile_android_driver_init_rejects_malformed_serial_before_lifecycle_runner() -> None:
     app, _, lifecycle, _ = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
 
-    result = CliRunner().invoke(app, ["init", "--device", "bad serial"])
+    result = CliRunner().invoke(app, ["android-driver-init", "--device", "bad serial"])
 
     assert result.exit_code == 1
     payload = _json(result.stdout)
     assert payload["ok"] is False
     assert payload["result"]["error"]["code"] == "device_offline"
     assert lifecycle.calls == []
+
+
+def test_mobile_init_alias_still_runs_for_compatibility() -> None:
+    app, _, lifecycle, _ = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
+
+    result = CliRunner().invoke(app, ["init", "RFCN4010FCK"])
+
+    assert result.exit_code == 0
+    payload = _json(result.stdout)
+    assert payload["result"]["operation"] == "init"
+    assert lifecycle.calls == [("init", "RFCN4010FCK", 60.0)]
 
 
 def test_mobile_doctor_runs_lifecycle_for_explicit_device() -> None:
@@ -423,7 +434,7 @@ def test_mobile_dump_xml_rejects_malformed_serial_before_dumper() -> None:
     assert xml_dumper.calls == []
 
 
-def test_mobile_dump_xml_outputs_raw_xml_for_explicit_device() -> None:
+def test_mobile_dump_xml_outputs_metadata_without_raw_xml() -> None:
     app, _, _, xml_dumper = _build_app(
         [DeviceInfo(serial="RFCN4010FCK", state="device")]
     )
@@ -437,7 +448,9 @@ def test_mobile_dump_xml_outputs_raw_xml_for_explicit_device() -> None:
     payload = _json(result.stdout)
     assert payload["ok"] is True
     assert payload["result"]["operation"] == "dump_xml"
-    assert payload["result"]["xml"] == "<hierarchy><node /></hierarchy>"
+    assert "xml" not in payload["result"]
+    assert "<hierarchy" not in result.stdout
+    assert payload["result"]["metadata"]["timeout_s"] == "3.0"
     assert xml_dumper.calls == [("RFCN4010FCK", 3.0)]
 
 

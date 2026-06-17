@@ -381,7 +381,6 @@ def _request_payload(
     }
     if snapshot is not None:
         payload["source"] = "snapshot_manifest"
-        payload["snapshot"] = str(snapshot)
     return payload
 
 

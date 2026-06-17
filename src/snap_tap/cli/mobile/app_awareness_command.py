@@ -51,6 +51,10 @@ def register_app_awareness_commands(
             bool,
             typer.Option("--all", help="Inspect every visible Android device."),
         ] = False,
+        json_output: Annotated[
+            bool,
+            typer.Option("--json", help="Emit structured JSON output."),
+        ] = False,
         timeout_s: Annotated[
             float,
             typer.Option("--timeout-s", min=0.001, help="Per-device timeout."),
@@ -69,7 +73,8 @@ def register_app_awareness_commands(
                     code=serial_error.code,
                     detail=serial_error.detail,
                     device_id=serial or device,
-                )
+                ),
+                json_output=json_output,
             )
             return
         if all_devices and requested_serial is not None:
@@ -80,7 +85,8 @@ def register_app_awareness_commands(
                     code="invalid_arguments",
                     detail="Use either --all or an explicit device serial, not both.",
                     device_id=requested_serial,
-                )
+                ),
+                json_output=json_output,
             )
             return
 
@@ -101,9 +107,9 @@ def register_app_awareness_commands(
                 device_id=requested_serial,
             )
             if all_devices:
-                _emit_all_results([result])
+                _emit_all_results([result], json_output=json_output)
                 return
-            _emit_app_result(result)
+            _emit_app_result(result, json_output=json_output)
             return
         visible = snapshot.devices
         if all_devices:
@@ -116,7 +122,7 @@ def register_app_awareness_commands(
                 )
                 for visible_device in visible
             ]
-            _emit_all_results(results)
+            _emit_all_results(results, json_output=json_output)
             return
 
         result = read_device_app_current(
@@ -125,7 +131,7 @@ def register_app_awareness_commands(
             requested_serial=requested_serial,
             timeout_s=timeout_s,
         )
-        _emit_app_result(result)
+        _emit_app_result(result, json_output=json_output)
 
     @app.command("package-info")
     def package_info(
@@ -145,6 +151,10 @@ def register_app_awareness_commands(
             bool,
             typer.Option("--all", help="Inspect every visible Android device."),
         ] = False,
+        json_output: Annotated[
+            bool,
+            typer.Option("--json", help="Emit structured JSON output."),
+        ] = False,
         timeout_s: Annotated[
             float,
             typer.Option("--timeout-s", min=0.001, help="Per-device timeout."),
@@ -163,7 +173,8 @@ def register_app_awareness_commands(
                     code=serial_error.code,
                     detail=serial_error.detail,
                     device_id=serial or device,
-                )
+                ),
+                json_output=json_output,
             )
             return
         if all_devices and requested_serial is not None:
@@ -174,7 +185,8 @@ def register_app_awareness_commands(
                     code="invalid_arguments",
                     detail="Use either --all or an explicit device serial, not both.",
                     device_id=requested_serial,
-                )
+                ),
+                json_output=json_output,
             )
             return
 
@@ -196,9 +208,9 @@ def register_app_awareness_commands(
                 device_id=requested_serial,
             )
             if all_devices:
-                _emit_all_results([result])
+                _emit_all_results([result], json_output=json_output)
                 return
-            _emit_app_result(result)
+            _emit_app_result(result, json_output=json_output)
             return
         visible = snapshot.devices
         if all_devices:
@@ -215,7 +227,7 @@ def register_app_awareness_commands(
                     )
                     for visible_device in visible
                 ]
-            _emit_all_results(results)
+            _emit_all_results(results, json_output=json_output)
             return
 
         result = read_device_package_info(
@@ -225,26 +237,106 @@ def register_app_awareness_commands(
             package=package or "",
             timeout_s=timeout_s,
         )
-        _emit_app_result(result)
+        _emit_app_result(result, json_output=json_output)
 
     app.command("app-info")(package_info)
 
 
-def _emit_app_result(result: DriverAppAwareness) -> None:
-    emit_json({"ok": result.ok, "result": app_awareness_to_dict(result)})
+def _emit_app_result(result: DriverAppAwareness, *, json_output: bool) -> None:
+    if json_output:
+        emit_json({"ok": result.ok, "result": app_awareness_to_dict(result)})
+    else:
+        _emit_app_table([result])
     if not result.ok:
         raise typer.Exit(code=1)
 
 
-def _emit_all_results(results: Sequence[DriverAppAwareness]) -> None:
+def _emit_all_results(
+    results: Sequence[DriverAppAwareness],
+    *,
+    json_output: bool,
+) -> None:
     payload = {
         "ok": bool(results) and all(result.ok for result in results),
         "count": len(results),
         "results": [app_awareness_to_dict(result) for result in results],
     }
-    emit_json(payload)
+    if json_output:
+        emit_json(payload)
+    else:
+        _emit_app_table(results)
     if payload["ok"] is not True:
         raise typer.Exit(code=1)
+
+
+def _emit_app_table(results: Sequence[DriverAppAwareness]) -> None:
+    if not results:
+        typer.echo("No app awareness results.")
+        return
+    typer.echo(_format_row(["SERIAL", "OPERATION", "PACKAGE", "DETAIL", "STATUS"]))
+    for result in results:
+        payload = app_awareness_to_dict(result)
+        metadata = payload["metadata"]
+        error = payload["error"]
+        package = _metadata_text(metadata, "package")
+        detail = _app_detail(result.operation, metadata)
+        status = result.status if result.ok else _error_code(error)
+        typer.echo(
+            _format_row(
+                [
+                    result.device_id or "-",
+                    result.operation,
+                    package,
+                    detail,
+                    status,
+                ]
+            )
+        )
+
+
+def _app_detail(operation: str, metadata: object) -> str:
+    if operation == "app_current":
+        activity = _metadata_text(metadata, "activity")
+        pid = _metadata_text(metadata, "pid")
+        if activity != "-" and pid != "-":
+            return f"{activity} pid={pid}"
+        return activity if activity != "-" else "-"
+    version = _metadata_text(metadata, "version_name")
+    code = _metadata_text(metadata, "version_code")
+    if version != "-" and code != "-":
+        return f"{version} ({code})"
+    return version if version != "-" else "-"
+
+
+def _metadata_text(metadata: object, key: str) -> str:
+    if not isinstance(metadata, dict):
+        return "-"
+    value = metadata.get(key)
+    if value is None:
+        return "-"
+    return str(value)
+
+
+def _error_code(error: object) -> str:
+    if not isinstance(error, dict):
+        return "failed"
+    code = error.get("code")
+    return code if isinstance(code, str) and code else "failed"
+
+
+def _format_row(columns: Sequence[str]) -> str:
+    widths = (18, 14, 32, 28, 16)
+    return "  ".join(
+        _truncate(value, width).ljust(width) for value, width in zip(columns, widths)
+    ).rstrip()
+
+
+def _truncate(value: str, width: int) -> str:
+    if len(value) <= width:
+        return value
+    if width <= 1:
+        return value[:width]
+    return value[: width - 1] + "."
 
 
 def _blocked_all_package_results(

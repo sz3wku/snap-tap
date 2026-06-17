@@ -152,11 +152,41 @@ def test_mobile_tap_snapshot_json_returns_next_snap_and_writes_latest_source(
     assert payload["receipt"]["schema_version"] == "primitive_receipt.v1"
     assert payload["receipt"]["after_snapshot"]["snapshot_id"] == "after"
     assert payload["next_snap"]["snapshot"]["snapshot_id"] == "after"
+    assert str(manifest) not in tap.stdout
     assert latest_snap_source_path(
         device_id="RFCN4010FCK",
         session_id="default",
         cache_root=tmp_path / "cache",
     ).exists()
+
+
+def test_mobile_tap_snapshot_error_does_not_echo_snapshot_path(
+    tmp_path: Path,
+) -> None:
+    manifest = _capture_manifest(tmp_path / "captures")
+    app, _xml_dumper = _build_app(tmp_path / "cache", _SuccessExecutor())
+
+    tap = CliRunner().invoke(
+        app,
+        [
+            "tap",
+            "e002",
+            "--device",
+            "RFCN4010FCK",
+            "--snapshot",
+            str(manifest),
+            "--session",
+            "custom",
+            "--json",
+        ],
+    )
+
+    assert tap.exit_code == 1
+    payload = _json(tap.stdout)
+    request = payload["receipt"]["request"]
+    assert request["source"] == "snapshot_manifest"
+    assert "snapshot" not in request
+    assert str(manifest) not in tap.stdout
 
 
 def test_mobile_tap_failure_with_after_snap_emits_receipt_not_next_table(

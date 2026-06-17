@@ -271,9 +271,8 @@ S2 text primitives must:
     attempted/touched truth, and structured failure when applicable.
 
 The text payload itself is an input to the process-isolated driver operation,
-not a public receipt field. Public receipts expose `text_length` and
-`text_sha256` so support evidence can correlate an attempt without printing
-operator text.
+not a public receipt field. Public receipts expose `text_length` only; they do
+not expose raw text or deterministic text hashes.
 
 S2 does not add Instagram composer logic, platform semantics, model-generated
 text, coordinate input public API, stale latest-cache execution, hidden retry,

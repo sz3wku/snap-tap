@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-
 from snap_tap.primitives import PrimitiveReceipt, invalid_request_receipt
 
 
@@ -37,9 +35,6 @@ def safe_text_request_metadata(
         "session_id": session_id,
         "mode": mode,
         "text_length": len(text) if isinstance(text, str) else 0,
-        "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()
-        if isinstance(text, str)
-        else None,
     }
 
 

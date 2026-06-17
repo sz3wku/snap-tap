@@ -69,7 +69,6 @@ def xml_dump_to_dict(result: DriverXmlDump) -> dict[str, object]:
         "operation": result.operation,
         "checked_at": result.checked_at,
         "elapsed_ms": result.elapsed_ms,
-        "xml": result.xml,
         "metadata": dict(result.metadata),
         "recovery": recovery_to_dict(result.metadata),
         "error": error_to_dict(result.error),

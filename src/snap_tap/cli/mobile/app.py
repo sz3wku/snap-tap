@@ -238,20 +238,11 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
         )
         _emit_status_result(health, json_output=json_output)
 
-    @app.command("init")
-    def init(
-        serial: Annotated[
-            str | None,
-            typer.Argument(help="ADB serial to prepare."),
-        ] = None,
-        device: Annotated[
-            str | None,
-            typer.Option("--device", "-d", help="ADB serial to prepare."),
-        ] = None,
-        timeout_s: Annotated[
-            float,
-            typer.Option("--timeout-s", min=0.001, help="Operation timeout."),
-        ] = 60.0,
+    def _android_driver_init(
+        *,
+        serial: str | None,
+        device: str | None,
+        timeout_s: float,
     ) -> None:
         requested_serial, serial_error = resolve_requested_serial(
             serial=serial,
@@ -274,6 +265,49 @@ def build_mobile_app(deps: MobileDependencies | None = None) -> typer.Typer:
             dependencies=dependencies,
             operation="init",
             device=requested_serial,
+            timeout_s=timeout_s,
+            command_name="android-driver-init",
+        )
+
+    @app.command("android-driver-init")
+    def android_driver_init(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to prepare."),
+        ] = None,
+        device: Annotated[
+            str | None,
+            typer.Option("--device", "-d", help="ADB serial to prepare."),
+        ] = None,
+        timeout_s: Annotated[
+            float,
+            typer.Option("--timeout-s", min=0.001, help="Operation timeout."),
+        ] = 60.0,
+    ) -> None:
+        _android_driver_init(
+            serial=serial,
+            device=device,
+            timeout_s=timeout_s,
+        )
+
+    @app.command("init", hidden=True)
+    def init(
+        serial: Annotated[
+            str | None,
+            typer.Argument(help="ADB serial to prepare."),
+        ] = None,
+        device: Annotated[
+            str | None,
+            typer.Option("--device", "-d", help="ADB serial to prepare."),
+        ] = None,
+        timeout_s: Annotated[
+            float,
+            typer.Option("--timeout-s", min=0.001, help="Operation timeout."),
+        ] = 60.0,
+    ) -> None:
+        _android_driver_init(
+            serial=serial,
+            device=device,
             timeout_s=timeout_s,
         )
 

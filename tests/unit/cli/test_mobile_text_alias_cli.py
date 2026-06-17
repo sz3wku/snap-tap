@@ -265,7 +265,7 @@ def test_mobile_text_alias_invalid_text_does_not_leak_raw_text(
     assert result.exit_code == 1
     assert payload["receipt"]["error"]["code"] == "primitive_invalid_request"
     assert payload["receipt"]["request"]["text_length"] == len(invalid_text)
-    assert "text_sha256" in payload["receipt"]["request"]
+    assert "text_sha256" not in payload["receipt"]["request"]
     assert payload["next_snap"] is None
     assert secret not in result.stdout
     assert executor.calls == []

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 from dataclasses import replace
 from typing import cast
@@ -55,7 +54,7 @@ def test_successful_input_receipt_has_resolution_driver_and_after_refs() -> None
     request = cast(dict[str, object], payload["request"])
     assert "text" not in request
     assert request["text_length"] == 11
-    assert request["text_sha256"] == hashlib.sha256(b"hakar smoke").hexdigest()
+    assert "text_sha256" not in request
     assert texter.calls == [
         ("RFCN4010FCK", 60.0, 120.0, "hakar smoke", TEXT_INPUT_MODE)
     ]

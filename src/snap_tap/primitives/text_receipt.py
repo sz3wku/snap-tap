@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import hashlib
-
 from snap_tap.backends.contracts import DriverError
 from snap_tap.primitives.models import (
     PRIMITIVE_RECEIPT_SCHEMA_VERSION,
@@ -42,10 +40,7 @@ def build_text_receipt(
     attempted = driver.attempted if driver is not None else False
     touched = bool(
         driver is not None
-        and (
-            driver.confirmed
-            or driver.metadata.get("touch_may_have_occurred") is True
-        )
+        and (driver.confirmed or driver.metadata.get("touch_may_have_occurred") is True)
     )
     return PrimitiveReceipt(
         schema_version=PRIMITIVE_RECEIPT_SCHEMA_VERSION,
@@ -135,7 +130,6 @@ def text_request_payload(request: PrimitiveTextRequest) -> dict[str, object]:
         "source_snapshot_id": request.signature.source_snapshot_id,
         "mode": request.mode,
         "text_length": len(request.text) if isinstance(request.text, str) else 0,
-        "text_sha256": _text_sha256(request.text),
         "timeout_s": request.timeout_s,
         "lease_timeout_s": request.lease_timeout_s,
         "post_action_settle_ms": normalize_post_action_settle_ms(
@@ -165,9 +159,3 @@ def _after_status(
     if after.ok and after.snapshot is not None:
         return "completed"
     return "failed"
-
-
-def _text_sha256(value: object) -> str | None:
-    if not isinstance(value, str):
-        return None
-    return hashlib.sha256(value.encode("utf-8")).hexdigest()

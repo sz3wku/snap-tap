@@ -141,7 +141,7 @@ class FakeAppReader:
 def test_mobile_app_current_auto_selects_single_online_device() -> None:
     app, reader = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
 
-    result = CliRunner().invoke(app, ["app-current", "--timeout-s", "3"])
+    result = CliRunner().invoke(app, ["app-current", "--timeout-s", "3", "--json"])
 
     assert result.exit_code == 0
     payload = _json(result.stdout)
@@ -156,6 +156,19 @@ def test_mobile_app_current_auto_selects_single_online_device() -> None:
     assert reader.calls == [("app_current", "RFCN4010FCK", None, 3.0)]
 
 
+def test_mobile_app_current_default_outputs_table() -> None:
+    app, reader = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
+
+    result = CliRunner().invoke(app, ["app-current", "RFCN4010FCK"])
+
+    assert result.exit_code == 0
+    assert "SERIAL" in result.stdout
+    assert "RFCN4010FCK" in result.stdout
+    assert "com.example.app" in result.stdout
+    assert ".MainActivity pid=123" in result.stdout
+    assert reader.calls == [("app_current", "RFCN4010FCK", None, 5.0)]
+
+
 def test_mobile_app_current_accepts_positional_serial() -> None:
     app, reader = _build_app(
         [
@@ -164,7 +177,10 @@ def test_mobile_app_current_accepts_positional_serial() -> None:
         ]
     )
 
-    result = CliRunner().invoke(app, ["app-current", "RFCN4010FCK", "--timeout-s", "3"])
+    result = CliRunner().invoke(
+        app,
+        ["app-current", "RFCN4010FCK", "--timeout-s", "3", "--json"],
+    )
 
     assert result.exit_code == 0
     payload = _json(result.stdout)
@@ -181,7 +197,10 @@ def test_mobile_app_current_all_outputs_results_array() -> None:
         ]
     )
 
-    result = CliRunner().invoke(app, ["app-current", "--all", "--timeout-s", "2"])
+    result = CliRunner().invoke(
+        app,
+        ["app-current", "--all", "--timeout-s", "2", "--json"],
+    )
 
     assert result.exit_code == 0
     payload = _json(result.stdout)
@@ -202,7 +221,7 @@ def test_mobile_app_current_rejects_all_with_explicit_device() -> None:
 
     result = CliRunner().invoke(
         app,
-        ["app-current", "--all", "--device", "RFCN4010FCK"],
+        ["app-current", "--all", "--device", "RFCN4010FCK", "--json"],
     )
 
     assert result.exit_code == 1
@@ -217,7 +236,7 @@ def test_mobile_app_current_rejects_positional_serial_with_device_option() -> No
 
     result = CliRunner().invoke(
         app,
-        ["app-current", "RFCN4010FCK", "--device", "RFCN4010FCK"],
+        ["app-current", "RFCN4010FCK", "--device", "RFCN4010FCK", "--json"],
     )
 
     assert result.exit_code == 1
@@ -233,7 +252,7 @@ def test_mobile_package_info_requires_valid_package_before_reader() -> None:
 
         result = CliRunner().invoke(
             app,
-            ["package-info", "--device", "RFCN4010FCK", *package_args],
+            ["package-info", "--device", "RFCN4010FCK", *package_args, "--json"],
         )
 
         assert result.exit_code == 1
@@ -255,6 +274,7 @@ def test_mobile_package_info_outputs_public_metadata_only() -> None:
             "com.example.app",
             "--timeout-s",
             "4",
+            "--json",
         ],
     )
 
@@ -272,6 +292,24 @@ def test_mobile_package_info_outputs_public_metadata_only() -> None:
     ]
 
 
+def test_mobile_package_info_default_outputs_table() -> None:
+    app, reader = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
+
+    result = CliRunner().invoke(
+        app,
+        ["package-info", "RFCN4010FCK", "--package", "com.example.app"],
+    )
+
+    assert result.exit_code == 0
+    assert "SERIAL" in result.stdout
+    assert "RFCN4010FCK" in result.stdout
+    assert "com.example.app" in result.stdout
+    assert "1.2.3 (42)" in result.stdout
+    assert reader.calls == [
+        ("package_info", "RFCN4010FCK", "com.example.app", 5.0)
+    ]
+
+
 def test_mobile_app_info_alias_outputs_public_metadata_only() -> None:
     app, reader = _build_app([DeviceInfo(serial="RFCN4010FCK", state="device")])
 
@@ -282,6 +320,7 @@ def test_mobile_app_info_alias_outputs_public_metadata_only() -> None:
             "RFCN4010FCK",
             "--package",
             "com.example.app",
+            "--json",
         ],
     )
 
@@ -305,7 +344,7 @@ def test_mobile_package_info_all_checks_each_visible_device() -> None:
 
     result = CliRunner().invoke(
         app,
-        ["package-info", "--all", "--package", "com.example.app"],
+        ["package-info", "--all", "--package", "com.example.app", "--json"],
     )
 
     assert result.exit_code == 0
@@ -325,7 +364,10 @@ def test_mobile_package_info_multi_device_without_target_fails_closed() -> None:
     ]
     app, reader = _build_app(devices)
 
-    result = CliRunner().invoke(app, ["package-info", "--package", "com.example.app"])
+    result = CliRunner().invoke(
+        app,
+        ["package-info", "--package", "com.example.app", "--json"],
+    )
 
     assert result.exit_code == 1
     payload = _json(result.stdout)

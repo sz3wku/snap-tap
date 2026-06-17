@@ -20,13 +20,13 @@ def test_android_uiautomator2_supports_full_primitive_surface() -> None:
     assert capabilities.supports("navigation")
 
 
-def test_ios_dvt_is_snap_only_and_blocks_snap_on_setup_gates() -> None:
+def test_ios_dvt_is_planned_and_blocks_snap_on_setup_gates() -> None:
     capabilities = ios_dvt_snap_capabilities()
 
     assert capabilities.platform == "ios"
     assert capabilities.backend_name == "ios-dvt"
-    assert capabilities.supports("discover")
-    assert capabilities.supports("snap")
+    assert not capabilities.supports("discover")
+    assert not capabilities.supports("snap")
     assert not capabilities.supports("targets")
     assert not capabilities.supports("tap")
 
@@ -41,15 +41,15 @@ def test_ios_dvt_is_snap_only_and_blocks_snap_on_setup_gates() -> None:
     }
 
 
-def test_ios_wda_declares_tap_input_and_wda_blockers() -> None:
+def test_ios_wda_is_planned_and_declares_wda_blockers() -> None:
     capabilities = ios_wda_capabilities()
 
     assert capabilities.platform == "ios"
     assert capabilities.backend_name == "ios-wda"
-    assert capabilities.supports("targets")
-    assert capabilities.supports("tap")
-    assert capabilities.supports("text")
-    assert capabilities.supports("swipe")
+    assert not capabilities.supports("targets")
+    assert not capabilities.supports("tap")
+    assert not capabilities.supports("text")
+    assert not capabilities.supports("swipe")
 
     tap_blockers = {
         requirement.code

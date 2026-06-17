@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 from collections.abc import Mapping
 from pathlib import Path
@@ -290,9 +289,6 @@ def _request_metadata(
         "device_id": device_id,
         "mode": mode,
         "text_length": len(text) if isinstance(text, str) else 0,
-        "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()
-        if isinstance(text, str)
-        else None,
     }
     if signature_id is not None:
         payload["signature_id"] = signature_id
