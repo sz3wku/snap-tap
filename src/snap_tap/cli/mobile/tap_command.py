@@ -5,15 +5,8 @@ from typing import Annotated, Protocol
 
 import typer
 
-from snap_tap.backends.android.uiautomator2.screenshot import (
-    Uiautomator2ScreenshotCapturer,
-)
 from snap_tap.backends.android.uiautomator2.tap import Uiautomator2Tapper
-from snap_tap.backends.contracts import (
-    DriverError,
-    DriverScreenshotCapturer,
-    DriverXmlDumper,
-)
+from snap_tap.backends.contracts import DriverError, DriverXmlDumper
 from snap_tap.cli.mobile.device_discovery import read_command_devices
 from snap_tap.cli.mobile.primitive_result_output import (
     emit_primitive_result,
@@ -21,7 +14,7 @@ from snap_tap.cli.mobile.primitive_result_output import (
 from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.device.identity import normalize_serial
 from snap_tap.primitives import (
-    CorePrimitiveSnapshotProvider,
+    CorePrimitiveObservationProvider,
     PrimitiveReceipt,
     PrimitiveTapper,
     PrimitiveTapRequest,
@@ -58,9 +51,6 @@ class TapDependencies(Protocol):
 
     @property
     def xml_dumper(self) -> DriverXmlDumper: ...
-
-    @property
-    def screenshot_capturer(self) -> DriverScreenshotCapturer | None: ...
 
     @property
     def primitive_tapper(self) -> PrimitiveTapper | None: ...
@@ -323,10 +313,9 @@ def run_tap_command(
             json_output=json_output,
         )
         return
-    provider = CorePrimitiveSnapshotProvider(
+    provider = CorePrimitiveObservationProvider(
         devices=visible.devices,
         xml_dumper=dependencies.xml_dumper,
-        screenshot_capturer=_screenshot_capturer(dependencies),
     )
     receipt = resolved_tap(
         primitive_request,
@@ -421,9 +410,3 @@ def _target_id_error(target_id: str) -> str | None:
     ):
         return "Target id must look like e001."
     return None
-
-
-def _screenshot_capturer(
-    dependencies: TapDependencies,
-) -> DriverScreenshotCapturer:
-    return dependencies.screenshot_capturer or Uiautomator2ScreenshotCapturer()

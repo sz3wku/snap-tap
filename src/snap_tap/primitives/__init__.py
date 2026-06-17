@@ -30,6 +30,7 @@ from snap_tap.primitives.receipt import (
 from snap_tap.primitives.signature_io import target_signature_from_dict
 from snap_tap.primitives.snapshot_provider import (
     DEFAULT_PRIMITIVE_SNAPSHOT_ROOT,
+    CorePrimitiveObservationProvider,
     CorePrimitiveSnapshotProvider,
     PrimitiveSnapshotProvider,
 )
@@ -41,6 +42,7 @@ __all__ = [
     "NAVIGATION_WAIT",
     "PRIMITIVE_RECEIPT_SCHEMA_VERSION",
     "CorePrimitiveSnapshotProvider",
+    "CorePrimitiveObservationProvider",
     "DEFAULT_PRIMITIVE_LEASE_ROOT",
     "DEFAULT_PRIMITIVE_SNAPSHOT_ROOT",
     "PrimitiveAppOpenRequest",

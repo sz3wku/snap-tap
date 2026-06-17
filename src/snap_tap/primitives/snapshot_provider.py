@@ -13,7 +13,13 @@ from snap_tap.backends.contracts import (
 from snap_tap.device.identity import DeviceInfo
 from snap_tap.primitives.models import PrimitiveSnapshotResult
 from snap_tap.semantics import SemanticSnapshotError, build_semantic_snapshot
-from snap_tap.snapshots import capture_raw_snapshot, materialize_raw_snapshot_artifacts
+from snap_tap.snapshots import (
+    RawSnapshotCapture,
+    capture_raw_observation,
+    capture_raw_snapshot,
+    complete_operator_observation,
+    materialize_raw_snapshot_artifacts,
+)
 
 DEFAULT_PRIMITIVE_SNAPSHOT_ROOT = Path("temp/mobile-primitives")
 
@@ -21,6 +27,29 @@ DEFAULT_PRIMITIVE_SNAPSHOT_ROOT = Path("temp/mobile-primitives")
 class PrimitiveSnapshotProvider(Protocol):
     def capture(self, device_id: str, timeout_s: float = 10.0) -> PrimitiveSnapshotResult:
         ...
+
+
+class CorePrimitiveObservationProvider:
+    def __init__(
+        self,
+        *,
+        devices: Sequence[DeviceInfo],
+        xml_dumper: DriverXmlDumper,
+    ) -> None:
+        self._devices = tuple(devices)
+        self._xml_dumper = xml_dumper
+
+    def capture(self, device_id: str, timeout_s: float = 10.0) -> PrimitiveSnapshotResult:
+        started = perf_counter()
+        raw = capture_raw_observation(
+            xml_dumper=self._xml_dumper,
+            devices=self._devices,
+            requested_serial=device_id,
+            timeout_s=timeout_s,
+        )
+        if raw.ok:
+            raw = complete_operator_observation(raw)
+        return _result_from_raw(raw, started=started)
 
 
 class CorePrimitiveSnapshotProvider:
@@ -48,34 +77,42 @@ class CorePrimitiveSnapshotProvider:
         )
         if raw.ok:
             raw = materialize_raw_snapshot_artifacts(raw, self._artifact_root)
-        if not raw.ok:
-            return PrimitiveSnapshotResult(
-                ok=False,
-                status=raw.status,
-                device_id=raw.device_id,
-                checked_at=raw.checked_at,
-                elapsed_ms=raw.elapsed_ms,
-                backend=raw.backend,
-                error=raw.error,
-            )
-        try:
-            snapshot = build_semantic_snapshot(raw)
-        except SemanticSnapshotError as exc:
-            return PrimitiveSnapshotResult(
-                ok=False,
-                status="blocked",
-                device_id=raw.device_id,
-                checked_at=raw.checked_at,
-                elapsed_ms=round((perf_counter() - started) * 1000, 3),
-                backend=raw.backend,
-                error=DriverError(code=exc.code, detail=exc.detail),
-            )
+        return _result_from_raw(raw, started=started)
+
+
+def _result_from_raw(
+    raw: RawSnapshotCapture,
+    *,
+    started: float,
+) -> PrimitiveSnapshotResult:
+    if not raw.ok:
         return PrimitiveSnapshotResult(
-            ok=True,
-            status="completed",
-            device_id=snapshot.device_id,
-            checked_at=snapshot.captured_at,
-            elapsed_ms=round((perf_counter() - started) * 1000, 3),
-            snapshot=snapshot,
+            ok=False,
+            status=raw.status,
+            device_id=raw.device_id,
+            checked_at=raw.checked_at,
+            elapsed_ms=raw.elapsed_ms,
             backend=raw.backend,
+            error=raw.error,
         )
+    try:
+        snapshot = build_semantic_snapshot(raw)
+    except SemanticSnapshotError as exc:
+        return PrimitiveSnapshotResult(
+            ok=False,
+            status="blocked",
+            device_id=raw.device_id,
+            checked_at=raw.checked_at,
+            elapsed_ms=round((perf_counter() - started) * 1000, 3),
+            backend=raw.backend,
+            error=DriverError(code=exc.code, detail=exc.detail),
+        )
+    return PrimitiveSnapshotResult(
+        ok=True,
+        status="completed",
+        device_id=snapshot.device_id,
+        checked_at=snapshot.captured_at,
+        elapsed_ms=round((perf_counter() - started) * 1000, 3),
+        snapshot=snapshot,
+        backend=raw.backend,
+    )

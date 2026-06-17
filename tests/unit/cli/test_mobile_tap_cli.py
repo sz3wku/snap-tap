@@ -211,6 +211,34 @@ class _Tapper:
         )
 
 
+class RecordingTapper:
+    backend_name = "fake"
+
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, float, float, float]] = []
+
+    def tap(
+        self,
+        *,
+        device_id: str,
+        x: float,
+        y: float,
+        timeout_s: float = 10.0,
+    ) -> DriverTap:
+        self.calls.append((device_id, x, y, timeout_s))
+        return DriverTap(
+            ok=True,
+            status="completed",
+            device_id=device_id,
+            backend="fake",
+            operation="tap",
+            elapsed_ms=1.0,
+            attempted=True,
+            confirmed=True,
+            checked_at=utc_now(),
+        )
+
+
 def test_mobile_snap_then_tap_id_builds_signature_for_executor(
     tmp_path: Path,
 ) -> None:
@@ -241,6 +269,31 @@ def test_mobile_snap_then_tap_id_builds_signature_for_executor(
     assert request.signature.display_id == "e002"
     assert request.signature.source_snapshot_id != "fresh"
     assert request.signature.refs == {}
+
+
+def test_mobile_tap_default_executor_uses_observation_without_screenshot(
+    tmp_path: Path,
+) -> None:
+    app, xml_dumper, capturer, tapper = _build_app_without_executor(tmp_path)
+    runner = CliRunner()
+
+    snap = runner.invoke(app, ["snap", "RFCN4010FCK"])
+    tap = runner.invoke(app, ["tap", "RFCN4010FCK", "e002", "--json"])
+
+    assert snap.exit_code == 0
+    assert tap.exit_code == 0
+    payload = _json(tap.stdout)
+    assert payload["ok"] is True
+    assert payload["receipt"]["before_snapshot"]["refs"] == {}
+    assert payload["receipt"]["after_snapshot"]["refs"] == {}
+    assert payload["next_snap"]["schema_version"] == "mobile_snap.v1"
+    assert xml_dumper.calls == [
+        ("RFCN4010FCK", 10.0),
+        ("RFCN4010FCK", 10.0),
+        ("RFCN4010FCK", 10.0),
+    ]
+    assert capturer.calls == []
+    assert tapper.calls == [("RFCN4010FCK", 320.0, 70.0, 10.0)]
 
 
 def test_mobile_tap_missing_source_blocks_before_phone_work(tmp_path: Path) -> None:
@@ -424,6 +477,28 @@ def _build_app(
         )
     )
     return app, xml_dumper
+
+
+def _build_app_without_executor(
+    cache_root: Path,
+) -> tuple[typer.Typer, FakeXmlDumper, FakeScreenshotCapturer, RecordingTapper]:
+    xml_dumper = FakeXmlDumper()
+    capturer = FakeScreenshotCapturer()
+    tapper = RecordingTapper()
+    app = build_mobile_app(
+        MobileDependencies(
+            discovery=FakeDiscovery([DeviceInfo("RFCN4010FCK", "device")]),
+            backend=FakeBackend(),
+            lifecycle_runner=FakeLifecycleRunner(),
+            xml_dumper=xml_dumper,
+            screenshot_capturer=capturer,
+            app_reader=FakeAppReader(),
+            primitive_tapper=tapper,
+            primitive_tap_executor=None,
+            latest_cache_root=cache_root,
+        )
+    )
+    return app, xml_dumper, capturer, tapper
 
 
 def _snapshot_result(

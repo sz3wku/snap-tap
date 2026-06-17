@@ -4,7 +4,10 @@ from pathlib import Path
 
 from snap_tap.backends.contracts import DriverScreenshot, DriverXmlDump
 from snap_tap.device.identity import DeviceInfo
-from snap_tap.primitives import CorePrimitiveSnapshotProvider
+from snap_tap.primitives import (
+    CorePrimitiveObservationProvider,
+    CorePrimitiveSnapshotProvider,
+)
 from snap_tap.targets import build_snapshot_targets
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\nfake-png"
@@ -61,3 +64,20 @@ def test_core_primitive_snapshot_provider_materializes_resolution_refs(
     assert all(Path(ref.path).exists() for ref in refs.values())
     targets = build_snapshot_targets(result.snapshot)
     assert targets.targets[0].label == "Safe"
+
+
+def test_core_primitive_observation_provider_uses_xml_without_artifact_refs() -> None:
+    provider = CorePrimitiveObservationProvider(
+        devices=[DeviceInfo("RFCN4010FCK", "device")],
+        xml_dumper=FakeXmlDumper(),
+    )
+
+    result = provider.capture("RFCN4010FCK")
+
+    assert result.ok is True
+    assert result.snapshot is not None
+    assert result.snapshot.refs == {}
+    targets = build_snapshot_targets(result.snapshot)
+    assert targets.targets[0].label == "Safe"
+    assert result.snapshot.screen_metadata.viewport.width == 110
+    assert result.snapshot.screen_metadata.viewport.height == 220
