@@ -18,8 +18,8 @@ may write `screen.xml`, `screen.png`, and `manifest.json`.
 screenshot/XML/manifest bundles. It may use the driver to observe the current
 screen, but the public value is a target list, not hashes or artifact paths.
 
-Dashboard and future Runs may later choose to persist evidence for a specific
-run or moment. That policy is outside S6.
+Higher-level products may choose to persist evidence for a specific run or
+moment. That policy is outside `mobile_snap.v1`.
 
 ## CLI Shape
 
@@ -205,7 +205,7 @@ decide what operations are allowed.
 
 Errors must be structured in JSON mode and human-readable in table mode.
 
-## Relationship To Later Runs
+## Relationship To Later Flows
 
 The CLI may use `mobile_snap.v1` output as the visible source for
 `tap/input/replace-text eNN`, but phone touch still requires target signature
@@ -218,7 +218,7 @@ rebuilds `target_signature.v1` from those facts before entering the resolved
 primitive path. The `eNN` id remains snapshot-local UX and is never executable
 directly.
 
-P1.R5.S6 adds explicit snapshot source override for debug/repro:
+`tap` supports an explicit snapshot source override for debug/repro:
 
 ```powershell
 snap-tap tap <serial> e080 --snapshot temp\snap-tap-smoke\capture-...\manifest.json --json
@@ -240,4 +240,4 @@ snap-tap replace-text <serial> e004 --text "hello" --json
 
 The source `eNN` must refer to an enabled input target in the latest successful
 `snap-tap snap` for the device/session. Raw text is sent only to the driver
-operation; receipts expose safe text metadata such as length/hash.
+operation; receipts expose safe text metadata such as length only.

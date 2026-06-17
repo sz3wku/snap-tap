@@ -10,6 +10,6 @@ mode: one `primitive_receipt.v1` plus the next `mobile_snap.v1` when available.
 This includes the small `app-open` lifecycle primitive. Lower-level
 `primitive-*` commands remain receipt-only.
 
-They are derived from HAKAR's proven phone-spine contracts, but this repository
-does not own HAKAR product concepts such as Teach, Scheduler, Runs, LIVE,
-Dashboard, platform semantics, accounts, or content workflows.
+This repository owns the portable phone boundary only. App-specific
+schedulers, dashboards, platform semantics, accounts, and content workflows
+belong outside these contracts.

@@ -19,12 +19,34 @@ snap-tap back <serial>
 snap-tap home <serial>
 snap-tap swipe <serial> --direction up
 snap-tap wait <serial> --seconds 1
+snap-tap android-driver-init <serial>
 snap-tap android-driver-purge <serial>
 ```
 
 ## Quick Start
 
-During alpha, install from a local checkout:
+Requirements:
+
+- Python 3.11, 3.12, or 3.13,
+- `uv`,
+- Android platform tools or Android Studio,
+- an Android phone with Developer options and USB debugging enabled.
+
+After the repository is public, the shortest no-checkout smoke path is:
+
+```powershell
+uvx --from git+https://github.com/HAKAR-OS/snap-tap.git snap-tap --help
+uvx --from git+https://github.com/HAKAR-OS/snap-tap.git snap-tap devices
+```
+
+For repeated use from a public Git checkout:
+
+```powershell
+uv tool install git+https://github.com/HAKAR-OS/snap-tap.git
+snap-tap --help
+```
+
+For local development:
 
 ```powershell
 uv sync
@@ -38,10 +60,12 @@ Prepare an Android phone:
 - connect the phone over USB and accept the RSA trust prompt,
 - check that `adb devices` shows the phone as `device`.
 
-On Windows, run from PowerShell:
+On Windows, run from PowerShell. The explicit init step prepares or repairs the
+Android UIAutomator2 helper path for the selected phone:
 
 ```powershell
 uv run snap-tap devices
+uv run snap-tap android-driver-init <serial>
 uv run snap-tap status <serial>
 uv run snap-tap snap <serial>
 ```
@@ -50,6 +74,7 @@ On Linux, use the same commands after ADB and any required udev rules are ready:
 
 ```bash
 uv run snap-tap devices
+uv run snap-tap android-driver-init <serial>
 uv run snap-tap status <serial>
 uv run snap-tap snap <serial>
 ```
@@ -71,8 +96,8 @@ Remove device-side Android helper artifacts:
 uv run snap-tap android-driver-purge <serial>
 ```
 
-After purge, `uv run snap-tap status <serial>` may reinitialize the
-UIAutomator2 bridge before reporting health.
+After purge, run `uv run snap-tap android-driver-init <serial>` or
+`uv run snap-tap status <serial>` before the next snap/tap flow.
 
 ## Safety Model
 
@@ -92,9 +117,9 @@ UIAutomator2 bridge before reporting health.
 
 ## Alpha Readiness
 
-This repository is in pre-alpha release hardening. The extracted runtime already
-keeps the hard parts: process isolation, fail-closed errors, leases, target
-resolution, stale guards, after-proof, and primitive receipts.
+This repository is in public-alpha release hardening. The runtime already keeps
+the hard parts: process isolation, fail-closed errors, leases, target
+resolution, stale guards, after-action observation, and primitive receipts.
 
 The headline CLI uses positional serials. `--device` remains accepted as a
 compatibility/debug alias for scripts and support flows. `--json` is reserved
@@ -113,12 +138,20 @@ as `com.android.settings` or a component such as
 Android remains the first release backend and uses UIAutomator2 for snapshots,
 target tables, taps, text input, navigation, and receipts.
 
-iOS is planned as a separate backend line. The feasibility spike proved
-discovery and DVT screenshots through Apple Devices, Developer Mode,
-DeveloperDiskImage, and `pymobiledevice3` tunneld. iOS tap/input support is
-expected to require Mac/Xcode signing and a signed WebDriverAgent/XCUITest
-runner. See
-`docs/PLATFORM_ARCHITECTURE.md`.
+iOS is planned as a separate backend line, not implemented in v0. The
+feasibility spike proved discovery and DVT screenshots through Apple Devices,
+Developer Mode, DeveloperDiskImage, and `pymobiledevice3` tunneld. iOS
+tap/input support is expected to require Mac/Xcode signing and a signed
+WebDriverAgent/XCUITest runner. See `docs/PLATFORM_ARCHITECTURE.md`.
+
+## Roadmap
+
+- Android backend: current release line.
+- Media transfer and media-picker helpers: planned after v0, so agents can
+  stage phone media without platform-specific scripts.
+- iOS backend: planned through DVT observation and WDA/XCUITest primitives
+  after Mac/Xcode signing setup is available.
+- Optional warm daemon: possible later performance path, not part of v0.
 
 ## Provenance
 

@@ -9,15 +9,17 @@ artifact paths, and stale target replay are all security-relevant.
 `snap-tap` is pre-alpha. Until the first public alpha tag, only the current
 default branch is supported.
 
-After public releases begin, this section should list supported release lines.
+After public releases begin, this section will list supported release lines.
 
 ## Reporting a Vulnerability
 
 Do not open a public issue for a vulnerability.
 
-Use GitHub Private Vulnerability Reporting or a private security advisory once
-the public repository is available. If the repository is still private, contact
-the maintainer out of band and include:
+Use GitHub Private Vulnerability Reporting on the public repository. If that
+channel is temporarily unavailable, open a minimal public issue asking for a
+private security contact and do not include technical details.
+
+Include:
 
 - affected commit or version,
 - operating system and Python version,
@@ -48,7 +50,7 @@ Out of scope:
 - unsupported local modifications,
 - devices already compromised outside `snap-tap`,
 - social platform account policy issues,
-- HAKAR product runtime issues unless they are reproducible in standalone
+- external product runtime issues unless they are reproducible in standalone
   `snap-tap`.
 
 ## Handling

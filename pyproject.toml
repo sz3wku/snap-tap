@@ -1,7 +1,7 @@
 [project]
 name = "snap-tap"
 version = "0.1.0"
-description = "Standalone phone snap/tap CLI and primitive runtime extracted from the HAKAR phone spine."
+description = "Standalone phone snap/tap CLI and primitive runtime for safe agent operation."
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 license = { file = "LICENSE" }

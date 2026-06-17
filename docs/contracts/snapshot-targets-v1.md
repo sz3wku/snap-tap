@@ -7,8 +7,8 @@ Owner: `src/snap_tap/targets`
 Represent the visible targets from one `semantic_snapshot.v1` as deterministic
 snapshot-local display handles.
 
-`snapshot_targets.v1` is the first P1.R4 bridge from semantic observation to
-future target identity. It is not a replay-safe identity, not a selector, not a
+`snapshot_targets.v1` is the bridge from semantic observation to future target
+identity. It is not a replay-safe identity, not a selector, not a
 coordinate-click command, and not permission to touch the phone.
 
 Display handles such as `e001` exist only inside the source `snapshot_id`.
@@ -22,8 +22,8 @@ signature against a fresh snapshot before any primitive can touch the phone.
 - visible semantic elements in source semantic order,
 - snapshot refs already present on the semantic snapshot.
 
-S1 must not read raw XML directly, inspect screenshot pixels, call the driver,
-query the foreground app, infer a platform screen, use Android-MCP mutable tool
+This layer must not read raw XML directly, inspect screenshot pixels, call the
+driver, query the foreground app, infer a platform screen, use mutable tool
 APIs, read latest-cache state, or create target signatures.
 
 ## Outputs
@@ -70,9 +70,9 @@ Each target record contains:
 
 Display handles are deterministic for one semantic snapshot.
 
-S1 uses semantic element order, not raw XML traversal order directly, because
-P1.R3 already filtered semantics to visible elements while preserving source
-order.
+Display ids use semantic element order, not raw XML traversal order directly,
+because the semantic layer already filtered to visible elements while
+preserving source order.
 
 The first semantic element is `e001`, the second is `e002`, and so on. Width is
 stable for normal phone UI snapshots, but callers must treat the handle as an
@@ -86,14 +86,14 @@ opaque string and must not parse it as durable identity.
 - `actionable=true` is still only an observation. It is not permission to touch
   the phone.
 - Empty target output must not invent fallback handles or coordinate targets.
-- S1 does not build `target_signature.v1`.
-- S1 does not resolve against a fresh snapshot.
-- S1 does not read or write latest snapshot cache state.
-- S1 does not create primitive receipts or runtime events.
-- S1 does not contain Instagram, TikTok, account, workflow, Scheduler, Teach,
-  Dashboard, model, or platform-specific meaning.
-- S1 does not copy Android-MCP coordinate-click, selector-click, wait, or
-  mutable tool API shape.
+- This layer does not build `target_signature.v1`.
+- This layer does not resolve against a fresh snapshot.
+- This layer does not read or write latest snapshot cache state.
+- This layer does not create primitive receipts or runtime events.
+- This layer does not contain Instagram, TikTok, account, workflow, scheduler,
+  dashboard, model, or platform-specific meaning.
+- This layer does not copy coordinate-click, selector-click, wait, or mutable
+  tool API shape.
 
 ## Failure Modes
 

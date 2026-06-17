@@ -20,10 +20,10 @@ primitive receipt, evidence store, run record, or permission to touch the phone.
 - one explicit device id,
 - one session id, defaulting to `default`.
 
-S5 must not read raw XML directly, inspect screenshot pixels, call the driver,
+This cache must not read raw XML directly, inspect screenshot pixels, call the driver,
 build target display output, build target signatures, resolve targets, call
 primitives, emit receipts, infer platform/app workflow meaning, or copy
-Android-MCP mutable tool APIs.
+mutable tool APIs.
 
 ## Storage
 
@@ -80,7 +80,7 @@ boundary.
 - The latest ref does not contain target ids, target signatures, target
   resolution results, primitive receipts, selectors, coordinate-click commands,
   raw XML, screenshot bytes, base64 payloads, model prompts, platform semantics,
-  Scheduler state, Teach flow state, Runs state, or evidence payloads.
+  scheduler state, product flow state, run state, or evidence payloads.
 
 ## Failure Modes
 
@@ -105,6 +105,6 @@ boundary.
   target signatures, target resolution results, primitive receipts, selectors,
   coordinate-click commands, model prompts, platform semantics, and phone-touch
   results.
-- Tests assert S5 does not call the driver, touch the phone, or depend on a
-  live device.
+- Tests assert this cache does not call the driver, touch the phone, or depend
+  on a live device.
 

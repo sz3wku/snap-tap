@@ -32,7 +32,7 @@ Observed results after CLI/API polish:
   detected.
 - `snap-tap status <serial>`, `snap-tap status <serial> --json`, and
   `snap-tap status --all`: visible Android devices reported healthy.
-- L1 safe system primitives on a dummy Android phone:
+- L1 safe system primitives on a dedicated Android test device:
   `home`, `wait`, `back`, `swipe up`, and final `home` reset all emitted
   successful primitive receipts with completed proof.
 - Public docs/source guard: no legacy command language or private serial
@@ -42,10 +42,10 @@ Observed results after CLI/API polish:
 
 ## Commit State
 
-Phase 0 and the positional CLI polish are committed locally. Later API/UX polish
-may still be uncommitted until reviewed and explicitly committed.
+The initial baseline and positional CLI polish are committed locally. Later
+API/UX polish should be reviewed and committed separately.
 
 ## Next Boundary
 
-Before a public alpha, decide whether to run L2 target tap/text mutation gates
-on a neutral dummy-phone surface.
+Before a public alpha, run target tap/text mutation gates on a neutral test
+surface.

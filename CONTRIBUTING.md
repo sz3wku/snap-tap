@@ -3,7 +3,8 @@
 Thanks for helping make `snap-tap` safer and sharper.
 
 `snap-tap` is Android-first today, with an iOS backend line being designed under
-the same CLI and safety model. It is not the HAKAR product runtime.
+the same CLI and safety model. It is a standalone toolkit, not an app-specific
+automation product.
 
 ## Development Setup
 
@@ -83,8 +84,8 @@ Keep in `snap-tap`:
 
 Keep out of `snap-tap`:
 
-- HAKAR Teach, Scheduler, Dashboard, Chatter, Runs/LIVE, accounts, content, and
-  vaults,
+- app-specific schedulers, dashboards, account vaults, content stores, and
+  product runtimes,
 - Instagram/TikTok platform semantics,
 - model-owned phone execution,
 - raw coordinate-click or selector-click APIs as public authority.

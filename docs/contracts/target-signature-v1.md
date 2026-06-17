@@ -7,27 +7,27 @@ Owner: `src/snap_tap/targets`
 Describe one snapshot-local target strongly enough for a future fresh-snapshot
 resolver to attempt a conservative match.
 
-`target_signature.v1` is the first durable target identity envelope in P1.R4.
-It is not executable by itself, not a selector, not a coordinate-click command,
-and not permission to touch the phone.
+`target_signature.v1` is the durable target identity envelope. It is not
+executable by itself, not a selector, not a coordinate-click command, and not
+permission to touch the phone.
 
-S2 builds signatures from `snapshot_targets.v1` only. Later slices resolve a
+Signatures are built from `snapshot_targets.v1` only. Later layers resolve a
 signature against a fresh semantic snapshot and fail closed when the target is
 missing, stale, ambiguous, disabled, or out of view.
 
-P1.R5.S6 allows `snapshot_targets.v1` to be reconstructed from an explicit
-completed `snapshot_manifest.v1` for debug/repro. That source changes only how
-the signature is built. The signature remains non-executable and future phone
-touch still requires fresh resolution and a primitive receipt.
+`snapshot_targets.v1` may be reconstructed from an explicit completed
+`snapshot_manifest.v1` for debug/repro. That source changes only how the
+signature is built. The signature remains non-executable and future phone touch
+still requires fresh resolution and a primitive receipt.
 
 ## Inputs
 
 - one successful `snapshot_targets.v1` object,
 - one snapshot-local `display_id`, such as `e001`.
 
-S2 must not read raw XML directly, inspect screenshots, call the driver, read a
-latest snapshot cache, resolve against the current screen, call primitives,
-emit receipts, or infer platform/app workflow meaning.
+Signature construction must not read raw XML directly, inspect screenshots,
+call the driver, read a latest snapshot cache, resolve against the current
+screen, call primitives, emit receipts, or infer platform/app workflow meaning.
 
 ## Outputs
 
@@ -49,7 +49,7 @@ The public payload contains:
 - `refs`: sanitized source refs copied from `snapshot_targets.v1`.
 
 Only `xml`, `screenshot`, and `manifest` ref names may cross this public
-boundary. Any other ref name is invalid input for S2.
+boundary. Any other ref name is invalid input for signature construction.
 
 `identity` may contain:
 
@@ -70,7 +70,7 @@ are observation hints only. They are never executable coordinates.
 - `not_executable_directly`: `true`.
 
 `identity_strength` is a conservative summary of the usable non-coordinate
-identity evidence. S2 may keep this simple, but it must distinguish at least
+identity evidence. It may stay simple, but it must distinguish at least
 insufficient identity from usable identity.
 
 ## Signature Id Rules
@@ -81,16 +81,17 @@ It must not include output directory paths, capture artifact paths, elapsed
 times, recovery metadata, raw XML, screenshot bytes, base64, model prompts, or
 anything from outside `snapshot_targets.v1`.
 
-It may include source snapshot identity because S2 signs the source observation,
-not a future resolved target. S3/S4 will decide whether the signature still
-matches a fresh snapshot.
+It may include source snapshot identity because the signature signs the source
+observation, not a future resolved target. Resolution decides whether the
+signature still matches a fresh snapshot.
 
 ## Identity Rules
 
 At least one non-coordinate identity fact is required.
 
-S2 must fail closed when a target has only bounds/center/source indexes and no
-usable identity facts. Bounds alone must never become a target signature.
+Signature construction must fail closed when a target has only
+bounds/center/source indexes and no usable identity facts. Bounds alone must
+never become a target signature.
 
 Useful identity facts include resource id, normalized label, class name,
 package, and role. Weak identity is acceptable only as an auditable signature
@@ -105,13 +106,13 @@ input for future fail-closed resolution; it is not action permission.
 - A signature is not a selector.
 - A signature is not coordinates.
 - `resource_id` is an identity fact, not a selector-click shortcut.
-- `actionable` from S1 must not become execution permission.
+- `actionable` must not become execution permission.
 - Future phone touch still requires fresh resolution and primitive receipt.
-- S2 does not read or write latest snapshot cache state.
-- S2 does not resolve ambiguity against the current screen.
-- S2 does not contain Instagram, TikTok, account, workflow, Scheduler, Teach,
-  Dashboard, model, or platform-specific meaning.
-- S2 does not copy Android-MCP coordinate-click, selector-click, wait, or
+- Signature construction does not read or write latest snapshot cache state.
+- Signature construction does not resolve ambiguity against the current screen.
+- The signature does not contain Instagram, TikTok, account, workflow,
+  scheduler, dashboard, model, or platform-specific meaning.
+- The signature does not copy coordinate-click, selector-click, wait, or
   mutable tool API shape.
 
 ## Failure Modes
@@ -144,5 +145,5 @@ for a later stronger target-selection path.
 - Tests assert public JSON excludes resolver results, latest-cache refs,
   primitive receipts, selectors, coordinate-click commands, raw XML, screenshot
   bytes, base64, and model prompts.
-- Tests assert S2 does not call the driver, touch the phone, or depend on a live
-  device.
+- Tests assert signature construction does not call the driver, touch the
+  phone, or depend on a live device.

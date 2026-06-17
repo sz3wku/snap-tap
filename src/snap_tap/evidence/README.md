@@ -2,7 +2,7 @@
 
 Low-level evidence helpers for primitive receipts and snapshots.
 
-High-level Runs and support bundles live above this layer.
+High-level run records and support bundles live above this layer.
 
 Current support:
 
@@ -14,7 +14,7 @@ Current support:
 - keep writes under the caller-provided evidence root,
 - write receipt-only artifacts without copying screenshot/XML/manifest files.
 
-S2 snapshot proof refs are classification only. Durable means the ref path is
-under the evidence root; local/temp capture refs stay volatile and
+Snapshot proof refs are classification only. Durable means the ref path is under
+the evidence root; local/temp capture refs stay volatile and
 `support_safe=false`.
 

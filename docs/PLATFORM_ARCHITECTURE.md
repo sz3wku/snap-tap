@@ -41,13 +41,13 @@ app-specific flows, or raw coordinate/selector authority.
 
 Backends advertise what they can do and what setup gates block each operation.
 
-Current planned capability lines:
+Current capability lines:
 
 | Backend | Discover | Snap | Targets | Tap/Text | Notes |
 | --- | --- | --- | --- | --- | --- |
 | `uiautomator2` | yes | yes | yes | yes | Android runtime path. |
-| `ios-dvt` | yes | yes | no | no | Proved screenshots through tunneld. |
-| `ios-wda` | yes | yes | yes | yes | Planned iOS primitive driver after WDA setup. |
+| `ios-dvt` | planned | planned | no | no | Feasibility spike proved screenshots through tunneld; not a v0 public backend. |
+| `ios-wda` | planned | planned | planned | planned | Future iOS primitive driver after Mac/Xcode/WDA setup. |
 
 The CLI and future `doctor` commands should use this model to explain why a
 device can snap but cannot tap yet.
@@ -57,7 +57,8 @@ device can snap but cannot tap yet.
 The Windows iOS spike proved:
 
 - Apple Devices can provide the local usbmux bridge.
-- `pymobiledevice3` and `tidevice` can discover the dummy iPhone by stable UDID.
+- `pymobiledevice3` and `tidevice` can discover a paired test iPhone by stable
+  UDID.
 - Developer Mode and DeveloperDiskImage are required for developer services.
 - On modern iOS, RemoteXPC/tunneld is required.
 - On Windows, `tunneld` needs an elevated Administrator PowerShell.
@@ -69,8 +70,9 @@ The Windows iOS spike proved:
 The immediate iOS architecture should therefore ship in layers:
 
 1. `ios doctor`: setup checks and clear blockers.
-2. `ios snap`: DVT screenshot proof when developer services are ready.
-3. `ios targets/tap/input`: WDA-backed once the dummy phone has a signed runner.
+2. `ios snap`: DVT screenshot observation when developer services are ready.
+3. `ios targets/tap/input`: WDA-backed once the paired test device has a signed
+   runner.
 
 ## Folder Direction
 
@@ -110,8 +112,8 @@ snap_tap/
 
 `backends/contracts.py` is the neutral result/protocol/error boundary.
 `backends/android/uiautomator2` owns the concrete Android driver. The iOS
-directories are intentional backend slots: DVT can provide screenshot-only
-snapshots, while WDA is the future tree/tap/text implementation line.
+directories are intentional backend slots for future work: DVT can provide
+observation, while WDA is the future tree/tap/text implementation line.
 
 ## Doctor Direction
 

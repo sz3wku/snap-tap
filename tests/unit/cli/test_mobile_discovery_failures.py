@@ -117,7 +117,7 @@ def test_mobile_commands_block_discovery_failure_without_raw_output(
     tmp_path: Path,
 ) -> None:
     normalized_args = [str(tmp_path / arg) if arg == "screen.png" else arg for arg in args]
-    if normalized_args[0] == "status":
+    if normalized_args[0] in {"status", "app-current", "package-info"}:
         normalized_args.append("--json")
 
     result = CliRunner().invoke(_build_app(), normalized_args)

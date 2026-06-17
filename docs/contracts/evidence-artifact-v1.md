@@ -9,7 +9,7 @@ Describe one durable evidence artifact written under top-level `data/evidence`.
 Artifacts can be JSON, screenshots, XML dumps, primitive receipts, replay proof,
 run timelines, support manifests, or other runtime proof files.
 
-For P1.R6.S2, primitive receipt JSON artifacts may include
+Primitive receipt JSON artifacts may include
 `snapshot_proof_refs` with before/fresh/after snapshot ref classifications.
 That field classifies refs already present in the receipt; it does not copy or
 retain screenshot, XML, or manifest artifacts.

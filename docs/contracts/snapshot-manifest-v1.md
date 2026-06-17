@@ -71,7 +71,8 @@ and optional structural source facts already allowed by
 - The manifest does not create semantic roles, target ids, target signatures,
   primitives, receipts, global evidence roots, support bundles, or latest
   caches.
-- P1.R5.S6 may read an explicit `snapshot_manifest.v1` as a debug/repro source
+- Targeted primitives may read an explicit `snapshot_manifest.v1` as a
+  debug/repro source
   for `snap-tap snap --snapshot` and `snap-tap tap <serial> <eNN> --snapshot`. That source is
   still not executable. Mutating commands may use it only to rebuild
   `target_signature.v1`; execution must capture a fresh current snapshot,

@@ -7,34 +7,30 @@ Owner: `src/snap_tap/primitives`
 Prove one primitive phone operation.
 
 Every phone touch, attempted phone touch, or blocked-before-touch primitive
-attempt must produce a receipt. A failed primitive is still product evidence.
+attempt must produce a receipt. A failed primitive is still operation evidence.
 
-P1.R5.S1 starts this contract with resolved `tap`. P1.R5.S2 extends the same
-receipt shape to targeted `input` and `replace_text`. P1.R5.S3 extends it to
-non-targeted `back`, `home`, `swipe`, and `wait`. P1.R5.S4 adds a stale target
-guard for targeted primitives after target resolution and before driver touch.
-P1.R5.S5 adds latest-source `tap eNN` CLI convenience. P1.R5.S6 adds explicit
-snapshot debug/repro source override for `tap eNN`; the override is not
-executable and still enters this receipt path only after fresh resolution and
-stale-target guard. P1.R5.S7 adds everyday CLI aliases for
-`input/replace-text eNN` and `back/home/swipe/wait`; these are thin entrypoints
-into the same primitive receipt path, not separate executors. P1.R5.S8 splits
-primitive execution truth from post-action observation proof and adds a central
-post-action settle policy before default after-snapshot proof. The everyday
-human primitive aliases may render a successful after-snapshot as the next snap
-table, but this is CLI presentation on top of the receipt, not a change to the
-receipt contract itself.
+The same receipt shape covers resolved `tap`, targeted `input` and
+`replace_text`, non-targeted `back`, `home`, `swipe`, and `wait`, latest-source
+CLI conveniences such as `tap eNN`, and explicit snapshot debug/repro source
+overrides. Snapshot-local ids and explicit snapshot sources are never
+executable by themselves; they still enter this receipt path only after fresh
+resolution and stale-target guards.
 
-P1.R6.S1 persists one completed, blocked, failed, or partial
+Primitive execution truth is separate from post-action observation proof. The
+everyday human primitive aliases may render a successful post-action
+observation as the next snap table, but this is CLI presentation on top of the
+receipt, not a change to the receipt contract itself.
+
+Persistence may write one completed, blocked, failed, or partial
 `primitive_receipt.v1` payload as canonical UTF-8 JSON under the caller's
 evidence root and returns an `evidence_artifact.v1` ref. This is receipt-only
 durability: it does not copy screenshot, XML, or manifest artifacts.
 
-P1.R6.S2 adds an evidence-owned `snapshot_proof_refs` view to persisted
-primitive receipt evidence. The view does not move or retain screenshot, XML,
-or manifest artifacts. It labels before/fresh/after snapshot refs as
-`durable`, `volatile`, `missing`, or `not_attempted` so future support and
-replay code can distinguish evidence-root refs from local/temp capture refs.
+An evidence-owned `snapshot_proof_refs` view may be added to persisted
+primitive receipt evidence. The view does not move or retain screenshot, XML, or
+manifest artifacts. It labels before/fresh/after snapshot refs as `durable`,
+`volatile`, `missing`, or `not_attempted` so future support and replay code can
+distinguish evidence-root refs from local/temp capture refs.
 
 ## Inputs
 
@@ -91,11 +87,11 @@ tokens, host-specific temp paths, or lock implementation details.
 `request` contains public primitive intent and parameters. For targeted
 primitives, this means operation, device id, target signature id/source snapshot
 id when available, and timeout/session metadata. Text primitives include mode
-and safe text metadata such as length/hash, not the raw requested text payload.
+and safe text metadata such as length only, not the raw requested text payload.
 It must not contain raw XML, screenshot bytes, selectors, model prompts, raw
 operator text, or platform workflow meaning.
 
-For S3 non-targeted primitives, `request` contains only explicit safe intent:
+For non-targeted primitives, `request` contains only explicit safe intent:
 operation, device id, timeout/lease metadata, wait seconds, or swipe
 direction/distance/duration. Swipe has no public arbitrary coordinate or
 selector API; coordinates are derived internally from the current snapshot
@@ -184,10 +180,10 @@ execution while exposing proof as unavailable.
   kind, owner, relative path, sha256, byte length, creation time, redaction
   class, and optional device/session/run/flow metadata.
 - `snapshot_proof_refs` must not make local/temp snapshot paths appear durable.
-- S2 snapshot proof refs are classification only; durable snapshot retention
+- Snapshot proof refs are classification only; durable snapshot retention
   and support bundle packaging belong to later evidence slices.
 
-## S8 Runtime Reliability Boundary
+## Runtime Reliability Boundary
 
 Post-action observation should be reliable enough for runtime use without
 turning proof collection into a brittle execution gate.
@@ -203,15 +199,15 @@ It must:
 - separate `execution_status` from `proof_status`;
 - never hide a failed proof path, and never hide a possible or confirmed phone
   touch;
-- avoid scattered sleeps in CLI/platform/Teach/Scheduler layers.
+- avoid scattered sleeps in CLI, platform, or product layers.
 
-## S1 Lease Boundary
+## Lease Boundary
 
-S1 uses a small per-device operation lease to prevent same-device concurrent
-mutating primitives, including separate repo-local CLI invocations on the same
-host.
+Primitive execution uses a small per-device operation lease to prevent
+same-device concurrent mutating primitives, including separate repo-local CLI
+invocations on the same host.
 
-The lease is not Scheduler ownership and not a future lane claim. It is a
+The lease is not scheduler ownership and not a future lane claim. It is a
 local primitive safety guard.
 
 It must:
@@ -224,12 +220,12 @@ It must:
 - expose safe public metadata in receipts,
 - be testable without a real phone.
 
-## S1 Tap Boundary
+## Resolved Tap Boundary
 
-The S1 tap primitive is explicit and debug-oriented. Everyday `tap eNN` UX is
-deferred to P1.R5.S5.
+The resolved tap primitive is explicit and debug-oriented. Everyday `tap eNN`
+UX is a thin CLI alias over the same receipt path.
 
-S1 tap must:
+Resolved tap must:
 
 1. acquire the device operation lease,
 2. capture/complete a fresh snapshot for target resolution,
@@ -245,15 +241,15 @@ S1 tap must:
    confirmed,
 9. return one receipt.
 
-## S2 Text Boundary
+## Text Boundary
 
-S2 adds explicit debug-oriented targeted text primitives:
+This contract includes explicit debug-oriented targeted text primitives:
 
 - `input`: focus a resolved input target and enter text.
 - `replace_text`: focus a resolved input target, clear existing text through
   the driver bridge, and enter replacement text.
 
-S2 text primitives must:
+Text primitives must:
 
 1. validate device id, target signature source, text payload, and mode before
    any subprocess call,
@@ -274,11 +270,11 @@ The text payload itself is an input to the process-isolated driver operation,
 not a public receipt field. Public receipts expose `text_length` only; they do
 not expose raw text or deterministic text hashes.
 
-S2 does not add Instagram composer logic, platform semantics, model-generated
-text, coordinate input public API, stale latest-cache execution, hidden retry,
-durable evidence layout, or runtime events.
+Text primitives do not add Instagram composer logic, platform semantics,
+model-generated text, coordinate input public API, stale latest-cache
+execution, hidden retry, durable evidence layout, or runtime events.
 
-## S6 Explicit Snapshot Source Boundary
+## Explicit Snapshot Source Boundary
 
 `snap-tap tap <serial> <eNN> --snapshot <manifest-or-capture-dir>` may read a completed
 `snapshot_manifest.v1` only to rebuild source target facts and
@@ -298,7 +294,7 @@ A blocked-before-touch result from these failures is a receipt with
 `attempted_touch=false`, `touched_phone=false`, `driver_result=null`, and
 `after_snapshot_status=not_attempted`.
 
-## S7 CLI Loop Boundary
+## Everyday CLI Loop Boundary
 
 Everyday CLI commands:
 
@@ -313,20 +309,21 @@ Everyday CLI commands:
 must emit `primitive_receipt.v1` through the existing primitive code paths.
 
 `input` and `replace-text` rebuild `target_signature.v1` from
-`latest_snap_source.v1`, then use the S2 text primitive path. They must block
+`latest_snap_source.v1`, then use the text primitive path. They must block
 before fresh snapshot capture or driver work when the source cache is missing,
 malformed, wrong-device/session, or the source target is missing, non-input,
 disabled, or has insufficient identity. After fresh snapshot
 capture, stale or ambiguous resolution still blocks before driver work. Public
-receipt request metadata records text length/hash, not raw text.
+receipt request metadata records text length only, not raw text.
 
-`back`, `home`, `swipe`, and `wait` are everyday aliases for the S3 navigation
+`back`, `home`, `swipe`, and `wait` are everyday aliases for the navigation
 primitive path. `swipe` remains direction-only with bounded distance/duration;
 it does not expose arbitrary coordinates or selectors.
 
-## S4 Stale Target Guard Boundary
+## Stale Target Guard Boundary
 
-S4 hardens targeted `tap`, `input`, and `replace_text` primitives.
+The stale target guard hardens targeted `tap`, `input`, and `replace_text`
+primitives.
 
 After `target_resolution.v1` succeeds and before any driver call, targeted
 primitives compare `target_signature.source_bounds` with the resolved fresh
@@ -347,9 +344,9 @@ When the guard blocks, the receipt must preserve `target_resolution`, report
 `attempted_touch=false` and `touched_phone=false`, set `driver_result=null`, and
 set `after_snapshot_status=not_attempted`.
 
-## S3 Navigation And Wait Boundary
+## Navigation And Wait Boundary
 
-S3 adds explicit debug-oriented non-targeted primitives:
+This contract includes explicit debug-oriented non-targeted primitives:
 
 - `back`: press Android back through the process-isolated driver bridge.
 - `home`: press Android home through the process-isolated driver bridge.
@@ -357,7 +354,7 @@ S3 adds explicit debug-oriented non-targeted primitives:
 - `wait`: hold the same primitive lease for a bounded sleep and prove
   before/after snapshots without touching the phone.
 
-S3/S8 `back`, `home`, and `swipe` primitives must:
+`back`, `home`, and `swipe` primitives must:
 
 1. validate device id and primitive arguments before subprocess work,
 2. acquire the same per-device primitive lease,
@@ -374,7 +371,7 @@ S3/S8 `back`, `home`, and `swipe` primitives must:
 9. return one receipt with attempted/touched truth and structured failure when
    applicable.
 
-S3 `swipe` accepts only `up`, `down`, `left`, or `right`, a bounded
+`swipe` accepts only `up`, `down`, `left`, or `right`, a bounded
 `distance_ratio`, and a bounded `duration_ms`. It does not expose arbitrary
 coordinates, selectors, target signatures, or platform-specific behavior.
 
@@ -382,12 +379,12 @@ For UIAutomator2 `back`/`home`, raw `press(...)` return values are not public
 confirmation truth. The child process normalizes a no-exception press call as
 confirmed and may keep safe raw-return facts only as diagnostic metadata.
 
-S8 explicitly exempts `back` and `home` from pre-action screenshot blocking.
+`back` and `home` are exempt from pre-action screenshot blocking.
 They still acquire the primitive lease, execute through the process-isolated
 driver bridge, apply post-action settle, attempt after-snapshot proof, and
 record execution/proof truth separately.
 
-S3 `wait` must acquire the primitive lease, capture before and after snapshots,
+`wait` must acquire the primitive lease, capture before and after snapshots,
 sleep only for a bounded duration, and report `attempted_touch=false` and
 `touched_phone=false` for every receipt outcome.
 

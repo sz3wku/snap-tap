@@ -52,7 +52,7 @@ should teach the positional serial form above.
 ## Debug And Maintenance
 
 ```powershell
-snap-tap init <serial>
+snap-tap android-driver-init <serial>
 snap-tap doctor <serial>
 snap-tap android-driver-purge <serial>
 snap-tap dump-xml <serial>
@@ -64,9 +64,12 @@ snap-tap app-info <serial> --package <package>
 snap-tap package-info <serial> --package <package>
 ```
 
+`android-driver-init` prepares or repairs the Android UIAutomator2 helper path
+for one explicit device.
+
 `android-driver-purge` removes Android UIAutomator2 helper artifacts from one
-explicit device. Run `status <serial>` afterward to let the read/status path
-reinitialize the bridge when needed.
+explicit device. Run `android-driver-init <serial>` or `status <serial>`
+afterward before the next snap/tap flow.
 
 `snapshot --out-dir` is the explicit heavy debug/evidence capture. It writes a
 fresh capture directory containing XML, screenshot, and manifest artifacts.

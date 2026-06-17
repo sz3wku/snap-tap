@@ -10,7 +10,7 @@ a real phone through platform-specific backend lines.
 The first complete driver backend is a bridge to Android UIAutomator2. Future
 iOS support should use the same boundary with a separate DVT/WDA backend line.
 The driver backend is not a platform action layer and does not know Instagram,
-TikTok, Teach, Scheduler, or Chatter.
+TikTok, schedulers, dashboards, account state, or content workflows.
 
 This contract exists to prevent a product inside the product. Driver code may
 connect, observe, and perform primitive operations. It must not become a custom
@@ -35,9 +35,10 @@ Python host -> Apple bridge/usbmux -> tunneld/RemoteXPC -> DVT screenshot
 Python host -> Apple bridge/usbmux -> tunneld/RemoteXPC -> WDA/XCUITest
 ```
 
-`ios-dvt` is expected to provide `snap` only. `ios-wda` is expected to provide
+`ios-dvt` is the planned observation line. `ios-wda` is expected to provide
 target tables and primitive `tap`, `text`, and gesture operations after a signed
-WebDriverAgent runner is installed.
+WebDriverAgent runner is installed. Neither line is implemented as a public v0
+backend yet.
 
 ## Inputs
 
@@ -49,7 +50,7 @@ Common inputs:
 - timeout,
 - optional app/package context for status only.
 
-Supported P1 operations:
+Supported operations:
 
 - health/status,
 - XML hierarchy dump,
@@ -94,7 +95,7 @@ Error objects keep backward-compatible fields:
 ```
 
 Only `code` and `detail` are required. `category`, `recoverable`,
-`retryable`, and `recovery_hint` are S5 taxonomy fields for agents and future
+`retryable`, and `recovery_hint` are taxonomy fields for agents and future
 preflight code.
 
 Read-only app/package awareness uses the same envelope:
@@ -144,6 +145,8 @@ exposed through the high-level CLI. It must not guess display names such as
 
 Android driver lifecycle cleanup is an explicit platform-specific surface:
 
+- `android-driver-init` runs the bounded UIAutomator2 setup lifecycle operation
+  for one explicit serial,
 - `android-driver-purge` runs the bounded UIAutomator2 `purge` lifecycle
   operation for one explicit serial.
 
@@ -154,8 +157,8 @@ before touch/write primitives.
 
 - No platform business logic.
 - No selector vault lookup.
-- No Teach flow replay logic.
-- No Scheduler state.
+- No app-specific flow replay logic.
+- No scheduler or dashboard state.
 - No model/provider call.
 - No custom product runtime hidden inside the driver.
 - No phone touch outside explicit primitive operation.
@@ -216,10 +219,10 @@ must not emit them directly.
 - `invalid_arguments`
 - `unsupported_operation`
 
-S5 taxonomy rules:
+Failure taxonomy rules:
 
 - `driver_unavailable` is the only driver-boundary error that may trigger
-  automatic recovery in P1.R1.
+  automatic recovery for read/status operations.
 - `device_offline`, `driver_conflict`, and `driver_timeout` fail closed without
   recovery.
 - Malformed/empty child probe output maps to `driver_probe_failed` and fails
@@ -241,8 +244,8 @@ S5 taxonomy rules:
 
 ## Recovery
 
-P1.R1.S5 allows a bounded internal recovery path for read/status driver
-operations only.
+A bounded internal recovery path is allowed for read/status driver operations
+only.
 
 Allowed recovery:
 
@@ -269,13 +272,13 @@ Recovery metadata may include:
 - `recovery_error_code`.
 
 Recovery is forbidden for app launch/stop, phone reboot, ADB server reset,
-platform/account readiness, Scheduler/Teach policy, and any future phone-touch
-or write primitive.
+platform/account readiness, app-specific policy, and any future phone-touch or
+write primitive.
 
 ## Deferred Backends
 
 `AdbFallbackBackend` may exist later for debug/fallback reads or emergency
 operations.
 
-`CustomAndroidDriverBackend` is forbidden in P1 unless a future ADR accepts
-live evidence that `uiautomator2` cannot satisfy the product spine.
+`CustomAndroidDriverBackend` is forbidden unless a future ADR accepts live
+evidence that `uiautomator2` cannot satisfy the phone boundary.

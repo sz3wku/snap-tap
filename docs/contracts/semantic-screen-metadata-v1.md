@@ -10,8 +10,8 @@ structural element facts.
 Represent neutral screen-level observations for one semantic snapshot.
 
 This contract gives later target resolution and platform semantics enough
-context to reason about the current screen without turning P1.R3 into platform
-screen detection.
+context to reason about the current screen without turning semantic metadata
+into platform screen detection.
 
 It is not a screen id, not an action hint, not a selector, not a target
 signature, and not a phone-touch contract.
@@ -24,8 +24,9 @@ signature, and not a phone-touch contract.
 - screenshot viewport width and height when available,
 - raw and semantic element package/count facts.
 
-S3 must not call the driver, inspect the current app separately, read raw XML
-directly, inspect screenshot pixels, OCR, launch/stop apps, or query packages.
+This contract must not call the driver, inspect the current app separately,
+read raw XML directly, inspect screenshot pixels, OCR, launch/stop apps, or
+query packages.
 
 ## Outputs
 
@@ -91,12 +92,13 @@ Each package summary contains:
 - Package names are raw observations only. They are not platform readiness,
   account readiness, or action permission.
 
-## Android-MCP Parity Reference
+## Prior Reference Boundary
 
-`temp/Android-MCP` remains a quarry for lightweight model-facing state. S3 takes
-only the idea that compact screen context helps future agents.
+Prior internal prototypes were useful only as design references for compact
+model-facing state. This contract takes only the idea that compact screen
+context helps future agents.
 
-S3 does not copy Android-MCP mutable tools, direct coordinate clicks,
+This contract does not copy mutable tools, direct coordinate clicks,
 selector-click/wait tools, base64 screenshots, or MCP server API shape.
 
 ## Failure Modes

@@ -12,12 +12,11 @@ platform-neutral semantic observations.
 
 A semantic snapshot is the bridge between raw UIAutomator output and safe
 target resolution. It is not a platform action, not a model prompt, and not a
-Dashboard-only shape.
+product-dashboard shape.
 
-P1.R3.S1 owns the generic role envelope for visible raw snapshot elements.
-P1.R3.S2 owns generic labels and accessibility text extraction. S3 owns screen
-metadata. Snapshot-local visible target ids are introduced in P1.R4, and
-phone-touch primitives stay in P1.R5.
+The semantic layer owns generic roles, normalized labels, accessibility text
+extraction, and screen metadata. Snapshot-local visible target ids and
+phone-touch primitives live in later layers.
 
 ## Inputs
 
@@ -26,20 +25,19 @@ phone-touch primitives stay in P1.R5.
 - `snapshot_elements.v1` structural elements,
 - optional `snapshot_manifest.v1` refs when the raw capture was materialized.
 
-S1 role classification may use only existing `SnapshotElement` facts:
+Role classification may use only existing `SnapshotElement` facts:
 `source_index`, `bounds`, `visible`, `enabled`, `clickable`, `scrollable`, optional
 `class_name`, optional `resource_id`, and optional `package`. It must not read
 raw XML directly, screenshot pixels, text, `content-desc`, `hint`, OCR, target
 signatures, or platform selector config.
 
-S2 label extraction may use source accessibility/text facts captured from raw
+Label extraction may use source accessibility/text facts captured from raw
 Android node attributes: `text`, `content-desc`, and `hint`. These facts are
 semantic inputs, not raw public `snapshot_elements.v1` output.
 
-S3 screen metadata may use existing raw snapshot viewport/count/package facts
-and existing semantic element summaries. It must not call the driver, inspect
-the foreground app separately, infer a platform screen, or read raw XML
-directly.
+Screen metadata may use existing raw snapshot viewport/count/package facts and
+existing semantic element summaries. It must not call the driver, inspect the
+foreground app separately, infer a platform screen, or read raw XML directly.
 
 ## Outputs
 
@@ -57,7 +55,7 @@ as a separate `result.semantics` envelope next to the raw `result.elements`.
 It does not replace raw structural elements and does not participate in
 `raw_snapshot_hash.v1`.
 
-Each S2 semantic element contains:
+Each semantic element contains:
 
 - `source_index`: the raw `SnapshotElement.source_index`, not a target id,
 - `role`: one of `button`, `tab`, `input`, `text`, `image`, `list_item`, or
@@ -79,20 +77,21 @@ Each S2 semantic element contains:
 - `source_element_count`,
 - `visible_element_count`,
 - `semantic_element_count`,
-- `role_counts`: counts keyed by the S1 role enum,
+- `role_counts`: counts keyed by the role enum,
 - `unknown_count`,
 - `labeled_count`,
 - `accessibility_field_counts`: counts keyed by `text`, `content_desc`, and
   `hint`.
 
-S2 may output normalized labels and accessibility/text fields. It does not
-output raw XML, image bytes, base64, screen ids, target ids, target signatures,
-target handles, primitive refs, receipts, or model prompts.
+Label extraction may output normalized labels and accessibility/text fields. It
+does not output raw XML, image bytes, base64, screen ids, target ids, target
+signatures, target handles, primitive refs, receipts, or model prompts.
 
-S3 may output neutral screen-level metadata such as viewport orientation,
-package summaries, and aggregate counts. It does not output `screen_id`,
-screen title, screen hint, safe next actions, platform screen family, target
-ids, target signatures, selectors, primitives, receipts, or model prompts.
+Screen metadata may output neutral screen-level data such as viewport
+orientation, package summaries, and aggregate counts. It does not output
+`screen_id`, screen title, screen hint, safe next actions, platform screen
+family, target ids, target signatures, selectors, primitives, receipts, or
+model prompts.
 
 ## Role Rules
 
@@ -108,27 +107,27 @@ The classifier applies one role per element using this precedence:
 2. `tab`: source facts explicitly identify a generic tab/navigation-tab
    control, such as a tab class or generic resource id containing `tab`.
 3. `list_item`: source facts explicitly identify a generic row/item/cell in a
-   list-like surface. S1 must not infer this from app package names or future
+   list-like surface. Role classification must not infer this from app package names or future
    screen semantics.
 4. `button`: source facts explicitly identify a button/image-button class, or
-   the visible element is enabled and clickable and no stronger S1 role matched.
+   the visible element is enabled and clickable and no stronger role matched.
 5. `image`: source facts explicitly identify a generic image view and the
    element was not already classified as a button.
 6. `text`: source facts explicitly identify a generic text/static label view
    and the element was not already classified as an input.
-7. `unknown`: no S1 rule matched.
+7. `unknown`: no role rule matched.
 
 Role rules may inspect package names only as raw structural facts already
 present on the element. They must not contain Instagram, TikTok, account,
 screen, workflow, or product-action meaning. Platform-specific meaning layers
-belong later in `src/platforms`.
+belong outside the core semantic contract.
 
 ## Label Rules
 
 Labels are generic observations from Android accessibility/text attributes.
 They are not selectors, not target identities, and not instructions to tap.
 
-S2 derives labels using this precedence:
+Label extraction derives labels using this precedence:
 
 1. `content-desc`
 2. `text`
@@ -150,7 +149,7 @@ the normalized non-empty source fields with keys `text`, `content_desc`, and
 `hint`. `descendant_text` does not add inherited text to `accessibility`; it is
 only a generic label on the clickable parent.
 
-S2 does not infer labels from screenshots, OCR, models, platform configs,
+Label extraction does not infer labels from screenshots, OCR, models, platform configs,
 package names, workflow state, or coordinates. Direct Android node attributes
 are preferred; descendant text aggregation is allowed only for an unlabeled
 enabled clickable parent with exactly one labeled descendant inside its bounds.
@@ -186,15 +185,16 @@ touch the phone.
 - Normalization is deterministic for the same raw input.
 - No phone touch happens while building the snapshot.
 - No platform action is decided here.
-- No snapshot-local display target ids are exposed by P1.R3.
+- No snapshot-local display target ids are exposed by this contract.
 - No `screen_id`, `screen_title`, screen hint, safe next actions, or platform
-  screen family is exposed by P1.R3.
-- S1 preserves raw element order for exported visible semantic elements.
-- S1 role-only output never emits `text`, `content-desc`, `hint`, OCR text,
+  screen family is exposed by this contract.
+- Role classification preserves raw element order for exported visible semantic
+  elements.
+- Role-only output never emits `text`, `content-desc`, `hint`, OCR text,
   raw XML, screenshot bytes, base64 payloads, target signatures, primitive
   receipts, or latest-snapshot cache refs.
 - Raw `result.elements` and `snapshot_manifest.v1` do not expose `text`,
-  `content-desc`, or `hint`; S2 exposes normalized values only in
+  `content-desc`, or `hint`; label extraction exposes normalized values only in
   `result.semantics`.
 - `unknown` is the fallback role for insufficient evidence; weak guesses must
   not be promoted to specific roles.
@@ -202,19 +202,19 @@ touch the phone.
   commands.
 - Package and viewport metadata are observations only. They are not platform
   readiness, account readiness, or action permission.
-- No Android-MCP mutable tool, coordinate-click, selector-click, or MCP server
-  API shape is copied into this contract.
+- No mutable tool, coordinate-click, selector-click, or MCP server API shape is
+  copied into this contract.
 
-## Android-MCP Parity Reference
+## Prior Reference Boundary
 
-`temp/Android-MCP` is a quarry/parity reference for keeping the state shape
-simple enough for agents and future snap-tap extraction.
+Prior internal prototypes were useful only as design references for keeping the
+state shape compact enough for agents.
 
 Useful ideas:
 
 - lightweight state over interactive elements,
-- names from `content-desc`, `text`, descendant text, and `hint` for S2 and
-  later label work,
+- names from `content-desc`, `text`, descendant text, and `hint` for label
+  work,
 - resource id, class name, bounds, and center coordinates,
 - compact screen context for future agent-readable state,
 - optional annotated screenshot as a future debug/evidence aid.
@@ -247,7 +247,7 @@ and determinism invariants above.
 ## Validation Expectations
 
 - Contract and unit tests use fake `SnapshotElement` values; no live phone is
-  required for S1 role classification.
+  required for role classification.
 - Tests cover the exact role enum, precedence, stable output order, and
   `unknown` fallback.
 - Tests cover label precedence, whitespace normalization, empty string discard,

@@ -20,7 +20,8 @@ The stale target guard compares source bounds with the freshly resolved target
 before calling the driver. Large drift returns a blocked
 `primitive_target_stale` receipt without touching the phone.
 
-Text primitives expose text length/hash in receipts, not raw operator text.
+Text primitives expose text length in receipts, not raw operator text or
+deterministic text hashes.
 
 ## Navigation Primitives
 

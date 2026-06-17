@@ -7,22 +7,22 @@ Owner: `src/snap_tap/targets`
 Record the read-only result of resolving a `target_signature.v1` against a
 fresh `semantic_snapshot.v1`.
 
-S3 answers whether a durable signature matches exactly one safe target on the
-current screen. It does not touch the phone, emit primitive receipts, use a
-latest snapshot cache, or make platform-specific decisions.
+Target resolution answers whether a durable signature matches exactly one safe
+target on the current screen. It does not touch the phone, emit primitive
+receipts, use a latest snapshot cache, or make platform-specific decisions.
 
-Future P1.R5 primitives may consider phone touch only after a `target_resolution`
-result is `ok=true`, `status=resolved`, and still passes the primitive-specific
-preflight checks.
+Primitives may consider phone touch only after a `target_resolution` result is
+`ok=true`, `status=resolved`, and still passes the primitive-specific preflight
+checks.
 
 ## Inputs
 
 - one `target_signature.v1`,
 - one fresh `semantic_snapshot.v1`.
 
-S3 must not read raw XML directly, inspect screenshots, call the driver, read a
-latest snapshot cache, call primitives, emit receipts, or infer platform/app
-workflow meaning.
+Target resolution must not read raw XML directly, inspect screenshots, call the
+driver, read a latest snapshot cache, call primitives, emit receipts, or infer
+platform/app workflow meaning.
 
 ## Outputs
 
@@ -63,10 +63,10 @@ The public payload contains:
 
 - `code`,
 - `detail`,
-- `touched_phone`: always `false` in S3.
+- `touched_phone`: always `false` in target resolution.
 
 Allowed fresh snapshot ref names are `xml`, `screenshot`, and `manifest`.
-Any other ref name is invalid input for S3.
+Any other ref name is invalid input for target resolution.
 
 ## Matching Rules
 
@@ -110,10 +110,10 @@ target. Ambiguity always blocks.
 - `display_id`, `semantic_index`, and `source_index` are not durable identity.
 - `resource_id` is an identity fact, not a selector-click shortcut.
 - Resolution does not read or write latest snapshot cache state.
-- Resolution does not contain Instagram, TikTok, account, workflow, Scheduler,
-  Teach, Dashboard, model, or platform-specific meaning.
-- Resolution does not copy Android-MCP coordinate-click, selector-click, wait,
-  or mutable tool API shape.
+- Resolution does not contain Instagram, TikTok, account, workflow, scheduler,
+  dashboard, model, or platform-specific meaning.
+- Resolution does not copy coordinate-click, selector-click, wait, or mutable
+  tool API shape.
 
 ## Failure Modes
 
@@ -127,9 +127,10 @@ target. Ambiguity always blocks.
 - `target_resolution_disabled`
 - `target_resolution_out_of_view`
 
-S3 may include `target_resolution_out_of_view` only when existing fresh snapshot
-facts prove the target is outside the visible/actionable surface. S3 must not
-add screenshot-pixel or driver inspection to determine this.
+Target resolution may include `target_resolution_out_of_view` only when
+existing fresh snapshot facts prove the target is outside the visible/actionable
+surface. It must not add screenshot-pixel or driver inspection to determine
+this.
 
 ## Validation Expectations
 
@@ -149,15 +150,15 @@ add screenshot-pixel or driver inspection to determine this.
 - Tests assert public JSON excludes latest-cache refs, primitive receipts,
   selectors, coordinate-click commands, raw XML, screenshot bytes, base64,
   model prompts, and phone-touch results.
-- Tests assert S3 does not call the driver, touch the phone, or depend on a live
-  device.
+- Tests assert target resolution does not call the driver, touch the phone, or
+  depend on a live device.
 
-## P1.R4.S4 Proof Gate
+## Proof Gate
 
-S4 does not add a new resolution schema. It stress-tests this contract before
-latest-cache and primitive work.
+The proof gate does not add a new resolution schema. It stress-tests this
+contract before latest-cache and primitive work.
 
-S4 must prove:
+It must prove:
 
 - source bounds, center coordinates, `display_id`, `semantic_index`, and
   `source_index` do not affect identity matching,
@@ -168,6 +169,6 @@ S4 must prove:
 - live proof can capture source/fresh snapshots and resolve or block targets on
   both connected phones without touching the phone.
 
-S4 live evidence must be metadata-only. Do not paste raw XML, screenshots,
+Live evidence must be metadata-only. Do not paste raw XML, screenshots,
 accessibility text, base64, private labels, or mutable tool payloads into issue
 evidence.

@@ -18,6 +18,7 @@ versioning after the first public alpha.
 - OSS repo shell: license, security policy, contributing guide, issue
   templates, and CI workflow.
 - Public API/export guards for core package surfaces.
+- `android-driver-init` as the public Android helper setup command.
 
 ### Changed
 
@@ -27,6 +28,13 @@ versioning after the first public alpha.
   human loop.
 - `devices` and `status` are human-readable by default, with `--json` retaining
   structured machine output.
+- `app-current`, `package-info`, and `app-info` now default to table output and
+  use `--json` for structured output.
+- `dump-xml` public JSON no longer includes the raw XML payload.
+- Text primitive receipts expose text length only, not deterministic text
+  hashes.
+- iOS capabilities are documented and exported as planned, not implemented in
+  v0.
 
 ### Not Released
 
