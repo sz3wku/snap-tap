@@ -24,6 +24,12 @@ class DriverTap:
 
 
 @dataclass(frozen=True)
+class DriverTapXmlDump:
+    tap: DriverTap
+    xml_dump: DriverXmlDump | None = None
+
+
+@dataclass(frozen=True)
 class DriverText:
     ok: bool
     status: str
@@ -192,4 +198,3 @@ class DriverLifecycleRunner(Protocol):
 
 def _utc_now() -> str:
     return datetime.now(UTC).isoformat()
-

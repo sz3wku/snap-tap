@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 from time import perf_counter
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
-from snap_tap.backends.contracts import DriverError, DriverTap
+from snap_tap.backends.contracts import (
+    DriverError,
+    DriverTap,
+    DriverTapXmlDump,
+    DriverXmlDump,
+)
 from snap_tap.device.identity import normalize_serial
 from snap_tap.primitives.lease import PrimitiveLeaseManager, default_lease_manager
 from snap_tap.primitives.models import (
@@ -39,6 +44,29 @@ class PrimitiveTapper(Protocol):
         y: float,
         timeout_s: float = 10.0,
     ) -> DriverTap: ...
+
+
+@runtime_checkable
+class PrimitiveTapXmlDumper(Protocol):
+    def tap_and_dump_xml(
+        self,
+        *,
+        device_id: str,
+        x: float,
+        y: float,
+        settle_ms: int = 0,
+        timeout_s: float = 10.0,
+    ) -> DriverTapXmlDump: ...
+
+
+@runtime_checkable
+class PrimitiveXmlDumpSnapshotProvider(Protocol):
+    def complete_xml_dump(
+        self,
+        xml_dump: DriverXmlDump,
+        *,
+        timeout_s: float = 10.0,
+    ) -> PrimitiveSnapshotResult: ...
 
 
 def resolved_tap(
@@ -189,28 +217,17 @@ def resolved_tap(
                 ),
             )
 
-        driver = _tap_safely(
+        driver, after = _tap_and_capture_after(
             tapper,
+            snapshot_provider,
             device_id=serial,
             x=target.bounds.center_x,
             y=target.bounds.center_y,
             timeout_s=request.timeout_s,
+            settle_ms=normalize_post_action_settle_ms(
+                request.post_action_settle_ms
+            ),
             started=started,
-        )
-        settle_after_driver_action(
-            driver,
-            settle_ms=request.post_action_settle_ms,
-        )
-        after = (
-            _capture_snapshot(
-                snapshot_provider,
-                device_id=serial,
-                timeout_s=request.timeout_s,
-                failure_code="primitive_after_snapshot_failed",
-                started=started,
-            )
-            if driver.attempted or driver.confirmed
-            else None
         )
         status, error = status_for_driver_and_proof(
             driver,
@@ -304,6 +321,103 @@ def _tap_safely(
                 code="primitive_driver_failed",
                 detail=_exception_detail(exc),
             ),
+        )
+
+
+def _tap_and_capture_after(
+    tapper: PrimitiveTapper,
+    provider: PrimitiveSnapshotProvider,
+    *,
+    device_id: str,
+    x: float,
+    y: float,
+    timeout_s: float,
+    settle_ms: int,
+    started: float,
+) -> tuple[PrimitiveDriverResult, PrimitiveSnapshotResult | None]:
+    if isinstance(tapper, PrimitiveTapXmlDumper) and isinstance(
+        provider,
+        PrimitiveXmlDumpSnapshotProvider,
+    ):
+        combined = _tap_and_dump_xml_safely(
+            tapper,
+            device_id=device_id,
+            x=x,
+            y=y,
+            timeout_s=timeout_s,
+            settle_ms=settle_ms,
+            started=started,
+        )
+        driver = _primitive_driver_result(combined.tap)
+        if combined.xml_dump is not None and (driver.attempted or driver.confirmed):
+            return (
+                driver,
+                provider.complete_xml_dump(
+                    combined.xml_dump,
+                    timeout_s=timeout_s,
+                ),
+            )
+        return driver, None
+
+    driver = _tap_safely(
+        tapper,
+        device_id=device_id,
+        x=x,
+        y=y,
+        timeout_s=timeout_s,
+        started=started,
+    )
+    settle_after_driver_action(driver, settle_ms=settle_ms)
+    after = (
+        _capture_snapshot(
+            provider,
+            device_id=device_id,
+            timeout_s=timeout_s,
+            failure_code="primitive_after_snapshot_failed",
+            started=started,
+        )
+        if driver.attempted or driver.confirmed
+        else None
+    )
+    return driver, after
+
+
+def _tap_and_dump_xml_safely(
+    tapper: PrimitiveTapXmlDumper,
+    *,
+    device_id: str,
+    x: float,
+    y: float,
+    timeout_s: float,
+    settle_ms: int,
+    started: float,
+) -> DriverTapXmlDump:
+    try:
+        return tapper.tap_and_dump_xml(
+            device_id=device_id,
+            x=x,
+            y=y,
+            settle_ms=settle_ms,
+            timeout_s=timeout_s,
+        )
+    except Exception as exc:
+        return DriverTapXmlDump(
+            tap=DriverTap(
+                ok=False,
+                status="failed",
+                device_id=device_id,
+                backend=getattr(tapper, "backend_name", "unknown"),
+                operation="tap",
+                elapsed_ms=round((perf_counter() - started) * 1000, 3),
+                attempted=True,
+                confirmed=False,
+                checked_at=utc_now(),
+                metadata={"touch_may_have_occurred": True},
+                error=DriverError(
+                    code="primitive_driver_failed",
+                    detail=_exception_detail(exc),
+                ),
+            )
         )
 
 

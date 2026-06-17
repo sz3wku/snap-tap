@@ -8,6 +8,7 @@ from typing import Protocol
 from snap_tap.backends.contracts import (
     DriverError,
     DriverScreenshotCapturer,
+    DriverXmlDump,
     DriverXmlDumper,
 )
 from snap_tap.device.identity import DeviceInfo
@@ -22,6 +23,12 @@ from snap_tap.snapshots import (
 )
 
 DEFAULT_PRIMITIVE_SNAPSHOT_ROOT = Path("temp/mobile-primitives")
+_PRESERVE_DRIVER_CODES = {
+    "device_offline",
+    "driver_conflict",
+    "driver_timeout",
+    "driver_unavailable",
+}
 
 
 class PrimitiveSnapshotProvider(Protocol):
@@ -47,6 +54,18 @@ class CorePrimitiveObservationProvider:
             requested_serial=device_id,
             timeout_s=timeout_s,
         )
+        if raw.ok:
+            raw = complete_operator_observation(raw)
+        return _result_from_raw(raw, started=started)
+
+    def complete_xml_dump(
+        self,
+        xml_dump: DriverXmlDump,
+        *,
+        timeout_s: float = 10.0,
+    ) -> PrimitiveSnapshotResult:
+        started = perf_counter()
+        raw = _raw_observation_from_xml_dump(xml_dump, timeout_s=timeout_s)
         if raw.ok:
             raw = complete_operator_observation(raw)
         return _result_from_raw(raw, started=started)
@@ -116,3 +135,79 @@ def _result_from_raw(
         snapshot=snapshot,
         backend=raw.backend,
     )
+
+
+def _raw_observation_from_xml_dump(
+    xml_dump: DriverXmlDump,
+    *,
+    timeout_s: float,
+) -> RawSnapshotCapture:
+    if not xml_dump.ok:
+        source_code = xml_dump.error.code if xml_dump.error is not None else "dump_failed"
+        return RawSnapshotCapture.failure(
+            backend=xml_dump.backend,
+            code=_snapshot_xml_error_code(source_code),
+            detail=_source_detail(xml_dump.error, "Operator observation XML failed."),
+            device_id=xml_dump.device_id,
+            elapsed_ms=xml_dump.elapsed_ms,
+            metadata={
+                "source_elapsed_ms": xml_dump.elapsed_ms,
+                "source_error_code": source_code,
+                "stage": "xml",
+                "timeout_s": timeout_s,
+            },
+        )
+    xml = xml_dump.xml
+    if not isinstance(xml, str) or not xml.strip():
+        return RawSnapshotCapture.failure(
+            backend=xml_dump.backend,
+            code="snapshot_dump_failed",
+            detail="Operator observation completed without XML content.",
+            device_id=xml_dump.device_id,
+            elapsed_ms=xml_dump.elapsed_ms,
+            metadata={
+                "source_elapsed_ms": xml_dump.elapsed_ms,
+                "stage": "xml",
+                "timeout_s": timeout_s,
+            },
+        )
+    return RawSnapshotCapture.observation_success(
+        device_id=xml_dump.device_id or "",
+        backend=xml_dump.backend,
+        elapsed_ms=xml_dump.elapsed_ms,
+        xml=xml,
+        metadata={
+            "timeout_s": timeout_s,
+            "xml_elapsed_ms": xml_dump.elapsed_ms,
+        },
+    )
+
+
+def _snapshot_xml_error_code(source_code: str) -> str:
+    if source_code in _PRESERVE_DRIVER_CODES:
+        return source_code
+    return "snapshot_dump_failed"
+
+
+def _source_detail(error: DriverError | None, fallback: str) -> str:
+    if error is None:
+        return fallback
+    if error.code not in _PRESERVE_DRIVER_CODES:
+        return fallback
+    if _contains_sensitive_detail(error.detail):
+        return fallback
+    return error.detail
+
+
+def _contains_sensitive_detail(detail: str) -> bool:
+    lowered = detail.lower()
+    markers = (
+        "<hierarchy",
+        "<node",
+        "image_base64",
+        "image_bytes",
+        "data:image",
+        "base64",
+        "ivbor",
+    )
+    return any(marker in lowered for marker in markers)

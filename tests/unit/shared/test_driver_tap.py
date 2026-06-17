@@ -11,7 +11,10 @@ from snap_tap.backends.android.uiautomator2.process_runner import (
     ProcessRunner,
     ProcessTimeoutError,
 )
-from snap_tap.backends.android.uiautomator2.tap import tap_uiautomator2
+from snap_tap.backends.android.uiautomator2.tap import (
+    tap_and_dump_uiautomator2_xml,
+    tap_uiautomator2,
+)
 
 
 class FakeRunner(ProcessRunner):
@@ -113,6 +116,90 @@ def test_uiautomator2_tap_malformed_payload_fails() -> None:
     assert result.error is not None
     assert result.error.code == "driver_probe_failed"
     assert result.attempted is True
+
+
+def test_uiautomator2_tap_and_dump_xml_uses_combined_probe() -> None:
+    runner = FakeRunner(
+        ProcessResult(
+            0,
+            json.dumps(
+                {
+                    "ok": True,
+                    "clicked": True,
+                    "xml": "<hierarchy><node /></hierarchy>",
+                    "metadata": {"settle_ms": 500},
+                }
+            ),
+            "",
+        )
+    )
+
+    result = tap_and_dump_uiautomator2_xml(
+        device_id="RFCN4010FCK",
+        x=60.0,
+        y=120.0,
+        settle_ms=500,
+        process_runner=runner,
+        python_executable="python",
+    )
+
+    assert result.tap.ok is True
+    assert result.tap.confirmed is True
+    assert result.xml_dump is not None
+    assert result.xml_dump.ok is True
+    assert result.xml_dump.xml == "<hierarchy><node /></hierarchy>"
+    assert result.xml_dump.metadata["settle_ms"] == 500
+    assert runner.calls == [
+        [
+            "python",
+            "-m",
+            "snap_tap.backends.android.uiautomator2.probes",
+            "tap_after_xml",
+            "--device",
+            "RFCN4010FCK",
+            "--x",
+            "60.0",
+            "--y",
+            "120.0",
+            "--settle-ms",
+            "500",
+        ]
+    ]
+
+
+def test_uiautomator2_tap_and_dump_xml_preserves_clicked_when_xml_fails() -> None:
+    runner = FakeRunner(
+        ProcessResult(
+            1,
+            json.dumps(
+                {
+                    "ok": False,
+                    "error": {"code": "dump_failed", "detail": "bad xml"},
+                    "metadata": {
+                        "clicked": True,
+                        "stage": "dump_xml",
+                        "touch_may_have_occurred": True,
+                    },
+                }
+            ),
+            "",
+        )
+    )
+
+    result = tap_and_dump_uiautomator2_xml(
+        device_id="RFCN4010FCK",
+        x=60.0,
+        y=120.0,
+        process_runner=runner,
+        python_executable="python",
+    )
+
+    assert result.tap.ok is True
+    assert result.tap.confirmed is True
+    assert result.xml_dump is not None
+    assert result.xml_dump.ok is False
+    assert result.xml_dump.error is not None
+    assert result.xml_dump.error.code == "dump_failed"
 
 
 def test_driver_tap_module_does_not_create_snapshot_import_cycle() -> None:

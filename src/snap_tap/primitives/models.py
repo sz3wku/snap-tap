@@ -8,7 +8,7 @@ from snap_tap.semantics import SemanticSnapshot
 from snap_tap.targets import TargetResolution, TargetSignature
 
 PRIMITIVE_RECEIPT_SCHEMA_VERSION = "primitive_receipt.v1"
-DEFAULT_POST_ACTION_SETTLE_MS = 2000
+DEFAULT_POST_ACTION_SETTLE_MS = 500
 MAX_POST_ACTION_SETTLE_MS = 10000
 MIN_POST_ACTION_SETTLE_MS = 0
 

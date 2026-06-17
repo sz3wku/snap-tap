@@ -14,7 +14,7 @@ from primitives_tap_helpers import (
     fake_tap_snapshot_result,
 )
 
-from snap_tap.backends.contracts import DriverError
+from snap_tap.backends.contracts import DriverError, DriverTapXmlDump, DriverXmlDump
 from snap_tap.primitives import (
     PrimitiveLeaseManager,
     PrimitiveRequestError,
@@ -228,6 +228,36 @@ def test_small_bounds_drift_still_uses_resolved_fresh_target_center() -> None:
     assert tapper.calls == [("RFCN4010FCK", 100.0, 120.0)]
 
 
+def test_combined_tap_uses_backend_after_xml_without_second_capture() -> None:
+    provider = _FakeCombinedSnapshotProvider(
+        [fake_tap_snapshot_result("fresh"), fake_tap_snapshot_result("after")]
+    )
+    tapper = _FakeCombinedTapper(
+        DriverTapXmlDump(
+            tap=fake_driver_tap_result(),
+            xml_dump=DriverXmlDump.success(
+                device_id="RFCN4010FCK",
+                backend="fake",
+                elapsed_ms=3.0,
+                xml="<hierarchy><node /></hierarchy>",
+            ),
+        )
+    )
+
+    receipt = resolved_tap(
+        fake_tap_request(),
+        snapshot_provider=provider,
+        tapper=tapper,
+        lease_manager=PrimitiveLeaseManager(in_memory_only=True),
+    )
+
+    assert receipt.status == "completed"
+    assert provider.calls == ["RFCN4010FCK"]
+    assert provider.completed_xml == [("fake", 10.0)]
+    assert tapper.calls == []
+    assert tapper.combined_calls == [("RFCN4010FCK", 60.0, 120.0, 500)]
+
+
 def test_lease_releases_after_blocked_resolution() -> None:
     manager = PrimitiveLeaseManager(in_memory_only=True)
 
@@ -407,3 +437,37 @@ def test_malformed_signature_is_rejected_before_primitive() -> None:
         target_signature_from_dict({"schema_version": "target_signature.v1"})
 
     assert exc.value.code == "primitive_invalid_request"
+
+
+class _FakeCombinedTapper(FakeTapper):
+    def __init__(self, result: DriverTapXmlDump) -> None:
+        super().__init__(None)
+        self.combined_result = result
+        self.combined_calls: list[tuple[str, float, float, int]] = []
+
+    def tap_and_dump_xml(
+        self,
+        *,
+        device_id: str,
+        x: float,
+        y: float,
+        settle_ms: int = 0,
+        timeout_s: float = 10.0,
+    ) -> DriverTapXmlDump:
+        self.combined_calls.append((device_id, x, y, settle_ms))
+        return self.combined_result
+
+
+class _FakeCombinedSnapshotProvider(FakeSnapshotProvider):
+    def __init__(self, results: list[PrimitiveSnapshotResult]) -> None:
+        super().__init__(results)
+        self.completed_xml: list[tuple[str, float]] = []
+
+    def complete_xml_dump(
+        self,
+        xml_dump: DriverXmlDump,
+        *,
+        timeout_s: float = 10.0,
+    ) -> PrimitiveSnapshotResult:
+        self.completed_xml.append((xml_dump.backend, timeout_s))
+        return self.results.pop(0)

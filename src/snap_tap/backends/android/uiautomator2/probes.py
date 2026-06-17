@@ -5,6 +5,7 @@ import base64
 import json
 from collections.abc import Mapping, Sequence
 from io import BytesIO
+from time import sleep
 from typing import Any
 
 from snap_tap.backends.android.uiautomator2.probe_payload import safe_error_detail
@@ -27,6 +28,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "app_current",
             "package_info",
             "tap",
+            "tap_after_xml",
             "input_text",
             "replace_text",
         ],
@@ -35,6 +37,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--package")
     parser.add_argument("--x", type=float)
     parser.add_argument("--y", type=float)
+    parser.add_argument("--settle-ms", type=int, default=0)
     parser.add_argument("--text")
     args = parser.parse_args(argv)
 
@@ -60,6 +63,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 detail="Coordinates are required for tap.",
             )
         return _tap(args.device, args.x, args.y)
+    if args.operation == "tap_after_xml":
+        if args.x is None or args.y is None:
+            return _failure(
+                code="tap_failed",
+                detail="Coordinates are required for tap_after_xml.",
+            )
+        return _tap_after_xml(args.device, args.x, args.y, args.settle_ms)
     if args.operation in {"input_text", "replace_text"}:
         if args.x is None or args.y is None or args.text is None:
             return _failure(
@@ -205,6 +215,60 @@ def _tap(device_id: str, x: float, y: float) -> int:
         return _failure(
             code=_bridge_error_code(exc, "tap_failed"),
             detail=f"{type(exc).__name__}: {exc}",
+        )
+
+
+def _tap_after_xml(device_id: str, x: float, y: float, settle_ms: int) -> int:
+    stage = "connect"
+    clicked = False
+    touch_may_have_occurred = False
+    click_result: object = None
+    safe_settle_ms = max(0, settle_ms)
+    try:
+        import uiautomator2 as u2
+
+        device = u2.connect(device_id)
+        stage = "tap"
+        touch_may_have_occurred = True
+        click_result = _click(device, x, y)
+        clicked = True
+        if safe_settle_ms:
+            stage = "settle"
+            sleep(safe_settle_ms / 1000)
+        stage = "dump_xml"
+        xml = _read_xml(device)
+        payload: dict[str, object] = {
+            "ok": True,
+            "clicked": True,
+            "xml": xml,
+            "metadata": {
+                "byte_length": str(len(xml.encode("utf-8"))),
+                "click_return": _public_click_result(click_result),
+                "node_count": str(xml.count("<node")),
+                "settle_ms": safe_settle_ms,
+                "touch_may_have_occurred": touch_may_have_occurred,
+                "x": x,
+                "y": y,
+            },
+        }
+        print(json.dumps(payload, sort_keys=True))
+        return 0
+    except Exception as exc:
+        code = "dump_failed" if clicked else "tap_failed"
+        metadata: dict[str, object] = {
+            "clicked": clicked,
+            "settle_ms": safe_settle_ms,
+            "stage": stage,
+            "touch_may_have_occurred": touch_may_have_occurred,
+            "x": x,
+            "y": y,
+        }
+        if clicked:
+            metadata["click_return"] = _public_click_result(click_result)
+        return _failure(
+            code=_bridge_error_code(exc, code),
+            detail=f"{type(exc).__name__}: {exc}",
+            metadata=metadata,
         )
 
 
