@@ -123,6 +123,78 @@ def capture_raw_snapshot(
     )
 
 
+def capture_raw_observation(
+    *,
+    xml_dumper: DriverXmlDumper,
+    devices: Sequence[DeviceInfo],
+    requested_serial: str | None,
+    timeout_s: float = 10.0,
+) -> RawSnapshotCapture:
+    started = perf_counter()
+    backend = xml_dumper.backend_name
+    if requested_serial is None:
+        return RawSnapshotCapture.failure(
+            backend=backend,
+            code="device_required",
+            detail="Operator observation requires an explicit device serial.",
+            elapsed_ms=_elapsed_ms(started),
+            status="blocked",
+            metadata={"timeout_s": timeout_s},
+        )
+
+    selection = select_device(devices, requested_serial)
+    if not selection.ok:
+        return RawSnapshotCapture.failure(
+            backend=backend,
+            code=selection.error_code or "driver_unavailable",
+            detail=selection.error_detail or "Device selection failed.",
+            device_id=selection.device.serial if selection.device else requested_serial,
+            elapsed_ms=_elapsed_ms(started),
+            status="blocked",
+            metadata={"timeout_s": timeout_s},
+        )
+    if selection.device is None:
+        return RawSnapshotCapture.failure(
+            backend=backend,
+            code="driver_unavailable",
+            detail="Device selection succeeded without a device.",
+            device_id=requested_serial,
+            elapsed_ms=_elapsed_ms(started),
+            status="blocked",
+            metadata={"timeout_s": timeout_s},
+        )
+
+    device_id = selection.device.serial
+    xml_result = xml_dumper.dump_xml(device_id, timeout_s=timeout_s)
+    if not xml_result.ok:
+        return _xml_failure(xml_result, started=started, timeout_s=timeout_s)
+    xml = xml_result.xml
+    if not isinstance(xml, str) or not xml.strip():
+        return RawSnapshotCapture.failure(
+            backend=xml_result.backend,
+            code="snapshot_dump_failed",
+            detail="Operator observation completed without XML content.",
+            device_id=device_id,
+            elapsed_ms=_elapsed_ms(started),
+            metadata=_failure_metadata(
+                stage="xml",
+                timeout_s=timeout_s,
+                source_elapsed_ms=xml_result.elapsed_ms,
+            ),
+        )
+
+    return RawSnapshotCapture.observation_success(
+        device_id=device_id,
+        backend=xml_result.backend,
+        elapsed_ms=_elapsed_ms(started),
+        xml=xml,
+        metadata=_observation_success_metadata(
+            xml_result=xml_result,
+            timeout_s=timeout_s,
+        ),
+    )
+
+
 def _success_metadata(
     *,
     xml_result: DriverXmlDump,
@@ -143,6 +215,28 @@ def _success_metadata(
     screenshot_recovery = _recovery_metadata(screenshot_result.metadata)
     if screenshot_recovery is not None:
         metadata["screenshot_recovery"] = screenshot_recovery
+    return metadata
+
+
+def _observation_success_metadata(
+    *,
+    xml_result: DriverXmlDump,
+    timeout_s: float,
+) -> dict[str, object]:
+    metadata: dict[str, object] = {
+        "timeout_s": timeout_s,
+        "xml_elapsed_ms": xml_result.elapsed_ms,
+    }
+    for source_key, target_key in (
+        ("displayWidth", "viewport_width"),
+        ("displayHeight", "viewport_height"),
+    ):
+        value = _positive_int_metadata(xml_result.metadata.get(source_key))
+        if value is not None:
+            metadata[target_key] = value
+    xml_recovery = _recovery_metadata(xml_result.metadata)
+    if xml_recovery is not None:
+        metadata["xml_recovery"] = xml_recovery
     return metadata
 
 
@@ -282,6 +376,20 @@ def _contains_sensitive_detail(detail: str) -> bool:
         "ivbor",
     )
     return any(marker in lowered for marker in markers)
+
+
+def _positive_int_metadata(value: object) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, int):
+        return value if value > 0 else None
+    if isinstance(value, str):
+        try:
+            parsed = int(value)
+        except ValueError:
+            return None
+        return parsed if parsed > 0 else None
+    return None
 
 
 def _combined_backend(first: str, second: str) -> str:

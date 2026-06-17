@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from snap_tap.backends.contracts import DriverScreenshot, DriverXmlDump
 from snap_tap.device.identity import DeviceInfo
-from snap_tap.snapshots import capture_raw_snapshot
+from snap_tap.snapshots import capture_raw_observation, capture_raw_snapshot
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\nfake-png"
 XML_TEXT = "<hierarchy><node /></hierarchy>"
@@ -80,6 +80,24 @@ def test_capture_raw_snapshot_composes_xml_and_screenshot() -> None:
     assert result.metadata["screenshot_width"] == 1080
     assert xml_dumper.calls == [("RFCN4010FCK", 3.0)]
     assert capturer.calls == [("RFCN4010FCK", 3.0)]
+
+
+def test_capture_raw_observation_uses_xml_without_screenshot() -> None:
+    xml_dumper = FakeXmlDumper()
+
+    result = capture_raw_observation(
+        xml_dumper=xml_dumper,
+        devices=[DeviceInfo(serial="RFCN4010FCK", state="device")],
+        requested_serial="RFCN4010FCK",
+        timeout_s=3.0,
+    )
+
+    assert result.ok is True
+    assert result.operation == "operator_observation"
+    assert result.xml == XML_TEXT
+    assert result.image_bytes is None
+    assert result.metadata["xml_elapsed_ms"] == 1.0
+    assert xml_dumper.calls == [("RFCN4010FCK", 3.0)]
 
 
 def test_capture_raw_snapshot_preserves_source_recovery_metadata() -> None:

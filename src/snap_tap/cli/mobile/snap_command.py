@@ -9,12 +9,8 @@ import typer
 from snap_tap.backends.android.uiautomator2.app_awareness import (
     Uiautomator2AppAwarenessReader,
 )
-from snap_tap.backends.android.uiautomator2.screenshot import (
-    Uiautomator2ScreenshotCapturer,
-)
 from snap_tap.backends.contracts import (
     DriverAppAwarenessReader,
-    DriverScreenshotCapturer,
     DriverXmlDumper,
     read_device_app_current,
 )
@@ -27,8 +23,8 @@ from snap_tap.device.discovery import DeviceDiscovery
 from snap_tap.snapshots import (
     DEFAULT_LATEST_SNAPSHOT_SESSION_ID,
     LatestSnapshotRefError,
-    capture_raw_snapshot,
-    complete_raw_snapshot_observation,
+    capture_raw_observation,
+    complete_operator_observation,
     normalize_latest_snapshot_session_id,
 )
 from snap_tap.snapshots.manifest_source import (
@@ -56,9 +52,6 @@ class SnapDependencies(Protocol):
 
     @property
     def xml_dumper(self) -> DriverXmlDumper: ...
-
-    @property
-    def screenshot_capturer(self) -> DriverScreenshotCapturer | None: ...
 
     @property
     def app_reader(self) -> DriverAppAwarenessReader | None: ...
@@ -185,7 +178,6 @@ def _capture_snap(
             detail=session_error.detail,
         )
     session_id = normalize_latest_snapshot_session_id(session)
-    capturer = _screenshot_capturer(dependencies)
     if device is None:
         return mobile_snap_failure(
             device_id=None,
@@ -206,15 +198,14 @@ def _capture_snap(
             detail=visible.error.detail,
         )
 
-    raw = capture_raw_snapshot(
+    raw = capture_raw_observation(
         xml_dumper=dependencies.xml_dumper,
-        screenshot_capturer=capturer,
         devices=visible.devices,
         requested_serial=device,
         timeout_s=timeout_s,
     )
     if raw.ok:
-        raw = complete_raw_snapshot_observation(raw)
+        raw = complete_operator_observation(raw)
 
     app_current = None
     if raw.ok and raw.device_id is not None:
@@ -415,12 +406,6 @@ def _clip(value: str, width: int) -> str:
     if width <= 1:
         return value[:width]
     return value[: width - 1] + "."
-
-
-def _screenshot_capturer(
-    dependencies: SnapDependencies,
-) -> DriverScreenshotCapturer:
-    return dependencies.screenshot_capturer or Uiautomator2ScreenshotCapturer()
 
 
 def _app_reader(dependencies: SnapDependencies) -> DriverAppAwarenessReader:

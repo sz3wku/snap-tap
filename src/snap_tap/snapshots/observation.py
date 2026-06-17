@@ -2,13 +2,71 @@ from __future__ import annotations
 
 import hashlib
 from collections.abc import Mapping
+from dataclasses import replace
 
 from snap_tap.snapshots.elements import (
     SnapshotNormalizationError,
     normalize_snapshot_elements,
 )
-from snap_tap.snapshots.identity import build_snapshot_identity
-from snap_tap.snapshots.models import RawSnapshotCapture, SnapshotArtifactRef
+from snap_tap.snapshots.identity import (
+    build_operator_observation_identity,
+    build_snapshot_identity,
+)
+from snap_tap.snapshots.models import (
+    RawSnapshotCapture,
+    SnapshotArtifactRef,
+    SnapshotElement,
+    SnapshotNormalization,
+)
+
+
+def complete_operator_observation(result: RawSnapshotCapture) -> RawSnapshotCapture:
+    if result.xml is None:
+        return RawSnapshotCapture.failure(
+            backend=result.backend,
+            code="snapshot_dump_failed",
+            detail="Operator observation completed without XML content.",
+            device_id=result.device_id,
+            elapsed_ms=result.elapsed_ms,
+            metadata=result.metadata,
+        )
+
+    try:
+        elements, normalization = normalize_snapshot_elements(
+            xml=result.xml,
+            viewport_width=result.metadata.get("viewport_width"),
+            viewport_height=result.metadata.get("viewport_height"),
+        )
+        normalization = _with_inferred_viewport(
+            normalization,
+            elements=elements,
+        )
+    except SnapshotNormalizationError as exc:
+        return RawSnapshotCapture.failure(
+            backend=result.backend,
+            code=exc.code,
+            detail=exc.detail,
+            device_id=result.device_id,
+            elapsed_ms=result.elapsed_ms,
+            metadata=result.metadata,
+            normalization=exc.normalization,
+        )
+
+    observed = result.with_elements(
+        elements=elements,
+        normalization=normalization,
+    )
+    identity = build_operator_observation_identity(observed)
+    if identity is None:
+        return RawSnapshotCapture.failure(
+            backend=result.backend,
+            code="snapshot_evidence_missing",
+            detail="Failed to build operator observation identity.",
+            device_id=result.device_id,
+            elapsed_ms=result.elapsed_ms,
+            metadata=result.metadata,
+        )
+    return observed.with_identity(identity).without_payloads()
 
 
 def complete_raw_snapshot_observation(result: RawSnapshotCapture) -> RawSnapshotCapture:
@@ -71,6 +129,28 @@ def complete_raw_snapshot_observation(result: RawSnapshotCapture) -> RawSnapshot
         elements=elements,
         normalization=normalization,
     )
+
+
+def _with_inferred_viewport(
+    normalization: SnapshotNormalization,
+    *,
+    elements: tuple[SnapshotElement, ...],
+) -> SnapshotNormalization:
+    if (
+        normalization.viewport_width is not None
+        and normalization.viewport_height is not None
+    ):
+        return normalization
+    max_right = max((element.bounds.right for element in elements), default=0)
+    max_bottom = max((element.bounds.bottom for element in elements), default=0)
+    width = normalization.viewport_width or (max_right if max_right > 0 else None)
+    height = normalization.viewport_height or (max_bottom if max_bottom > 0 else None)
+    if (
+        width == normalization.viewport_width
+        and height == normalization.viewport_height
+    ):
+        return normalization
+    return replace(normalization, viewport_width=width, viewport_height=height)
 
 
 def _screenshot_ref_metadata(metadata: Mapping[str, object]) -> dict[str, object]:

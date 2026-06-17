@@ -110,6 +110,28 @@ class RawSnapshotCapture:
         )
 
     @classmethod
+    def observation_success(
+        cls,
+        *,
+        device_id: str,
+        backend: str,
+        elapsed_ms: float,
+        xml: str,
+        metadata: Mapping[str, object] | None = None,
+    ) -> RawSnapshotCapture:
+        return cls(
+            ok=True,
+            status="completed",
+            device_id=device_id,
+            backend=backend,
+            operation="operator_observation",
+            checked_at=_utc_now(),
+            elapsed_ms=elapsed_ms,
+            xml=xml,
+            metadata=metadata or {},
+        )
+
+    @classmethod
     def failure(
         cls,
         *,
@@ -169,6 +191,9 @@ class RawSnapshotCapture:
             elements=tuple(elements),
             normalization=normalization,
         )
+
+    def without_payloads(self) -> RawSnapshotCapture:
+        return replace(self, xml=None, image_bytes=None)
 
 
 def _utc_now() -> str:
